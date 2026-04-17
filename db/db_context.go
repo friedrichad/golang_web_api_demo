@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/friedrichad/golang_web_api_demo/configs"
+	config "github.com/friedrichad/golang_web_api_demo/configs"
 	"github.com/friedrichad/golang_web_api_demo/models"
 
 	"gorm.io/driver/mysql"
@@ -15,6 +15,38 @@ import (
 
 // DB là biến instance toàn cục để các repository trong project sử dụng
 var DB *gorm.DB
+
+func ConnectDB(cfg *config.Config) {
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		cfg.Database.Username,
+		cfg.Database.Password,
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.DBName,
+	)
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+
+	if err != nil {
+		log.Fatalf("Không thể kết nối database: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("Không thể lấy sqlDB: %v", err)
+	}
+
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	DB = db
+
+	fmt.Println("Database connected successfully")
+}
 
 // InitDB khởi tạo kết nối đến MySQL dựa trên cấu hình được load từ file json/env
 func InitDB(cfg *config.Config) {
@@ -57,19 +89,26 @@ func InitDB(cfg *config.Config) {
 	// GORM sẽ tự động tạo bảng hoặc thêm cột mới nếu struct Model có thay đổi
 	// Thứ tự nên ưu tiên các bảng độc lập (bảng cha) trước
 	err = DB.AutoMigrate(
-		&models.User{},
+		// Nhóm 1: Không phụ thuộc ai
 		&models.Role{},
 		&models.Warehouse{},
-		&models.Bin{},
-		&models.ComponentCategory{},
+		&models.Componentcategory{},
 		&models.Component{},
-		&models.ComponentBin{},
 		&models.Customer{},
-		&models.TransferRequest{},
-		&models.TransferRequestComponent{},
-		&models.FinishedTransferRequestComponent{},
-	)
 
+		// Nhóm 2: Phụ thuộc nhóm 1
+		&models.User{},            // Many-to-Many với Role thông qua u_r
+		&models.Bin{},             // Foreign Key đến Warehouse
+		&models.Transferrequest{}, // Foreign Keys đến User, Warehouse, Customer
+
+		// Nhóm 3: Bảng chi tiết giao dịch (Phụ thuộc nhóm 2)
+		// GORM sẽ tự động tạo bảng trung gian cho many2many relationships:
+		// - u_r (User-Role)
+		// - c_c (Component-ComponentCategory)
+		// - component_bins (Component-Bin)
+		&models.Transferrequestcomponent{},
+		&models.Finishedtransferrequestcomponent{},
+	)
 	if err != nil {
 		log.Fatalf("Lỗi trong quá trình AutoMigrate: %v", err)
 	}
