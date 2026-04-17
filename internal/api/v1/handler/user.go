@@ -1,24 +1,40 @@
 package v1handler
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
-	// model "github.com/friedrichad/golang_web_api_demo/models"
+
+	dtos "github.com/friedrichad/golang_web_api_demo/dtos"
+	"github.com/friedrichad/golang_web_api_demo/service"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 var slugRegex = regexp.MustCompile(`^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)+$`)
 
 type UserHandler struct {
+	userService service.IUserService
 }
 
-func NewUserHandler() *UserHandler {
-	return &UserHandler{}
+func NewUserHandler(db *gorm.DB) *UserHandler {
+	userService := &service.UserService{DB: db}
+	return &UserHandler{
+		userService: userService,
+	}
 }
 func (h *UserHandler) GetUser(ctx *gin.Context) {
+	users, err := h.userService.GetUsers()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to fetch users: %v", err),
+		})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"data": "GetUsers method",
+		"data": users,
 	})
 }
 func (h *UserHandler) GetUserSlug(ctx *gin.Context) {
@@ -48,14 +64,39 @@ func (h *UserHandler) GetUserById(ctx *gin.Context) {
 		})
 		return
 	}
+
+	user, err := h.userService.GetUserByID(int32(userInt))
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"data":    "GetUserById method",
-		"user_id": user_id,
+		"data": user,
 	})
 }
 func (h *UserHandler) PostUser(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": "PostUser method",
+	var user dtos.UserResp
+
+	if err := ctx.BindJSON(&user); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request: " + err.Error(),
+		})
+		return
+	}
+
+	createdUser, err := h.userService.PostUser(&user)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"data": createdUser,
 	})
 }
 func (h *UserHandler) PutUser(ctx *gin.Context) {
