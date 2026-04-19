@@ -1,6 +1,6 @@
 package dtos
 
-type Componentbin struct {
+type ComponentBinResponse struct {
 	ComponentBinID int32   `json:"component_bin_id"`
 	Quantity       float64 `json:"quantity"`
 	ComponentID    int32   `json:"component_id"`

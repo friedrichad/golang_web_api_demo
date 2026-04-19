@@ -5,13 +5,14 @@ import (
 
 	dtos "github.com/friedrichad/golang_web_api_demo/dtos"
 	"github.com/friedrichad/golang_web_api_demo/models"
+	utils "github.com/friedrichad/golang_web_api_demo/utils"
 	"gorm.io/gorm"
 )
 
 type IUserService interface {
-	GetUserByID(userID int32) (*dtos.UserResp, error)
-	GetUsers() ([]*dtos.UserResp, error)
-	PostUser(user *dtos.UserResp) (*dtos.UserResp, error)
+	GetUserByID(userID int32) (*dtos.UserResponse, error)
+	GetUsers() ([]*dtos.UserResponse, error)
+	CreateUser(user *dtos.UserRequest) (*dtos.UserResponse, error)
 }
 
 type UserService struct {
@@ -19,7 +20,7 @@ type UserService struct {
 }
 
 // GetUserByID retrieves a single user by their ID
-func (s *UserService) GetUserByID(userID int32) (*dtos.UserResp, error) {
+func (s *UserService) GetUserByID(userID int32) (*dtos.UserResponse, error) {
 	var user models.User
 
 	result := s.DB.Where("user_id = ?", userID).First(&user)
@@ -31,7 +32,7 @@ func (s *UserService) GetUserByID(userID int32) (*dtos.UserResp, error) {
 	}
 
 	// Convert models.User to dtos.UserResp (hide password_hash)
-	return &dtos.UserResp{
+	return &dtos.UserResponse{
 		UserID:      user.UserID,
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
@@ -41,7 +42,7 @@ func (s *UserService) GetUserByID(userID int32) (*dtos.UserResp, error) {
 }
 
 // GetUsers retrieves all users from the database
-func (s *UserService) GetUsers() ([]*dtos.UserResp, error) {
+func (s *UserService) GetUsers() ([]*dtos.UserResponse, error) {
 	var users []models.User
 
 	result := s.DB.Find(&users)
@@ -50,9 +51,9 @@ func (s *UserService) GetUsers() ([]*dtos.UserResp, error) {
 	}
 
 	// Convert models.User to dtos.UserResp (hide password_hash)
-	var userResps []*dtos.UserResp
+	var userResps []*dtos.UserResponse
 	for _, user := range users {
-		userResps = append(userResps, &dtos.UserResp{
+		userResps = append(userResps, &dtos.UserResponse{
 			UserID:      user.UserID,
 			Username:    user.Username,
 			DisplayName: user.DisplayName,
@@ -65,36 +66,40 @@ func (s *UserService) GetUsers() ([]*dtos.UserResp, error) {
 }
 
 // PostUser creates a new user in the database
-func (s *UserService) PostUser(user *dtos.UserResp) (*dtos.UserResp, error) {
-	// Validation
-	if user.Username == "" {
-		return nil, fmt.Errorf("username is required")
+func (s *UserService) CreateUser(user *dtos.UserRequest) (*dtos.UserResponse, error) {
+	passwordHash, err := utils.HashPassword(user.Password)
+	if err != nil {
+		return nil, fmt.Errorf("Error while hashing password: %v", err)
 	}
-	if user.Email == "" {
-		return nil, fmt.Errorf("email is required")
-	}
-
-	// Convert dtos.UserResp to models.User
-	// Note: Password hash should be provided and properly hashed before calling this method
+	statusInt := int32(1)
 	dbUser := models.User{
 		Username:     user.Username,
 		DisplayName:  user.DisplayName,
 		Email:        user.Email,
-		PasswordHash: "", // This should be set by the handler with properly hashed password
-		StatusInt:    user.StatusInt,
+		PasswordHash: passwordHash,
+		StatusInt:    statusInt,
 	}
 
 	result := s.DB.Create(&dbUser)
 	if result.Error != nil {
 		return nil, result.Error
 	}
+	userRole := models.UR{
+		UserID: dbUser.UserID,
+		RoleID: int32(user.RoleID),
+	}
+	resultRole := s.DB.Create(&userRole)
+	if resultRole.Error != nil {
+		return nil, resultRole.Error
+	}
 
-	// Convert back to dtos.UserResp and return (without password hash)
-	return &dtos.UserResp{
+	// Convert back to dtos.UserResponse and return (without password hash)
+	return &dtos.UserResponse{
 		UserID:      dbUser.UserID,
 		Username:    dbUser.Username,
 		DisplayName: dbUser.DisplayName,
 		Email:       dbUser.Email,
 		StatusInt:   dbUser.StatusInt,
+		RoleID: userRole.RoleID,
 	}, nil
 }

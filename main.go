@@ -24,7 +24,7 @@ func main() {
     // Đăng ký các route
     v1.GET("/users", userHandler.GetUser)
     v1.GET("/users/:user_id", userHandler.GetUserById)
-    v1.POST("/users", userHandler.PostUser)
+    v1.POST("/users/create", userHandler.CreateUser)
     v1.PUT("/users/:user_id", userHandler.PutUser)
     v1.DELETE("/users/:user_id", userHandler.DeleteUser)
 	r.Run(":8080")

@@ -77,8 +77,8 @@ func (h *UserHandler) GetUserById(ctx *gin.Context) {
 		"data": user,
 	})
 }
-func (h *UserHandler) PostUser(ctx *gin.Context) {
-	var user dtos.UserResp
+func (h *UserHandler) CreateUser(ctx *gin.Context) {
+	var user dtos.UserRequest
 
 	if err := ctx.BindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -86,8 +86,15 @@ func (h *UserHandler) PostUser(ctx *gin.Context) {
 		})
 		return
 	}
+	valid, err := user.Verify()
+	if !valid {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
-	createdUser, err := h.userService.PostUser(&user)
+	createdUser, err := h.userService.CreateUser(&user)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),

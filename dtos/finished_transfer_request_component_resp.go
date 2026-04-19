@@ -1,6 +1,6 @@
 package dtos
 
-type Finishedtransferrequestcomponent struct {
+type FinishedTransferRequestComponentResponse struct {
 	FinishedTransferRequestComponentID int32   `json:"finished_transfer_request_component_id"`
 	RequestID                          int32   `json:"request_id"`
 	ComponentID                        int32   `json:"component_id"`

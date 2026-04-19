@@ -1,7 +1,7 @@
 package dtos
 import "time"
 
-type Transferrequest struct {
+type TransferRequestResponse struct {
 	RequestID       int32     `json:"request_id"`
 	Description     string    `json:"description"`
 	TypeInt         int32     `json:"type_int"`

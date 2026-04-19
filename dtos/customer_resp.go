@@ -2,7 +2,7 @@ package dtos
 
 import("time")
 
-type Customer struct {
+type CustomerResponse struct {
 	CustomerID   int32    `json:"customer_id"`
 	CustomerName string    `json:"customer_name"`
 	Phone        string    `json:"phone"`
