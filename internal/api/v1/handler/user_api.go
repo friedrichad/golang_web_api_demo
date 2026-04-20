@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	dtos "github.com/friedrichad/golang_web_api_demo/dtos"
-	"github.com/friedrichad/golang_web_api_demo/service"
+	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -15,11 +15,11 @@ import (
 var slugRegex = regexp.MustCompile(`^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)+$`)
 
 type UserHandler struct {
-	userService service.IUserService
+	userService repository.IUserRepository
 }
 
 func NewUserHandler(db *gorm.DB) *UserHandler {
-	userService := &service.UserService{DB: db}
+	userService := &repository.UserRepository{DB: db}
 	return &UserHandler{
 		userService: userService,
 	}

@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	config "github.com/friedrichad/golang_web_api_demo/configs"
-	"github.com/friedrichad/golang_web_api_demo/models"
+	config "github.com/friedrichad/golang_web_api_demo/internal/configs"
+	"github.com/friedrichad/golang_web_api_demo/internal/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

@@ -6,21 +6,23 @@ import (
 	"strconv"
 
 	dtos "github.com/friedrichad/golang_web_api_demo/dtos"
-	"github.com/friedrichad/golang_web_api_demo/service"
+	repository "github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
 type ComponentHandler struct {
-	componentService service.IComponentService
+	componentService repository.IComponentRepository
 }
+
 func NewComponentHandler(db *gorm.DB) *ComponentHandler {
-	componentService := &service.ComponentService{DB: db}
+	componentService := &repository.ComponentRepository{DB: db}
 	return &ComponentHandler{
 		componentService: componentService,
 	}
 }
-func (h * ComponentHandler) GetComponent(ctx * gin.Context){
-	componentResps,err := h.componentService.GetComponents()
+func (h *ComponentHandler) GetComponent(ctx *gin.Context) {
+	componentResps, err := h.componentService.GetComponents()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to fetch components: %v", err),
@@ -29,7 +31,7 @@ func (h * ComponentHandler) GetComponent(ctx * gin.Context){
 	}
 	ctx.JSON(http.StatusOK, componentResps)
 }
-func (h * ComponentHandler) GetComponentByID(ctx * gin.Context){
+func (h *ComponentHandler) GetComponentByID(ctx *gin.Context) {
 	componentID, err := strconv.ParseInt(ctx.Param("id"), 10, 32)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -46,7 +48,7 @@ func (h * ComponentHandler) GetComponentByID(ctx * gin.Context){
 	}
 	ctx.JSON(http.StatusOK, componentResp)
 }
-func (h * ComponentHandler) CreateComponent(ctx * gin.Context){
+func (h *ComponentHandler) CreateComponent(ctx *gin.Context) {
 	var compoentReq dtos.ComponentRequest
 	if err := ctx.BindJSON(&compoentReq); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{

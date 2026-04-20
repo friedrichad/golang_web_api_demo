@@ -1,26 +1,28 @@
-package service
+package repository
 
 import (
 	"fmt"
 
 	dtos "github.com/friedrichad/golang_web_api_demo/dtos"
-	"github.com/friedrichad/golang_web_api_demo/models"
-	utils "github.com/friedrichad/golang_web_api_demo/utils"
+	"github.com/friedrichad/golang_web_api_demo/internal/models"
+	utils "github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"gorm.io/gorm"
 )
 
-type IUserService interface {
+type IUserRepository interface {
 	GetUserByID(userID int32) (*dtos.UserResponse, error)
 	GetUsers() ([]*dtos.UserResponse, error)
 	CreateUser(user *dtos.UserRequest) (*dtos.UserResponse, error)
+	// DeleteUser(userID int32) error
+	// UpdateUser(userID int32, user *dtos.UserRequest) (*dtos.UserResponse, error)
 }
 
-type UserService struct {
+type UserRepository struct {
 	DB *gorm.DB
 }
 
 // GetUserByID retrieves a single user by their ID
-func (s *UserService) GetUserByID(userID int32) (*dtos.UserResponse, error) {
+func (s *UserRepository) GetUserByID(userID int32) (*dtos.UserResponse, error) {
 	var user models.User
 
 	result := s.DB.Where("user_id = ?", userID).First(&user)
@@ -42,7 +44,7 @@ func (s *UserService) GetUserByID(userID int32) (*dtos.UserResponse, error) {
 }
 
 // GetUsers retrieves all users from the database
-func (s *UserService) GetUsers() ([]*dtos.UserResponse, error) {
+func (s *UserRepository) GetUsers() ([]*dtos.UserResponse, error) {
 	var users []models.User
 
 	result := s.DB.Find(&users)
@@ -66,7 +68,7 @@ func (s *UserService) GetUsers() ([]*dtos.UserResponse, error) {
 }
 
 // PostUser creates a new user in the database
-func (s *UserService) CreateUser(user *dtos.UserRequest) (*dtos.UserResponse, error) {
+func (s *UserRepository) CreateUser(user *dtos.UserRequest) (*dtos.UserResponse, error) {
 	passwordHash, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return nil, fmt.Errorf("Error while hashing password: %v", err)

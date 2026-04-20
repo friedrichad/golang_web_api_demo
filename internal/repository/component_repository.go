@@ -1,24 +1,24 @@
-package service
+package repository
 
 import (
 	"fmt"
 
 	dtos "github.com/friedrichad/golang_web_api_demo/dtos"
-	"github.com/friedrichad/golang_web_api_demo/models"
+	"github.com/friedrichad/golang_web_api_demo/internal/models"
 	"gorm.io/gorm"
 )
 
-type IComponentService interface {
+type IComponentRepository interface {
 	GetComponentByID(componentID int32) (*dtos.ComponentResponse, error)
 	GetComponents() ([]*dtos.ComponentResponse, error)
 	CreateComponent(component *dtos.ComponentRequest) (*dtos.ComponentResponse, error)
 }
 
-type ComponentService struct {
+type ComponentRepository struct {
 	DB *gorm.DB
 }
 
-func (s *ComponentService) GetComponentByID(componentId int32) (*dtos.ComponentResponse, error) {
+func (s *ComponentRepository) GetComponentByID(componentId int32) (*dtos.ComponentResponse, error) {
 	var component models.Component
 	result := s.DB.Where("component_id = ?", componentId).First(&component)
 	if result.Error != nil {
@@ -31,7 +31,7 @@ func (s *ComponentService) GetComponentByID(componentId int32) (*dtos.ComponentR
 		UnitPrice:    component.UnitPrice,
 	}, nil
 }
-func (s *ComponentService) GetComponents() ([]*dtos.ComponentResponse, error) {
+func (s *ComponentRepository) GetComponents() ([]*dtos.ComponentResponse, error) {
 	var components []models.Component
 	result := s.DB.Find(&components)
 	if result.Error != nil {
@@ -48,7 +48,7 @@ func (s *ComponentService) GetComponents() ([]*dtos.ComponentResponse, error) {
 	}
 	return componentResps, nil
 }
-func (s *ComponentService) CreateComponent(componentReq *dtos.ComponentRequest) (*dtos.ComponentResponse, error) {
+func (s *ComponentRepository) CreateComponent(componentReq *dtos.ComponentRequest) (*dtos.ComponentResponse, error) {
 	var bin models.Bin
 	result := s.DB.Where("bin_id =?", componentReq.BinID).First(&bin)
 	if result.Error != nil {
