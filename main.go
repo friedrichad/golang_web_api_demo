@@ -20,6 +20,11 @@ func main() {
 
     // Khởi tạo UserHandler với DB đã connect
     userHandler := v1handler.NewUserHandler(db.DB)
+    componetHander := v1handler.NewComponentHandler(db.DB)
+
+    v1.GET("/components", componetHander.GetComponent)
+    v1.GET("/components/:id", componetHander.GetComponentByID)
+    v1.POST("/components/create", componetHander.CreateComponent)
 
     // Đăng ký các route
     v1.GET("/users", userHandler.GetUser)
