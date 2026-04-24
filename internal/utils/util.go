@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func Map[T, U any](data []T, f func(T) U) []U {

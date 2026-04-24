@@ -2,8 +2,9 @@ package main
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/router"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
+	"github.com/spf13/viper"
+	"log"
 )
 
 // @title Auth Server API
@@ -12,11 +13,13 @@ import (
 // @host localhost:8080
 // @BasePath /
 
-func main() {
+func main() {	
+	viper.SetConfigFile("internal/configs/config.yaml")
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	db.InitMysql()
 
-	r := router.SetupRouter()
-
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	r.Run(":8080")
+	router.InitRouter().Run(":" + viper.GetString("port"))
 }

@@ -12,7 +12,7 @@ const TableNameUser = "user"
 
 // User mapped from table <user>
 type User struct {
-	UserID       int32     `gorm:"column:user_id;primaryKey;autoIncrement:true" json:"user_id"`
+	UserUUID     string    `gorm:"column:user_uuid;primaryKey" json:"user_uuid"`
 	Username     string    `gorm:"column:username" json:"username"`
 	DisplayName  string    `gorm:"column:display_name" json:"display_name"`
 	Email        string    `gorm:"column:email" json:"email"`
@@ -29,6 +29,15 @@ func (*User) TableName() string {
 	return TableNameUser
 }
 
+// DTOs for API requests
+type UserCreateRequest struct {
+	Username    string `json:"username" binding:"required,min=3,max=50"`
+	DisplayName string `json:"display_name" binding:"required,min=1,max=100"`
+	Email       string `json:"email" binding:"required,email"`
+	Password    string `json:"password" binding:"required,min=6"`
+	StatusInt   int32  `json:"status_int"`
+}
+
 type UserRequest struct {
 	Username    string `form:"username"`
 	DisplayName string `form:"display_name"`
@@ -37,13 +46,14 @@ type UserRequest struct {
 	Page        int    `form:"page"`
 	Size        int    `form:"size"`
 }
+
 type UserUpdate struct {
-	Username string     `json:"username"`
-	DisplayName string     `json:"display_name"`
-	Email      string     `json:"email"`
-	OldPassword string     `json:"old_password"`
-	NewPassword   string    `json:"new_password"`
-	StatusInt  *int32     `json:"status_int"`
-	UpdatedBy  *int32     `json:"updated_by"`
-	UpdatedAt  *time.Time `json:"modify_time"`
+	UserUUID    string `json:"user_uuid" binding:"required"`
+	Username    string `json:"username" binding:"min=3,max=50"`
+	DisplayName string `json:"display_name" binding:"min=1,max=100"`
+	Email       string `json:"email" binding:"email"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password" binding:"min=6"`
+	StatusInt   *int32 `json:"status_int"`
+	UpdatedBy   *int32 `json:"updated_by"`
 }

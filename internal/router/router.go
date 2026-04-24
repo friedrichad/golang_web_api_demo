@@ -1,16 +1,18 @@
 package router
 
 import (
-	// "github.com/friedrichad/golang_web_api_demo/internal/controller"
-	// "github.com/friedrichad/golang_web_api_demo/internal/configs/middleware"
+	"github.com/friedrichad/golang_web_api_demo/internal/controller"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+
 )
 
 func InitRouter() *gin.Engine {
 	router := gin.Default()
 	configCors(router)
+	// initOtherRouter(router)
+	initUserRouter(router)
 	return router
 }
 
@@ -23,8 +25,17 @@ func configCors(router *gin.Engine) {
 	}))
 }
 
-func initOtherRouter(router *gin.Engine) {
-	// router.GET("role-menu", middleware.BearerAuthenticator(), controller.NewRoleMenuController().GetByRole())
-	// router.GET("user-role", middleware.BearerAuthenticator(), controller.NewUserRoleController().GetByUser())
-	// router.POST("upload", middleware.BearerAuthenticator(), controller.NewUploadController().UploadFile())
+
+
+func initUserRouter(router *gin.Engine) {
+	userController := controller.NewUserController()
+	userGroup := router.Group("/users")
+	{
+		userGroup.GET("", userController.GetAllUsers)
+		userGroup.GET("/:id", userController.GetUserById)
+		userGroup.POST("", userController.CreateUser)
+		userGroup.PUT("", userController.UpdateUser)
+		userGroup.DELETE("", userController.DeleteUser)
+		userGroup.GET("/:id/authorities", userController.GetUserAuthorities)
+	}
 }

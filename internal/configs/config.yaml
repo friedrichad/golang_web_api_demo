@@ -1,0 +1,9 @@
+port: 8080
+
+database:
+  mysql:
+    connection-string: root:quang@tcp(localhost:3306)/ewm?charset=utf8mb4&parseTime=True&loc=Local
+
+security:
+  cors:
+    - http://localhost:8080

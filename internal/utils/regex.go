@@ -15,11 +15,11 @@ var (
 	ReUsername = regexp.MustCompile(`^[a-zA-Z0-9]{3,16}$`)
 
 	// Password: ít nhất 8 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt
-	RePassword = regexp.MustCompile(`^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$`)
+	RePassword = regexp.MustCompile(`^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@$!%*?&])[A-Za-z0-9@$!%*?&]{8,}$`)
 
 	// Date (YYYY-MM-DD)
-	ReDate = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+	ReDate = regexp.MustCompile(`^[0-9]{4}-[0-9]{2}-[0-9]{2}$`)
 
 	// Time (HH:MM:SS)
-	ReTime = regexp.MustCompile(`^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$`)
+	ReTime = regexp.MustCompile(`^(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$`)
 )
