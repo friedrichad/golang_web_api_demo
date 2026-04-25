@@ -8,11 +8,11 @@ const TableNameInventoryAdjustmentDetail = "inventory_adjustment_detail"
 
 // InventoryAdjustmentDetail mapped from table <inventory_adjustment_detail>
 type InventoryAdjustmentDetail struct {
-	AdjustmentDetailID int32   `gorm:"column:adjustment_detail_id;primaryKey;autoIncrement:true" json:"adjustment_detail_id"`
-	AdjustmentID       int32   `gorm:"column:adjustment_id" json:"adjustment_id"`
-	ComponentID        int32   `gorm:"column:component_id" json:"component_id"`
-	BinID              int32   `gorm:"column:bin_id" json:"bin_id"`
-	WarehouseID        int32   `gorm:"column:warehouse_id" json:"warehouse_id"`
+	AdjustmentDetailID int     `gorm:"column:adjustment_detail_id;primaryKey;autoIncrement:true" json:"adjustment_detail_id"`
+	AdjustmentID       int     `gorm:"column:adjustment_id" json:"adjustment_id"`
+	ComponentID        int     `gorm:"column:component_id" json:"component_id"`
+	BinID              int     `gorm:"column:bin_id" json:"bin_id"`
+	WarehouseID        int     `gorm:"column:warehouse_id" json:"warehouse_id"`
 	QuantityBefore     float64 `gorm:"column:quantity_before" json:"quantity_before"`
 	QuantityAfter      float64 `gorm:"column:quantity_after" json:"quantity_after"`
 	AdjustmentQuantity float64 `gorm:"column:adjustment_quantity" json:"adjustment_quantity"`

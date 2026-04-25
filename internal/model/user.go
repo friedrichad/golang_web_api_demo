@@ -12,19 +12,19 @@ const TableNameUser = "user"
 
 // User mapped from table <user>
 type User struct {
-	UserUUID     string    `gorm:"column:user_uuid;primaryKey" json:"user_uuid"`
-	Username     string    `gorm:"column:username" json:"username"`
-	DisplayName  string    `gorm:"column:display_name" json:"display_name"`
-	Email        string    `gorm:"column:email" json:"email"`
-	PasswordHash string    `gorm:"column:password_hash" json:"password_hash"`
-	StatusInt    int32     `gorm:"column:status_int" json:"status_int"`
-	CreatedBy    int32     `gorm:"column:created_by" json:"created_by"`
-	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedBy    int32     `gorm:"column:updated_by" json:"updated_by"`
-	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
-	UserRoles   []UserRole `json:"userRoles" gorm:"-"`
-	Menus       []Menu     `json:"menus" gorm:"-"`
-	Permissions []string   `json:"permissions" gorm:"-"`
+	UserUUID     string     `gorm:"column:user_uuid;primaryKey" json:"user_uuid"`
+	Username     string     `gorm:"column:username" json:"username"`
+	DisplayName  string     `gorm:"column:display_name" json:"display_name"`
+	Email        string     `gorm:"column:email" json:"email"`
+	PasswordHash string     `gorm:"column:password_hash" json:"password_hash"`
+	StatusInt    int        `gorm:"column:status_int" json:"status_int"`
+	CreatedBy    int        `gorm:"column:created_by" json:"created_by"`
+	CreatedAt    time.Time  `gorm:"column:created_at" json:"created_at"`
+	UpdatedBy    int        `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedAt    time.Time  `gorm:"column:updated_at" json:"updated_at"`
+	UserRoles    []UserRole `json:"user_roles" gorm:"-"`
+	Menus        []Menu     `json:"menus" gorm:"-"`
+	Permissions  []string   `json:"permissions" gorm:"-"`
 }
 
 // TableName User's table name
@@ -38,14 +38,14 @@ type UserCreateRequest struct {
 	DisplayName string `json:"display_name" binding:"required,min=1,max=100"`
 	Email       string `json:"email" binding:"required,email"`
 	Password    string `json:"password" binding:"required,min=6"`
-	StatusInt   int32  `json:"status_int"`
+	StatusInt   int    `json:"status_int"`
 }
 
 type UserRequest struct {
 	Username    string `form:"username"`
 	DisplayName string `form:"display_name"`
 	Email       string `form:"email"`
-	StatusInt   int32  `form:"status_int"`
+	StatusInt   int    `form:"status_int"`
 	DateRequest
 	PageSize
 }
@@ -57,6 +57,6 @@ type UserUpdate struct {
 	Email       string `json:"email" binding:"email"`
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password" binding:"min=6"`
-	StatusInt   *int32 `json:"status_int"`
-	UpdatedBy   *int32 `json:"updated_by"`
+	StatusInt   *int   `json:"status_int"`
+	UpdatedBy   *int   `json:"updated_by"`
 }

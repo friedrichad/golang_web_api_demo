@@ -8,10 +8,10 @@ const TableNameRequestDetail = "request_detail"
 
 // RequestDetail mapped from table <request_detail>
 type RequestDetail struct {
-	RequestDetailID int32   `gorm:"column:request_detail_id;primaryKey;autoIncrement:true" json:"request_detail_id"`
-	RequestID       int32   `gorm:"column:request_id" json:"request_id"`
-	ComponentID     int32   `gorm:"column:component_id" json:"component_id"`
-	Quantity        int32   `gorm:"column:quantity" json:"quantity"`
+	RequestDetailID int     `gorm:"column:request_detail_id;primaryKey;autoIncrement:true" json:"request_detail_id"`
+	RequestID       int     `gorm:"column:request_id" json:"request_id"`
+	ComponentID     int     `gorm:"column:component_id" json:"component_id"`
+	Quantity        int     `gorm:"column:quantity" json:"quantity"`
 	UnitPrice       float64 `gorm:"column:unit_price" json:"unit_price"`
 }
 

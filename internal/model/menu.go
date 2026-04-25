@@ -8,7 +8,7 @@ const TableNameMenu = "menu"
 
 // Menu mapped from table <menu>
 type Menu struct {
-	MenuID   int32  `gorm:"column:menu_id;primaryKey;autoIncrement:true" json:"menu_id"`
+	MenuID   int    `gorm:"column:menu_id;primaryKey;autoIncrement:true" json:"menu_id"`
 	MenuName string `gorm:"column:menu_name" json:"menu_name"`
 }
 

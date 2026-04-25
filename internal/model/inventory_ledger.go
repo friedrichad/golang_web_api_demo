@@ -12,17 +12,17 @@ const TableNameInventoryLedger = "inventory_ledger"
 
 // InventoryLedger mapped from table <inventory_ledger>
 type InventoryLedger struct {
-	LedgerID        int32     `gorm:"column:ledger_id;primaryKey;autoIncrement:true" json:"ledger_id"`
-	ComponentID     int32     `gorm:"column:component_id" json:"component_id"`
-	WarehouseID     int32     `gorm:"column:warehouse_id" json:"warehouse_id"`
-	BinID           int32     `gorm:"column:bin_id" json:"bin_id"`
-	ReferenceType   int32     `gorm:"column:reference_type" json:"reference_type"`
-	ReferenceTypeID int32     `gorm:"column:reference_type_id" json:"reference_type_id"`
+	LedgerID        int       `gorm:"column:ledger_id;primaryKey;autoIncrement:true" json:"ledger_id"`
+	ComponentID     int       `gorm:"column:component_id" json:"component_id"`
+	WarehouseID     int       `gorm:"column:warehouse_id" json:"warehouse_id"`
+	BinID           int       `gorm:"column:bin_id" json:"bin_id"`
+	ReferenceType   int       `gorm:"column:reference_type" json:"reference_type"`
+	ReferenceTypeID int       `gorm:"column:reference_type_id" json:"reference_type_id"`
 	Description     string    `gorm:"column:description" json:"description"`
 	QuantityChange  float64   `gorm:"column:quantity_change" json:"quantity_change"`
 	QuantityAfter   float64   `gorm:"column:quantity_after" json:"quantity_after"`
 	Note            string    `gorm:"column:note" json:"note"`
-	CreatedBy       int32     `gorm:"column:created_by" json:"created_by"`
+	CreatedBy       int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt       time.Time `gorm:"column:created_at" json:"created_at"`
 }
 

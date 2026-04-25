@@ -12,9 +12,9 @@ const TableNameComponentCategory = "component_category"
 
 // ComponentCategory mapped from table <component_category>
 type ComponentCategory struct {
-	CategoryID   int32     `gorm:"column:category_id;primaryKey;autoIncrement:true" json:"category_id"`
+	CategoryID   int       `gorm:"column:category_id;primaryKey;autoIncrement:true" json:"category_id"`
 	CategoryName string    `gorm:"column:category_name" json:"category_name"`
-	CreatedBy    int32     `gorm:"column:created_by" json:"created_by"`
+	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 }
 

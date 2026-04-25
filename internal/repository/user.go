@@ -72,7 +72,6 @@ func (u *UserRepository) GetAllByCondition(query model.UserRequest) ([]model.Use
 	if err != nil {
 		return nil, 0, err
 	}
-
 	return users, int(total), nil
 }
 
@@ -93,12 +92,12 @@ func (u *UserRepository) GetByUuid(id int) (*model.User, error) {
 }
 
 func (u *UserRepository) Save(user *model.User) error {
-	return u.Instance.Create(user).Error
+	return u.DB.Create(user).Error
 }
 
 func (u *UserRepository) Update(user *model.UserUpdate) error {
 	var existingUser *model.User
-	err := u.Instance.Where("user_uuid = ?", user.UserUUID).First(&existingUser).Error
+	err := u.DB.Where("user_uuid = ?", user.UserUUID).First(&existingUser).Error
 	if err != nil {
 		return err
 	}

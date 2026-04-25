@@ -12,14 +12,15 @@ const TableNameBin = "bin"
 
 // Bin mapped from table <bin>
 type Bin struct {
-	BinID               int32     `gorm:"column:bin_id;primaryKey;autoIncrement:true" json:"bin_id"`
+	BinID               int       `gorm:"column:bin_id;primaryKey;autoIncrement:true" json:"bin_id"`
 	LocationInWarehouse string    `gorm:"column:location_in_warehouse" json:"location_in_warehouse"`
-	StatusInt           int32     `gorm:"column:status_int" json:"status_int"`
-	WarehouseID         int32     `gorm:"column:warehouse_id" json:"warehouse_id"`
-	CreatedBy           int32     `gorm:"column:created_by" json:"created_by"`
+	StatusInt           int       `gorm:"column:status_int" json:"status_int"`
+	WarehouseID         int       `gorm:"column:warehouse_id" json:"warehouse_id"`
+	CreatedBy           int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt           time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedBy           int32     `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedBy           int       `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt           time.Time `gorm:"column:updated_at" json:"updated_at"`
+	WarehouseName       string    `gorm:"-" json:"warehouse_name"`
 }
 
 // TableName Bin's table name
