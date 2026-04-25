@@ -12,7 +12,7 @@ type IUserRepository interface {
 	GetAuthorities(userId int) ([]string, error)
 	GetAllByCondition(query model.UserRequest) ([]model.User, int, error)
 	Delete(ids []int) error
-	GetById(id int) (*model.User, error)
+	GetByUuid(id int) (*model.User, error)
 	Save(user *model.User) error
 	Update(user *model.UserUpdate) error
 }
@@ -34,7 +34,7 @@ func NewUserRepository() IUserRepository {
 
 func (u *UserRepository) GetByUsername(username string) (*model.User, error) {
 	var user *model.User
-	err := u.Instance.Where("username = ?", username).First(&user).Error
+	err := u.DB.Where("username = ?", username).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
@@ -44,7 +44,7 @@ func (u *UserRepository) GetByUsername(username string) (*model.User, error) {
 func (u *UserRepository) GetAllByCondition(query model.UserRequest) ([]model.User, int, error) {
 	var users []model.User
 	var total int64
-	q := u.Instance
+	q := u.DB.Model(&model.User{})
 
 	// Apply filters
 	if query.Username != "" {
@@ -86,9 +86,9 @@ func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
 	return authorities, err
 }
 
-func (u *UserRepository) GetById(id int) (*model.User, error) {
+func (u *UserRepository) GetByUuid(id int) (*model.User, error) {
 	var user *model.User
-	err := u.Instance.Where("user_id = ?", id).First(&user).Error
+	err := u.Instance.Where("user_uuid = ?", id).First(&user).Error
 	return user, err
 }
 
@@ -97,10 +97,22 @@ func (u *UserRepository) Save(user *model.User) error {
 }
 
 func (u *UserRepository) Update(user *model.UserUpdate) error {
-	return u.Instance.Model(&model.User{}).Updates(user).Error
+	var existingUser *model.User
+	err := u.Instance.Where("user_uuid = ?", user.UserUUID).First(&existingUser).Error
+	if err != nil {
+		return err
+	}
+	existingUser.Username = user.Username
+	existingUser.DisplayName = user.DisplayName
+	existingUser.Email = user.Email
+	if user.NewPassword != "" {
+		existingUser.PasswordHash = user.NewPassword // In production, hash the password
+	}
+	err = u.BaseRepository.Update(existingUser)
+	return err
 }
 
 func (u *UserRepository) Delete(ids []int) error {
-	err := u.Delete(ids)
+	err := u.BaseRepository.Delete(ids)
 	return err
 }

@@ -21,21 +21,6 @@ func NewUserController() *UserController {
 	}
 }
 
-// GetAllUsers godoc
-// @Summary Get all users with pagination and filters
-// @Description Get all users with pagination and filters
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param username query string false "Filter by username"
-// @Param display_name query string false "Filter by display name"
-// @Param email query string false "Filter by email"
-// @Param status_int query int false "Filter by status"
-// @Param page query int false "Page number (default 1)"
-// @Param size query int false "Page size (default 10)"
-// @Success 200 {object} model.ResponseWrapper{data=model.UserPage}
-// @Failure 400 {object} model.ResponseWrapper
-// @Router /users [get]
 func (controller *UserController) GetAllUsers(c *gin.Context) {
 	var query model.UserRequest
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -64,7 +49,7 @@ func (controller *UserController) GetUserById(c *gin.Context) {
 		return
 	}
 
-	user, errService := controller.userService.GetUserById(c, id)
+	user, errService := controller.userService.GetUserByUuid(c, id)
 	if errService != nil {
 		controller.Error(c, errService, nil)
 		return

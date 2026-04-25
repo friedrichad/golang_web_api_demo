@@ -1,6 +1,7 @@
 package service
 
 import (
+
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -10,7 +11,7 @@ import (
 
 type IUserService interface {
 	GetAllUsers(c *gin.Context, query model.UserRequest) ([]model.User, int, *common.Error)
-	GetUserById(c *gin.Context, id int) (*model.User, *common.Error)
+	GetUserByUuid(c *gin.Context, id int) (*model.User, *common.Error)
 	CreateUser(c *gin.Context, user *model.User) (*model.User, *common.Error)
 	UpdateUser(c *gin.Context, user *model.UserUpdate) *common.Error
 	DeleteUser(c *gin.Context, ids []int) *common.Error
@@ -45,12 +46,15 @@ func (s *UserService) GetAllUsers(c *gin.Context, query model.UserRequest) ([]mo
 	if err != nil {
 		return nil, 0, common.SystemError
 	}
+	if total == 0{
+		return nil, 0, common.NotFound
+	}
 
 	return users, total, nil
 }
 
-func (s *UserService) GetUserById(c *gin.Context, id int) (*model.User, *common.Error) {
-	user, err := s.userRepo.GetById(id)
+func (s *UserService) GetUserByUuid(c *gin.Context, id int) (*model.User, *common.Error) {
+	user, err := s.userRepo.GetByUuid(id)
 	if err != nil {
 		return nil, common.SystemError
 	}

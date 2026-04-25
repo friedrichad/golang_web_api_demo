@@ -22,6 +22,9 @@ type User struct {
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy    int32     `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
+	UserRoles   []UserRole `json:"userRoles" gorm:"-"`
+	Menus       []Menu     `json:"menus" gorm:"-"`
+	Permissions []string   `json:"permissions" gorm:"-"`
 }
 
 // TableName User's table name
@@ -43,8 +46,8 @@ type UserRequest struct {
 	DisplayName string `form:"display_name"`
 	Email       string `form:"email"`
 	StatusInt   int32  `form:"status_int"`
-	Page        int    `form:"page"`
-	Size        int    `form:"size"`
+	DateRequest
+	PageSize
 }
 
 type UserUpdate struct {
