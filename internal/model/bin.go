@@ -21,6 +21,7 @@ type Bin struct {
 	UpdatedBy           int       `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt           time.Time `gorm:"column:updated_at" json:"updated_at"`
 	WarehouseName       string    `gorm:"-" json:"warehouse_name"`
+	Components         []Component `gorm:"-" json:"components"`
 }
 
 // TableName Bin's table name

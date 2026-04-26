@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"strconv"
-
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
@@ -43,11 +41,7 @@ func (controller *UserController) GetAllUsers(c *gin.Context) {
 }
 
 func (controller *UserController) GetUserById(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		controller.Error(c, common.RequestInvalid, nil)
-		return
-	}
+	id := c.Param("id")
 
 	user, errService := controller.userService.GetUserByUuid(c, id)
 	if errService != nil {
@@ -107,7 +101,7 @@ func (controller *UserController) UpdateUser(c *gin.Context) {
 }
 
 func (controller *UserController) DeleteUser(c *gin.Context) {
-	var ids []int
+	var ids []string
 	if err := c.ShouldBindJSON(&ids); err != nil {
 		controller.Error(c, common.RequestInvalid, nil)
 		return
@@ -123,12 +117,7 @@ func (controller *UserController) DeleteUser(c *gin.Context) {
 }
 
 func (controller *UserController) GetUserAuthorities(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		controller.Error(c, common.RequestInvalid, nil)
-		return
-	}
-
+	id := c.Param("id")
 	authorities, errService := controller.userService.GetUserAuthorities(c, id)
 	if errService != nil {
 		controller.Error(c, errService, nil)

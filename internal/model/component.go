@@ -17,6 +17,7 @@ type Component struct {
 	MetadataJSON  string    `gorm:"column:metadata_json" json:"metadata_json"`
 	Unit          string    `gorm:"column:unit" json:"unit"`
 	UnitPrice     float64   `gorm:"column:unit_price" json:"unit_price"`
+	ComponentCategory   []ComponentCategory `gorm:"-" json:"component_category"`
 	CreatedBy     int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt     time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy     int       `gorm:"column:updated_by" json:"updated_by"`

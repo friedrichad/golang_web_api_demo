@@ -11,11 +11,11 @@ import (
 
 type IUserService interface {
 	GetAllUsers(c *gin.Context, query model.UserRequest) ([]model.User, int, *common.Error)
-	GetUserByUuid(c *gin.Context, id int) (*model.User, *common.Error)
+	GetUserByUuid(c *gin.Context, id string) (*model.User, *common.Error)
 	CreateUser(c *gin.Context, user *model.User) (*model.User, *common.Error)
 	UpdateUser(c *gin.Context, user *model.UserUpdate) *common.Error
-	DeleteUser(c *gin.Context, ids []int) *common.Error
-	GetUserAuthorities(c *gin.Context, userId int) ([]string, *common.Error)
+	DeleteUser(c *gin.Context, ids []string) *common.Error
+	GetUserAuthorities(c *gin.Context, userId string) ([]string, *common.Error)
 }
 
 type UserService struct {
@@ -53,10 +53,10 @@ func (s *UserService) GetAllUsers(c *gin.Context, query model.UserRequest) ([]mo
 	return users, total, nil
 }
 
-func (s *UserService) GetUserByUuid(c *gin.Context, id int) (*model.User, *common.Error) {
+func (s *UserService) GetUserByUuid(c *gin.Context, id string) (*model.User, *common.Error) {
 	user, err := s.userRepo.GetByUuid(id)
 	if err != nil {
-		return nil, common.SystemError
+		return nil, common.NotFound
 	}
 
 	if user == nil {
@@ -93,7 +93,7 @@ func (s *UserService) UpdateUser(c *gin.Context, user *model.UserUpdate) *common
 	return nil
 }
 
-func (s *UserService) DeleteUser(c *gin.Context, ids []int) *common.Error {
+func (s *UserService) DeleteUser(c *gin.Context, ids []string) *common.Error {
 	err := s.userRepo.Delete(ids)
 	if err != nil {
 		return common.SystemError
@@ -102,7 +102,7 @@ func (s *UserService) DeleteUser(c *gin.Context, ids []int) *common.Error {
 	return nil
 }
 
-func (s *UserService) GetUserAuthorities(c *gin.Context, userId int) ([]string, *common.Error) {
+func (s *UserService) GetUserAuthorities(c *gin.Context, userId string) ([]string, *common.Error) {
 	authorities, err := s.userRepo.GetAuthorities(userId)
 	if err != nil {
 		return nil, common.SystemError
