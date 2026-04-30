@@ -4,15 +4,23 @@
 
 package model
 
+import (
+	"time"
+)
+
 const TableNameRequestDetail = "request_detail"
 
 // RequestDetail mapped from table <request_detail>
 type RequestDetail struct {
-	RequestDetailID int     `gorm:"column:request_detail_id;primaryKey;autoIncrement:true" json:"request_detail_id"`
-	RequestID       int     `gorm:"column:request_id" json:"request_id"`
-	ComponentID     int     `gorm:"column:component_id" json:"component_id"`
-	Quantity        int     `gorm:"column:quantity" json:"quantity"`
-	UnitPrice       float64 `gorm:"column:unit_price" json:"unit_price"`
+	RequestDetailID int32     `gorm:"column:request_detail_id;primaryKey;autoIncrement:true" json:"request_detail_id"`
+	RequestID       int32     `gorm:"column:request_id" json:"request_id"`
+	ComponentID     int32     `gorm:"column:component_id" json:"component_id"`
+	Quantity        int32     `gorm:"column:quantity" json:"quantity"`
+	UnitPrice       float64   `gorm:"column:unit_price" json:"unit_price"`
+	CreatedBy       int32     `gorm:"column:created_by" json:"created_by"`
+	CreatedAt       time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedBy       int32     `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedAt       time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
 // TableName RequestDetail's table name

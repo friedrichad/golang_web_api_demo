@@ -12,15 +12,14 @@ const TableNameComponent = "component"
 
 // Component mapped from table <component>
 type Component struct {
-	ComponentID   int       `gorm:"column:component_id;primaryKey;autoIncrement:true" json:"component_id"`
+	ComponentID   int32     `gorm:"column:component_id;primaryKey;autoIncrement:true" json:"component_id"`
 	ComponentName string    `gorm:"column:component_name" json:"component_name"`
 	MetadataJSON  string    `gorm:"column:metadata_json" json:"metadata_json"`
 	Unit          string    `gorm:"column:unit" json:"unit"`
 	UnitPrice     float64   `gorm:"column:unit_price" json:"unit_price"`
-	ComponentCategory   []ComponentCategory `gorm:"-" json:"component_category"`
-	CreatedBy     int       `gorm:"column:created_by" json:"created_by"`
+	CreatedBy     int32     `gorm:"column:created_by" json:"created_by"`
 	CreatedAt     time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedBy     int       `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedBy     int32     `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt     time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 

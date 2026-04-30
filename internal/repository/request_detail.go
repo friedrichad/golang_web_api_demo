@@ -10,22 +10,22 @@ import (
 type IRequestDetailRepository interface {
 	IBaseRepository[model.RequestDetail, int]
 	GetByRequestId(requestId int) (*model.RequestDetail, error)
-	GetAllByCondition(query dtos.RequestDetailRequest) ([]model.RequestDetail, int, error)
+	GetAllByCondition(query dtos.RequestDetailFilter) ([]model.RequestDetail, int, error)
 	Delete(ids []int) error
 	Save(request *model.RequestDetail) error
 	Update(request *model.RequestDetail) error
 }
-type RequestDetailRepository struct{
+type RequestDetailRepository struct {
 	BaseRepository[model.RequestDetail, int]
 	DB *gorm.DB
 }
 
 var requestDetailRepository IRequestDetailRepository
 
-func NewRequestDetailRepository() IRequestDetailRepository{
-	if requestDetailRepository == nil{
+func NewRequestDetailRepository() IRequestDetailRepository {
+	if requestDetailRepository == nil {
 		requestDetailRepository = &RequestDetailRepository{DB: db.Instance}
-		requestDetailRepository.SetInstance(db.Instance)	
+		requestDetailRepository.SetInstance(db.Instance)
 	}
 	return requestDetailRepository
 }
@@ -37,13 +37,13 @@ func (r *RequestDetailRepository) GetByRequestId(requestId int) (*model.RequestD
 	}
 	return requestDetail, nil
 }
-func (r *RequestDetailRepository) GetAllByCondition(query dtos.RequestDetailRequest) ([]model.RequestDetail, int, error) {
+func (r *RequestDetailRepository) GetAllByCondition(query dtos.RequestDetailFilter) ([]model.RequestDetail, int, error) {
 	return r.GetPage("Select rd.* from request_detail as rd "+
-	"where (? is Null or rd.request_id = ?))"+
-	"request_id = ?)) "+
-	"and (? is Null or rd.component_id = ?)) "+
-	"and (? is null or create_time >= ?) "+
-	"and (? is null or create_time < ?) ", query.Page, query.Size, query.RequestID, query.RequestID, query.ComponentID, query.ComponentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		"where (? is Null or rd.request_id = ?))"+
+		"request_id = ?)) "+
+		"and (? is Null or rd.component_id = ?)) "+
+		"and (? is null or create_at >= ?) "+
+		"and (? is null or create_at < ?) ", query.Page, query.Size, query.RequestID, query.RequestID, query.ComponentID, query.ComponentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
 func (r *RequestDetailRepository) Delete(ids []int) error {

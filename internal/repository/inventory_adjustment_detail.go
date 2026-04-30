@@ -1,30 +1,31 @@
 package repository
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/model"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
+	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
 
 type IInventoryAdjustmentDetail interface {
 	IBaseRepository[model.InventoryAdjustmentDetail, int]
 	GetByAdjustmentDetailId(adjustmentDetailId int) (*model.InventoryAdjustmentDetail, error)
-	GetAllByCondition(query dtos.InventoryAdjustmentDetailRequest) ([]model.InventoryAdjustmentDetail, int, error)
+	GetAllByCondition(query dtos.InventoryAdjustmentDetailFilter) ([]model.InventoryAdjustmentDetail, int, error)
 	Delete(ids []int) error
 	Save(request *model.InventoryAdjustmentDetail) error
 	Update(request *model.InventoryAdjustmentDetail) error
 }
-type InventoryAdjustmentDetailRepository struct{
+type InventoryAdjustmentDetailRepository struct {
 	BaseRepository[model.InventoryAdjustmentDetail, int]
 	DB *gorm.DB
 }
+
 var inventoryAdjustmentDetailRepository IInventoryAdjustmentDetail
 
-func NewInventoryAdjustmentDetailRepository() IInventoryAdjustmentDetail{
-	if inventoryAdjustmentDetailRepository == nil{
+func NewInventoryAdjustmentDetailRepository() IInventoryAdjustmentDetail {
+	if inventoryAdjustmentDetailRepository == nil {
 		inventoryAdjustmentDetailRepository = &InventoryAdjustmentDetailRepository{DB: db.Instance}
-		inventoryAdjustmentDetailRepository.SetInstance(db.Instance)	
+		inventoryAdjustmentDetailRepository.SetInstance(db.Instance)
 	}
 	return inventoryAdjustmentDetailRepository
 }
@@ -37,12 +38,12 @@ func (r *InventoryAdjustmentDetailRepository) GetByAdjustmentDetailId(adjustment
 	return inventoryAdjustmentDetail, nil
 }
 
-func (r *InventoryAdjustmentDetailRepository) GetAllByCondition(query dtos.InventoryAdjustmentDetailRequest) ([]model.InventoryAdjustmentDetail, int, error){
+func (r *InventoryAdjustmentDetailRepository) GetAllByCondition(query dtos.InventoryAdjustmentDetailFilter) ([]model.InventoryAdjustmentDetail, int, error) {
 	return r.GetPage("Select iad.* from inventory_adjustment_detail as iad "+
-	"where (? is Null or iad.adjustment_detail_id = ?))"+
-	"and (? is Null or iad.adjustment_id = ?)) "+
-	"and (? is null or create_time >= ?) "+
-	"and (? is null or create_time < ?) ", query.Page, query.Size, query.AdjustmentDetailID, query.AdjustmentDetailID, query.AdjustmentID, query.AdjustmentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		"where (? is Null or iad.adjustment_detail_id = ?))"+
+		"and (? is Null or iad.adjustment_id = ?)) "+
+		"and (? is null or create_at >= ?) "+
+		"and (? is null or create_at < ?) ", query.Page, query.Size, query.AdjustmentDetailID, query.AdjustmentDetailID, query.AdjustmentID, query.AdjustmentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
 func (r *InventoryAdjustmentDetailRepository) Delete(ids []int) error {
@@ -53,6 +54,6 @@ func (r *InventoryAdjustmentDetailRepository) Save(request *model.InventoryAdjus
 	return r.BaseRepository.Create(request)
 }
 
-func (r *InventoryAdjustmentDetailRepository) Update(request *model.InventoryAdjustmentDetail) error{
+func (r *InventoryAdjustmentDetailRepository) Update(request *model.InventoryAdjustmentDetail) error {
 	return r.BaseRepository.Update(request)
 }

@@ -12,15 +12,15 @@ const TableNameCustomer = "customer"
 
 // Customer mapped from table <customer>
 type Customer struct {
-	CustomerID   int       `gorm:"column:customer_id;primaryKey;autoIncrement:true" json:"customer_id"`
+	CustomerID   int32     `gorm:"column:customer_id;primaryKey;autoIncrement:true" json:"customer_id"`
 	CustomerName string    `gorm:"column:customer_name" json:"customer_name"`
 	Phone        string    `gorm:"column:phone" json:"phone"`
 	Email        string    `gorm:"column:email" json:"email"`
 	Address      string    `gorm:"column:address" json:"address"`
-	StatusInt    int       `gorm:"column:status_int" json:"status_int"`
-	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
+	StatusInt    int32     `gorm:"column:status_int" json:"status_int"`
+	CreatedBy    int32     `gorm:"column:created_by" json:"created_by"`
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedBy    int       `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedBy    int32     `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 

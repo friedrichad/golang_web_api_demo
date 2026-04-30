@@ -12,19 +12,21 @@ const TableNameRequest = "request"
 
 // Request mapped from table <request>
 type Request struct {
-	RequestID     int       `gorm:"column:request_id;primaryKey;autoIncrement:true" json:"request_id"`
+	RequestID     int32     `gorm:"column:request_id;primaryKey;autoIncrement:true" json:"request_id"`
 	RequestType   string    `gorm:"column:request_type" json:"request_type"`
 	Description   string    `gorm:"column:description" json:"description"`
-	WarehouseID   int       `gorm:"column:warehouse_id" json:"warehouse_id"`
-	BinTo         int       `gorm:"column:bin_to" json:"bin_to"`
-	BinFrom       int       `gorm:"column:bin_from" json:"bin_from"`
-	PerformedByID int       `gorm:"column:performed_by_id" json:"performed_by_id"`
-	ApproverID    int       `gorm:"column:approver_id" json:"approver_id"`
-	PartnerID     int       `gorm:"column:partner_id" json:"partner_id"`
+	WarehouseID   int32     `gorm:"column:warehouse_id" json:"warehouse_id"`
+	BinTo         int32     `gorm:"column:bin_to" json:"bin_to"`
+	BinFrom       int32     `gorm:"column:bin_from" json:"bin_from"`
+	PerformedByID int32     `gorm:"column:performed_by_id" json:"performed_by_id"`
+	ApproverID    int32     `gorm:"column:approver_id" json:"approver_id"`
+	PartnerID     int32     `gorm:"column:partner_id" json:"partner_id"`
 	RequestDate   time.Time `gorm:"column:request_date" json:"request_date"`
-	StatusInt     int       `gorm:"column:status_int" json:"status_int"`
+	StatusInt     int32     `gorm:"column:status_int" json:"status_int"`
 	Note          string    `gorm:"column:note" json:"note"`
+	CreatedBy     int32     `gorm:"column:created_by" json:"created_by"`
 	CreatedAt     time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedBy     int32     `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt     time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 

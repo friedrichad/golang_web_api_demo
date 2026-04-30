@@ -8,8 +8,8 @@ const TableNameComponentCategoryMap = "component_category_map"
 
 // ComponentCategoryMap mapped from table <component_category_map>
 type ComponentCategoryMap struct {
-	ComponentID int `gorm:"column:component_id;primaryKey" json:"component_id"`
-	CategoryID  int `gorm:"column:category_id;primaryKey" json:"category_id"`
+	ComponentID int32 `gorm:"column:component_id;primaryKey" json:"component_id"`
+	CategoryID  int32 `gorm:"column:category_id;primaryKey" json:"category_id"`
 }
 
 // TableName ComponentCategoryMap's table name

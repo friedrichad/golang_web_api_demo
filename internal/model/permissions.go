@@ -8,7 +8,7 @@ const TableNamePermission = "permissions"
 
 // Permission mapped from table <permissions>
 type Permission struct {
-	PermissionID   int    `gorm:"column:permission_id;primaryKey;autoIncrement:true" json:"permission_id"`
+	PermissionID   int32  `gorm:"column:permission_id;primaryKey;autoIncrement:true" json:"permission_id"`
 	PermissionName string `gorm:"column:permission_name" json:"permission_name"`
 }
 

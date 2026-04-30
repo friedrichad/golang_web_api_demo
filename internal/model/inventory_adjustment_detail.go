@@ -4,18 +4,26 @@
 
 package model
 
+import (
+	"time"
+)
+
 const TableNameInventoryAdjustmentDetail = "inventory_adjustment_detail"
 
 // InventoryAdjustmentDetail mapped from table <inventory_adjustment_detail>
 type InventoryAdjustmentDetail struct {
-	AdjustmentDetailID int     `gorm:"column:adjustment_detail_id;primaryKey;autoIncrement:true" json:"adjustment_detail_id"`
-	AdjustmentID       int     `gorm:"column:adjustment_id" json:"adjustment_id"`
-	ComponentID        int     `gorm:"column:component_id" json:"component_id"`
-	BinID              int     `gorm:"column:bin_id" json:"bin_id"`
-	WarehouseID        int     `gorm:"column:warehouse_id" json:"warehouse_id"`
-	QuantityBefore     float64 `gorm:"column:quantity_before" json:"quantity_before"`
-	QuantityAfter      float64 `gorm:"column:quantity_after" json:"quantity_after"`
-	AdjustmentQuantity float64 `gorm:"column:adjustment_quantity" json:"adjustment_quantity"`
+	AdjustmentDetailID int32     `gorm:"column:adjustment_detail_id;primaryKey;autoIncrement:true" json:"adjustment_detail_id"`
+	AdjustmentID       int32     `gorm:"column:adjustment_id" json:"adjustment_id"`
+	ComponentID        int32     `gorm:"column:component_id" json:"component_id"`
+	BinID              int32     `gorm:"column:bin_id" json:"bin_id"`
+	WarehouseID        int32     `gorm:"column:warehouse_id" json:"warehouse_id"`
+	QuantityBefore     float64   `gorm:"column:quantity_before" json:"quantity_before"`
+	QuantityAfter      float64   `gorm:"column:quantity_after" json:"quantity_after"`
+	AdjustmentQuantity float64   `gorm:"column:adjustment_quantity" json:"adjustment_quantity"`
+	CreatedBy          int32     `gorm:"column:created_by" json:"created_by"`
+	CreatedAt          time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedBy          int32     `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedAt          time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
 // TableName InventoryAdjustmentDetail's table name

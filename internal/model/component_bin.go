@@ -12,13 +12,13 @@ const TableNameComponentBin = "component_bin"
 
 // ComponentBin mapped from table <component_bin>
 type ComponentBin struct {
-	ComponentBinID int       `gorm:"column:component_bin_id;primaryKey;autoIncrement:true" json:"component_bin_id"`
+	ComponentBinID int32     `gorm:"column:component_bin_id;primaryKey;autoIncrement:true" json:"component_bin_id"`
 	Quantity       float64   `gorm:"column:quantity" json:"quantity"`
-	ComponentID    int       `gorm:"column:component_id" json:"component_id"`
-	BinID          int       `gorm:"column:bin_id" json:"bin_id"`
-	CreatedBy      int       `gorm:"column:created_by" json:"created_by"`
+	ComponentID    int32     `gorm:"column:component_id" json:"component_id"`
+	BinID          int32     `gorm:"column:bin_id" json:"bin_id"`
+	CreatedBy      int32     `gorm:"column:created_by" json:"created_by"`
 	CreatedAt      time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedBy      int       `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedBy      int32     `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt      time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 

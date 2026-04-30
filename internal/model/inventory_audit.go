@@ -12,13 +12,13 @@ const TableNameInventoryAudit = "inventory_audit"
 
 // InventoryAudit mapped from table <inventory_audit>
 type InventoryAudit struct {
-	AuditID     int       `gorm:"column:audit_id;primaryKey;autoIncrement:true" json:"audit_id"`
-	WarehouseID int       `gorm:"column:warehouse_id" json:"warehouse_id"`
-	StatusInt   int       `gorm:"column:status_int" json:"status_int"`
+	AuditID     int32     `gorm:"column:audit_id;primaryKey;autoIncrement:true" json:"audit_id"`
+	WarehouseID int32     `gorm:"column:warehouse_id" json:"warehouse_id"`
+	StatusInt   int32     `gorm:"column:status_int" json:"status_int"`
 	Note        string    `gorm:"column:note" json:"note"`
-	CreatedBy   int       `gorm:"column:created_by" json:"created_by"`
+	CreatedBy   int32     `gorm:"column:created_by" json:"created_by"`
 	CreatedAt   time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedBy   int       `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedBy   int32     `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt   time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 

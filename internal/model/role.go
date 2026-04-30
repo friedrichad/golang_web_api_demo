@@ -12,12 +12,12 @@ const TableNameRole = "role"
 
 // Role mapped from table <role>
 type Role struct {
-	RoleID      int       `gorm:"column:role_id;primaryKey;autoIncrement:true" json:"role_id"`
+	RoleID      int32     `gorm:"column:role_id;primaryKey;autoIncrement:true" json:"role_id"`
 	RoleName    string    `gorm:"column:role_name" json:"role_name"`
 	Description string    `gorm:"column:description" json:"description"`
-	CreatedBy   int       `gorm:"column:created_by" json:"created_by"`
+	CreatedBy   int32     `gorm:"column:created_by" json:"created_by"`
 	CreatedAt   time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedBy   int       `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedBy   int32     `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt   time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 

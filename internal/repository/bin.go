@@ -9,7 +9,7 @@ import (
 
 type IBinRespository interface {
 	IBaseRepository[model.Bin, int]
-	GetAllByCondition(query dtos.BinRequest) ([]model.Bin, int, error)
+	GetAllByCondition(query dtos.BinFilter) ([]model.Bin, int, error)
 	Delete(ids []int) error
 	GetById(id int) (*model.Bin, error)
 	Save(bin *model.Bin) error
@@ -31,7 +31,7 @@ func NewBinRepository() IBinRespository{
 	return binRepository
 }
 
-func (b *BinRespository) GetAllByCondition(query dtos.BinRequest) ([]model.Bin, int, error) {
+func (b *BinRespository) GetAllByCondition(query dtos.BinFilter) ([]model.Bin, int, error) {
 	return b.GetPage("SELECT b.*, w.name as warehouse_name FROM bin b LEFT JOIN warehouse w ON b.warehouse_id = w.id WHERE b.location_in_warehouse LIKE ? AND b.status_int = ? AND b.warehouse_id = ?", query.Page, query.Size,"%"+query.LocationInWarehouse+"%", query.StatusInt, query.WarehouseID)
 }
 func (b* BinRespository) Delete(ids []int) error {

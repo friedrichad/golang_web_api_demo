@@ -2,14 +2,13 @@ package service
 
 import (
 	"time"
-
+	"strconv"
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type IUserService interface {
@@ -37,7 +36,7 @@ func NewUserService() IUserService {
 }
 
 func (s *UserService) GetAllUsers(c *gin.Context) ([]dtos.UserResponse, int, *common.Error) {
-	var query dtos.UserRequest
+	var query dtos.UserFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -68,12 +67,18 @@ func (s *UserService) GetAllUsers(c *gin.Context) ([]dtos.UserResponse, int, *co
 }
 
 func (s *UserService) GetUserByUuid(c *gin.Context) (*dtos.UserResponse, *common.Error) {
-	id := c.Param("id")
-	if id == "" {
+	idStr := c.Param("id")
+	if idStr == "" {
 		return nil, common.RequestInvalid
 	}
 
-	user, err := s.userRepo.GetByUuid(id)
+	// Convert string to int
+	userId, err := strconv.Atoi(idStr)
+	if err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	user, err := s.userRepo.GetById(userId)
 	if err != nil {
 		return nil, common.NotFound
 	}
@@ -82,12 +87,12 @@ func (s *UserService) GetUserByUuid(c *gin.Context) (*dtos.UserResponse, *common
 		return nil, &common.Error{Code: "404", Message: "Người dùng không tồn tại"}
 	}
 
-	UserResponse := modelToUserResponse(user)
-	return &UserResponse, nil
+	userResponse := modelToUserResponse(user)
+	return &userResponse, nil
 }
 
 func (s *UserService) CreateUser(c *gin.Context) (*dtos.UserResponse, *common.Error) {
-	var req dtos.UserCreateRequest
+	var req dtos.UserCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -106,13 +111,12 @@ func (s *UserService) CreateUser(c *gin.Context) (*dtos.UserResponse, *common.Er
 
 	// Create user model
 	user := &model.User{
-		UserUUID:     uuid.New().String(),
 		Username:     req.Username,
 		DisplayName:  req.DisplayName,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
 		StatusInt:    1, // Active by default
-		CreatedAt: time.Now(),
+		CreatedAt:    time.Now(),
 	}
 
 	err = s.userRepo.Save(user)
@@ -120,18 +124,24 @@ func (s *UserService) CreateUser(c *gin.Context) (*dtos.UserResponse, *common.Er
 		return nil, common.SystemError
 	}
 
-	UserResponse := modelToUserResponse(user)
-	return &UserResponse, nil
+	userResponse := modelToUserResponse(user)
+	return &userResponse, nil
 }
 
 func (s *UserService) UpdateUser(c *gin.Context) *common.Error {
-	var user dtos.UserUpdate
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var req dtos.UserUpdate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return common.RequestInvalid
+	}
+
+	// Convert UserID string to int
+	userId, err := strconv.Atoi(req.UserID)
+	if err != nil {
 		return common.RequestInvalid
 	}
 
 	// Get existing user
-	existingUser, err := s.userRepo.GetByUuid(user.UserUUID)
+	existingUser, err := s.userRepo.GetById(userId)
 	if err != nil {
 		return common.NotFound
 	}
@@ -141,26 +151,26 @@ func (s *UserService) UpdateUser(c *gin.Context) *common.Error {
 	}
 
 	// Update fields
-	if user.Username != "" {
-		existingUser.Username = user.Username
+	if req.Username != "" {
+		existingUser.Username = req.Username
 	}
-	if user.DisplayName != "" {
-		existingUser.DisplayName = user.DisplayName
+	if req.DisplayName != "" {
+		existingUser.DisplayName = req.DisplayName
 	}
-	if user.Email != "" {
-		existingUser.Email = user.Email
+	if req.Email != "" {
+		existingUser.Email = req.Email
 	}
-	if user.StatusInt != nil {
-		existingUser.StatusInt = *user.StatusInt
+	if req.StatusInt != nil {
+		existingUser.StatusInt = *req.StatusInt
 	}
-	if user.UpdatedBy != nil {
-		existingUser.UpdatedBy = *user.UpdatedBy
+	if req.UpdatedBy != nil {
+		existingUser.UpdatedBy = *req.UpdatedBy
 	}
 
 	// Update password if provided
-	if user.NewPassword != "" {
+	if req.NewPassword != "" {
 		// Hash new password
-		hashedPassword, errHash := utils.HashPassword(user.NewPassword)
+		hashedPassword, errHash := utils.HashPassword(req.NewPassword)
 		if errHash != nil {
 			return common.SystemError
 		}
@@ -176,9 +186,19 @@ func (s *UserService) UpdateUser(c *gin.Context) *common.Error {
 }
 
 func (s *UserService) DeleteUser(c *gin.Context) *common.Error {
-	var ids []string
-	if err := c.ShouldBindJSON(&ids); err != nil {
+	var idStrs []string
+	if err := c.ShouldBindJSON(&idStrs); err != nil {
 		return common.RequestInvalid
+	}
+
+	// Convert string IDs to int
+	ids := make([]int, len(idStrs))
+	for i, idStr := range idStrs {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			return common.RequestInvalid
+		}
+		ids[i] = id
 	}
 
 	err := s.userRepo.Delete(ids)
@@ -190,12 +210,18 @@ func (s *UserService) DeleteUser(c *gin.Context) *common.Error {
 }
 
 func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Error) {
-	id := c.Param("id")
-	if id == "" {
+	idStr := c.Param("id")
+	if idStr == "" {
 		return nil, common.RequestInvalid
 	}
 
-	authorities, err := s.userRepo.GetAuthorities(id)
+	// Convert string to int
+	userId, err := strconv.Atoi(idStr)
+	if err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	authorities, err := s.userRepo.GetAuthorities(userId)
 	if err != nil {
 		return nil, common.SystemError
 	}
@@ -203,14 +229,15 @@ func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Erro
 	return authorities, nil
 }
 
+
 // Helper function to convert User model to UserResponse DTO
 func modelToUserResponse(user *model.User) dtos.UserResponse {
 	return dtos.UserResponse{
-		UserUUID:    user.UserUUID,
+		UserID:      strconv.Itoa(user.UserID),
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
 		Email:       user.Email,
-		StatusInt:   user.StatusInt,
+		StatusInt:   int(user.StatusInt),
 		CreatedBy:   user.CreatedBy,
 		CreatedAt:   user.CreatedAt,
 		UpdatedBy:   user.UpdatedBy,

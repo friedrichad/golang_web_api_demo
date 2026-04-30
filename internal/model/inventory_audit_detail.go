@@ -12,16 +12,18 @@ const TableNameInventoryAuditDetail = "inventory_audit_detail"
 
 // InventoryAuditDetail mapped from table <inventory_audit_detail>
 type InventoryAuditDetail struct {
-	AuditDetailID      int       `gorm:"column:audit_detail_id;primaryKey;autoIncrement:true" json:"audit_detail_id"`
-	AuditID            int       `gorm:"column:audit_id" json:"audit_id"`
-	ComponentID        int       `gorm:"column:component_id" json:"component_id"`
-	BinID              int       `gorm:"column:bin_id" json:"bin_id"`
+	AuditDetailID      int32     `gorm:"column:audit_detail_id;primaryKey;autoIncrement:true" json:"audit_detail_id"`
+	AuditID            int32     `gorm:"column:audit_id" json:"audit_id"`
+	ComponentID        int32     `gorm:"column:component_id" json:"component_id"`
+	BinID              int32     `gorm:"column:bin_id" json:"bin_id"`
 	SystemQuantity     float64   `gorm:"column:system_quantity" json:"system_quantity"`
 	ActualQuantity     float64   `gorm:"column:actual_quantity" json:"actual_quantity"`
 	DifferenceQuantity float64   `gorm:"column:difference_quantity" json:"difference_quantity"`
 	Note               string    `gorm:"column:note" json:"note"`
-	CreatedBy          int       `gorm:"column:created_by" json:"created_by"`
+	CreatedBy          int32     `gorm:"column:created_by" json:"created_by"`
 	CreatedAt          time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedBy          int32     `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedAt          time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
 // TableName InventoryAuditDetail's table name

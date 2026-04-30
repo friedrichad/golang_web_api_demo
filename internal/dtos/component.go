@@ -6,19 +6,32 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 )
 
-type ComponentRequest struct {
-	ComponentID       int                    `json:"component_id"`
+// ComponentFilter - GET request with query parameters
+type ComponentFilter struct {
+	ComponentID   int    `form:"component_id"`
+	ComponentName string `form:"component_name"`
+	model.PageSize
+	model.DateRequest
+}
+
+// ComponentCreate - POST request body
+type ComponentCreate struct {
+	ComponentName     string                 `json:"component_name" binding:"required"`
+	MetadataJSON      string                 `json:"metadata_json"`
+	Unit              string                 `json:"unit" binding:"required"`
+	UnitPrice         float64                `json:"unit_price" binding:"required"`
+	ComponentCategory []ComponentCategoryDTO `json:"component_category"`
+}
+
+// ComponentUpdate - PUT request body
+type ComponentUpdate struct {
+	ComponentID       int                    `json:"component_id" binding:"required"`
 	ComponentName     string                 `json:"component_name"`
 	MetadataJSON      string                 `json:"metadata_json"`
 	Unit              string                 `json:"unit"`
 	UnitPrice         float64                `json:"unit_price"`
 	ComponentCategory []ComponentCategoryDTO `json:"component_category"`
-	CreatedBy         int                    `json:"created_by"`
-	CreatedAt         time.Time              `json:"created_at"`
 	UpdatedBy         int                    `json:"updated_by"`
-	UpdatedAt         time.Time              `json:"updated_at"`
-	model.PageSize
-	model.DateRequest
 }
 
 type ComponentResponse struct {

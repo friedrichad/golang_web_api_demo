@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/base64"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -71,12 +72,12 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 		AccessToken: "",
 		TokenType:   "bearer",
 	}
-	response.Id = user.UserUUID
+	response.Id = strconv.FormatInt(int64(user.UserID), 10)
 	response.Username = user.Username
 	response.Active = true
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)
-	authorities, err := a.repository.GetAuthorities(user.UserUUID)
+	authorities, err := a.repository.GetAuthorities(int(user.UserID))
 	if err != nil && err.Error() != "record not found" {
 		return nil, common.SystemError
 	}

@@ -5,13 +5,18 @@ import (
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 )
-type InventoryLedgerRequest struct {
-	LedgerID        int       `json:"ledger_id"`
-	WarehouseID     int       `json:"warehouse_id"`
-	ReferenceTypeID int       `json:"reference_type_id"`
+
+// InventoryLedgerFilter - GET request with query parameters
+type InventoryLedgerFilter struct {
+	LedgerID        int `form:"ledger_id"`
+	ComponentID     int `form:"component_id"`
+	WarehouseID     int `form:"warehouse_id"`
+	BinID           int `form:"bin_id"`
+	ReferenceTypeID int `form:"reference_type_id"`
 	model.PageSize
 	model.DateRequest
 }
+
 type InventoryLedgerResponse struct {
 	LedgerID        int       `json:"ledger_id"`
 	ComponentID     int       `json:"component_id"`

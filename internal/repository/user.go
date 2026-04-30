@@ -8,18 +8,18 @@ import (
 )
 
 type IUserRepository interface {
-	IBaseRepository[model.User, string]
+	IBaseRepository[model.User, int]
 	GetByUsername(username string) (*model.User, error)
-	GetAuthorities(userId string) ([]string, error)
-	GetAllByCondition(query dtos.UserRequest) ([]model.User, int, error)
-	Delete(ids []string) error
+	GetAuthorities(userId int) ([]string, error)
+	GetAllByCondition(query dtos.UserFilter) ([]model.User, int, error)
+	Delete(ids []int) error
 	GetByUuid(id string) (*model.User, error)
 	Save(user *model.User) error
 	Update(user *model.User) error
 }
 
 type UserRepository struct {
-	BaseRepository[model.User, string]
+	BaseRepository[model.User, int]
 	DB *gorm.DB
 }
 
@@ -42,7 +42,7 @@ func (u *UserRepository) GetByUsername(username string) (*model.User, error) {
 	return user, err
 }
 
-func (u *UserRepository) GetAllByCondition(query dtos.UserRequest) ([]model.User, int, error) {
+func (u *UserRepository) GetAllByCondition(query dtos.UserFilter) ([]model.User, int, error) {
 	var users []model.User
 	var total int64
 	q := u.DB.Model(&model.User{})
@@ -76,7 +76,7 @@ func (u *UserRepository) GetAllByCondition(query dtos.UserRequest) ([]model.User
 	return users, int(total), nil
 }
 
-func (u *UserRepository) GetAuthorities(userId string) ([]string, error) {
+func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
 	var authorities []string
 	err := u.Instance.Model(&model.Role{}).
 		Select("role.role_name").
@@ -100,7 +100,7 @@ func (u *UserRepository) Update(user *model.User) error {
 	return u.BaseRepository.Update(user)
 }
 
-func (u *UserRepository) Delete(ids []string) error {
-	err := u.DB.Where("user_uuid IN ?", ids).Delete(&model.User{}).Error
+func (u *UserRepository) Delete(ids []int) error {
+	err := u.DB.Where("user_id IN ?", ids).Delete(&model.User{}).Error
 	return err
 }
