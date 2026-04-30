@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
+	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -10,11 +11,11 @@ type IUserRepository interface {
 	IBaseRepository[model.User, string]
 	GetByUsername(username string) (*model.User, error)
 	GetAuthorities(userId string) ([]string, error)
-	GetAllByCondition(query model.UserRequest) ([]model.User, int, error)
+	GetAllByCondition(query dtos.UserRequest) ([]model.User, int, error)
 	Delete(ids []string) error
 	GetByUuid(id string) (*model.User, error)
 	Save(user *model.User) error
-	Update(user *model.UserUpdate) error
+	Update(user *model.User) error
 }
 
 type UserRepository struct {
@@ -41,7 +42,7 @@ func (u *UserRepository) GetByUsername(username string) (*model.User, error) {
 	return user, err
 }
 
-func (u *UserRepository) GetAllByCondition(query model.UserRequest) ([]model.User, int, error) {
+func (u *UserRepository) GetAllByCondition(query dtos.UserRequest) ([]model.User, int, error) {
 	var users []model.User
 	var total int64
 	q := u.DB.Model(&model.User{})
@@ -92,23 +93,11 @@ func (u *UserRepository) GetByUuid(id string) (*model.User, error) {
 }
 
 func (u *UserRepository) Save(user *model.User) error {
-	return u.DB.Create(user).Error
+	return u.BaseRepository.Create(user)
 }
 
-func (u *UserRepository) Update(user *model.UserUpdate) error {
-	var existingUser *model.User
-	err := u.DB.Where("user_uuid = ?", user.UserUUID).First(&existingUser).Error
-	if err != nil {
-		return err
-	}
-	existingUser.Username = user.Username
-	existingUser.DisplayName = user.DisplayName
-	existingUser.Email = user.Email
-	if user.NewPassword != "" {
-		existingUser.PasswordHash = user.NewPassword // In production, hash the password
-	}
-	err = u.BaseRepository.Update(existingUser)
-	return err
+func (u *UserRepository) Update(user *model.User) error {
+	return u.BaseRepository.Update(user)
 }
 
 func (u *UserRepository) Delete(ids []string) error {

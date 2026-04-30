@@ -1,15 +1,55 @@
 package repository
 
 import (
+	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
+	"gorm.io/gorm"
 )
 
 type IInventoryAdjustment interface {
-	IBaseRepository[model.Request, int]
-	GetByRequestId(requestId string) (*model.Request, error)
-	GetAuthorities(requestId int) ([]string, error)
-	GetAllByCondition(query model.Request) ([]model.Request, int, error)
+	IBaseRepository[model.InventoryAdjustment, int]
+	GetByAdjustmentId(adjustmentId int) (*model.InventoryAdjustment, error)
+	GetAllByCondition(query dtos.InventoryAdjustmentDetailRequest) ([]model.InventoryAdjustment, int, error)
 	Delete(ids []int) error
-	Save(request *model.Request) error
-	Update(request *model.Request) error
+	Save(request *model.InventoryAdjustment) error
+	Update(request *model.InventoryAdjustment) error
+}
+
+type InventoryAdjustmentRepository struct{
+	BaseRepository[model.InventoryAdjustment, int]
+	DB *gorm.DB
+}
+var inventoryAdjustmentRepository IInventoryAdjustment
+
+func NewInventoryAdjustmentRepository() IInventoryAdjustment{
+	if inventoryAdjustmentRepository == nil{
+		inventoryAdjustmentRepository = &InventoryAdjustmentRepository{DB: db.Instance}
+		inventoryAdjustmentRepository.SetInstance(db.Instance)	
+	}
+	return inventoryAdjustmentRepository
+}
+func (r *InventoryAdjustmentRepository) GetByAdjustmentId(adjustmentId int) (*model.InventoryAdjustment, error){
+	var inventoryAdjustment *model.InventoryAdjustment
+	err := r.DB.Where("adjustment_id = ?", adjustmentId).First(&inventoryAdjustment).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return inventoryAdjustment, err
+}
+
+func (r *InventoryAdjustmentRepository) GetAllByCondition(query dtos.InventoryAdjustmentDetailRequest) ([]model.InventoryAdjustment, int, error) {
+	return r.GetPage("Select ia.* from inventory_adjustment as ia "+
+	"where (? is Null or ia.adjustment_id = ?))"+
+	"and (? is null or create_time >= ?) "+
+	"and (? is null or create_time < ?) ", query.Page, query.Size, query.AdjustmentID, query.AdjustmentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+}
+func (r *InventoryAdjustmentRepository) Delete(ids []int) error {
+	return r.DB.Exec("delete from inventory_adjustment where adjustment_id in ?", ids).Error
+}
+func (r *InventoryAdjustmentRepository) Save(request *model.InventoryAdjustment) error {
+	return r.BaseRepository.Create(request)
+}
+func (r *InventoryAdjustmentRepository) Update(request *model.InventoryAdjustment) error {
+	return r.BaseRepository.Update(request)
 }

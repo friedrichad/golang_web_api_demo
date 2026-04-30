@@ -5,7 +5,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-
 )
 
 func InitRouter() *gin.Engine {
@@ -25,17 +24,15 @@ func configCors(router *gin.Engine) {
 	}))
 }
 
-
-
 func initUserRouter(router *gin.Engine) {
 	userController := controller.NewUserController()
 	userGroup := router.Group("/users")
 	{
-		userGroup.GET("", userController.GetAllUsers)
-		userGroup.GET("/:id", userController.GetUserById)
-		userGroup.POST("", userController.CreateUser)
-		userGroup.PUT("", userController.UpdateUser)
-		userGroup.DELETE("", userController.DeleteUser)
-		userGroup.GET("/:id/authorities", userController.GetUserAuthorities)
+		userGroup.GET("", userController.GetAllUsers())
+		userGroup.GET("/:id", userController.GetUserById())
+		userGroup.POST("", userController.CreateUser())
+		userGroup.PUT("", userController.UpdateUser())
+		userGroup.DELETE("", userController.DeleteUser())
+		userGroup.GET("/:id/authorities", userController.GetUserAuthorities())
 	}
 }

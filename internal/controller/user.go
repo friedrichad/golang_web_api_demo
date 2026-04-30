@@ -1,128 +1,57 @@
 package controller
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
-	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
+type IUserController interface {
+	GetAllUsers() gin.HandlerFunc
+	GetUserById() gin.HandlerFunc
+	CreateUser() gin.HandlerFunc
+	UpdateUser() gin.HandlerFunc
+	DeleteUser() gin.HandlerFunc
+	GetUserAuthorities() gin.HandlerFunc
+}
+
 type UserController struct {
-	BaseController[model.User]
+	BaseController[dtos.UserResponse]
 	userService service.IUserService
 }
 
-func NewUserController() *UserController {
-	return &UserController{
-		userService: service.NewUserService(),
-	}
+func NewUserController() IUserController {
+	userService := service.NewUserService()
+	return &UserController{userService: userService}
 }
 
-func (controller *UserController) GetAllUsers(c *gin.Context) {
-	var query model.UserRequest
-	if err := c.ShouldBindQuery(&query); err != nil {
-		controller.Error(c, common.RequestInvalid, nil)
-		return
-	}
-
-	users, total, err := controller.userService.GetAllUsers(c, query)
-	if err != nil {
-		controller.Error(c, err, nil)
-		return
-	}
-
-	response := model.Page[model.User]{
-		Content: users,
-		Total:   total,
-	}
-
-	controller.Success(c, response)
+func (controller *UserController) GetAllUsers() gin.HandlerFunc {
+	return controller.ResponsePage(controller.userService.GetAllUsers)
 }
 
-func (controller *UserController) GetUserById(c *gin.Context) {
-	id := c.Param("id")
-
-	user, errService := controller.userService.GetUserByUuid(c, id)
-	if errService != nil {
-		controller.Error(c, errService, nil)
-		return
-	}
-
-	controller.Success(c, user)
+func (controller *UserController) GetUserById() gin.HandlerFunc {
+	return controller.ResponsePointer(controller.userService.GetUserByUuid)
 }
 
-func (controller *UserController) CreateUser(c *gin.Context) {
-	var req model.UserCreateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		controller.Error(c, common.RequestInvalid, nil)
-		return
-	}
-
-	// Hash password
-	hashedPassword, err := utils.HashPassword(req.Password)
-	if err != nil {
-		controller.Error(c, common.SystemError, nil)
-		return
-	}
-
-	// Convert DTO to model
-	user := &model.User{
-		Username:     req.Username,
-		DisplayName:  req.DisplayName,
-		Email:        req.Email,
-		PasswordHash: hashedPassword,
-		StatusInt:    req.StatusInt,
-	}
-
-	newUser, errService := controller.userService.CreateUser(c, user)
-	if errService != nil {
-		controller.Error(c, errService, nil)
-		return
-	}
-
-	controller.Success(c, newUser)
+func (controller *UserController) CreateUser() gin.HandlerFunc {
+	return controller.ResponsePointer(controller.userService.CreateUser)
 }
 
-func (controller *UserController) UpdateUser(c *gin.Context) {
-	var user model.UserUpdate
-	if err := c.ShouldBindJSON(&user); err != nil {
-		controller.Error(c, common.RequestInvalid, nil)
-		return
-	}
-
-	errService := controller.userService.UpdateUser(c, &user)
-	if errService != nil {
-		controller.Error(c, errService, nil)
-		return
-	}
-
-	controller.Success(c, nil)
+func (controller *UserController) UpdateUser() gin.HandlerFunc {
+	return controller.ResponseSuccessOnly(controller.userService.UpdateUser)
 }
 
-func (controller *UserController) DeleteUser(c *gin.Context) {
-	var ids []string
-	if err := c.ShouldBindJSON(&ids); err != nil {
-		controller.Error(c, common.RequestInvalid, nil)
-		return
-	}
-
-	errService := controller.userService.DeleteUser(c, ids)
-	if errService != nil {
-		controller.Error(c, errService, nil)
-		return
-	}
-
-	controller.Success(c, nil)
+func (controller *UserController) DeleteUser() gin.HandlerFunc {
+	return controller.ResponseSuccessOnly(controller.userService.DeleteUser)
 }
 
-func (controller *UserController) GetUserAuthorities(c *gin.Context) {
-	id := c.Param("id")
-	authorities, errService := controller.userService.GetUserAuthorities(c, id)
-	if errService != nil {
-		controller.Error(c, errService, nil)
-		return
+func (controller *UserController) GetUserAuthorities() gin.HandlerFunc {
+	return func(g *gin.Context) {
+		authorities, err := controller.userService.GetUserAuthorities(g)
+		if err != nil {
+			controller.Error(g, err, nil)
+			return
+		}
+		controller.Success(g, authorities)
 	}
-
-	controller.Success(c, authorities)
 }

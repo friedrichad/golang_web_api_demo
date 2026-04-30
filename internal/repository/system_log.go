@@ -5,7 +5,7 @@ import (
 )
 
 type ISystemLog interface {
-	IBaseRepository[model.Request, int]
+	IBaseRepository[model.SystemLog, int]
 	GetByRequestId(requestId string) (*model.Request, error)
 	GetAuthorities(requestId int) ([]string, error)
 	GetAllByCondition(query model.Request) ([]model.Request, int, error)

@@ -7,3 +7,11 @@ database:
 security:
   cors:
     - http://localhost:8080
+
+oauth:
+  access-token-expired: 600
+  refresh-token-expired: 3600
+  client-id: ewm-client
+  client-secret: ewmn@#123919
+  jwt-secret: super-secretkey
+
