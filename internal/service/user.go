@@ -1,8 +1,9 @@
 package service
 
 import (
-	"time"
 	"strconv"
+	"time"
+
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -72,13 +73,13 @@ func (s *UserService) GetUserByUuid(c *gin.Context) (*dtos.UserResponse, *common
 		return nil, common.RequestInvalid
 	}
 
-	// Convert string to int
-	userId, err := strconv.Atoi(idStr)
+	// Convert string to int32
+	userId, err := strconv.ParseInt(idStr, 10, 32)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
 
-	user, err := s.userRepo.GetById(userId)
+	user, err := s.userRepo.GetById(int32(userId))
 	if err != nil {
 		return nil, common.NotFound
 	}
@@ -134,14 +135,8 @@ func (s *UserService) UpdateUser(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	// Convert UserID string to int
-	userId, err := strconv.Atoi(req.UserID)
-	if err != nil {
-		return common.RequestInvalid
-	}
-
 	// Get existing user
-	existingUser, err := s.userRepo.GetById(userId)
+	existingUser, err := s.userRepo.GetById(req.UserID)
 	if err != nil {
 		return common.NotFound
 	}
@@ -160,11 +155,11 @@ func (s *UserService) UpdateUser(c *gin.Context) *common.Error {
 	if req.Email != "" {
 		existingUser.Email = req.Email
 	}
-	if req.StatusInt != nil {
-		existingUser.StatusInt = *req.StatusInt
+	if req.StatusInt != 0 {
+		existingUser.StatusInt = req.StatusInt
 	}
-	if req.UpdatedBy != nil {
-		existingUser.UpdatedBy = *req.UpdatedBy
+	if req.UpdatedBy != 0 {
+		existingUser.UpdatedBy = req.UpdatedBy
 	}
 
 	// Update password if provided
@@ -191,14 +186,14 @@ func (s *UserService) DeleteUser(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	// Convert string IDs to int
-	ids := make([]int, len(idStrs))
+	// Convert string IDs to int32
+	ids := make([]int32, len(idStrs))
 	for i, idStr := range idStrs {
-		id, err := strconv.Atoi(idStr)
+		id, err := strconv.ParseInt(idStr, 10, 32)
 		if err != nil {
 			return common.RequestInvalid
 		}
-		ids[i] = id
+		ids[i] = int32(id)
 	}
 
 	err := s.userRepo.Delete(ids)
@@ -215,13 +210,13 @@ func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Erro
 		return nil, common.RequestInvalid
 	}
 
-	// Convert string to int
-	userId, err := strconv.Atoi(idStr)
+	// Convert string to int32
+	userId, err := strconv.ParseInt(idStr, 10, 32)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
 
-	authorities, err := s.userRepo.GetAuthorities(userId)
+	authorities, err := s.userRepo.GetAuthorities(int32(userId))
 	if err != nil {
 		return nil, common.SystemError
 	}
@@ -229,18 +224,17 @@ func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Erro
 	return authorities, nil
 }
 
-
 // Helper function to convert User model to UserResponse DTO
 func modelToUserResponse(user *model.User) dtos.UserResponse {
 	return dtos.UserResponse{
-		UserID:      strconv.Itoa(user.UserID),
+		UserID:      strconv.FormatInt(int64(user.UserID), 10),
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
 		Email:       user.Email,
 		StatusInt:   int(user.StatusInt),
-		CreatedBy:   user.CreatedBy,
+		CreatedBy:   int(user.CreatedBy),
 		CreatedAt:   user.CreatedAt,
-		UpdatedBy:   user.UpdatedBy,
+		UpdatedBy:   int(user.UpdatedBy),
 		UpdatedAt:   user.UpdatedAt,
 	}
 }

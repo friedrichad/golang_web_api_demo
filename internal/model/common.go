@@ -6,8 +6,8 @@ import (
 )
 
 type DateRequest struct {
-	DateFrom *time.Time `form:"dateFrom" time_format:"2006-01-02 15:04:05"`
-	DateTo   *time.Time `form:"dateTo" time_format:"2006-01-02 15:04:05"`
+	DateFrom *time.Time `form:"date_from" time_format:"2006-01-02 15:04:05"`
+	DateTo   *time.Time `form:"date_to" time_format:"2006-01-02 15:04:05"`
 }
 
 func (d DateRequest) GetDateFrom() *time.Time {

@@ -8,16 +8,16 @@ import (
 )
 
 type IInventoryAudit interface {
-	IBaseRepository[model.InventoryAudit, int]
-	GetByRequestId(auditId int) (*model.InventoryAudit, error)
+	IBaseRepository[model.InventoryAudit, int32]
+	GetByRequestId(auditId int32) (*model.InventoryAudit, error)
 	GetAllByCondition(query dtos.InventoryAuditFilter) ([]model.InventoryAudit, int, error)
-	Delete(ids []int) error
+	Delete(ids []int32) error
 	Save(request *model.InventoryAudit) error
 	Update(request *model.InventoryAudit) error
 }
 
 type InventoryAuditRepository struct {
-	BaseRepository[model.InventoryAudit, int]
+	BaseRepository[model.InventoryAudit, int32]
 	DB *gorm.DB
 }
 
@@ -31,7 +31,7 @@ func NewInventoryAuditRepository() IInventoryAudit {
 	return inventoryAuditRepository
 }
 
-func (r *InventoryAuditRepository) GetByRequestId(auditId int) (*model.InventoryAudit, error) {
+func (r *InventoryAuditRepository) GetByRequestId(auditId int32) (*model.InventoryAudit, error) {
 	var inventoryAudit *model.InventoryAudit
 	err := r.DB.Where("audit_id = ?", auditId).First(&inventoryAudit).Error
 	if err == gorm.ErrRecordNotFound {
@@ -45,7 +45,7 @@ func (r *InventoryAuditRepository) GetAllByCondition(query dtos.InventoryAuditFi
 		"and (? is null or create_at >= ?) "+
 		"and (? is null or create_at < ?) ", query.Page, query.Size, query.AuditID, query.AuditID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
-func (r *InventoryAuditRepository) Delete(ids []int) error {
+func (r *InventoryAuditRepository) Delete(ids []int32) error {
 	return r.DB.Exec("delete from inventory_audit where audit_id in ?", ids).Error
 }
 func (r *InventoryAuditRepository) Save(request *model.InventoryAudit) error {

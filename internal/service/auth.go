@@ -77,7 +77,7 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	response.Active = true
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)
-	authorities, err := a.repository.GetAuthorities(int(user.UserID))
+	authorities, err := a.repository.GetAuthorities(user.UserID)
 	if err != nil && err.Error() != "record not found" {
 		return nil, common.SystemError
 	}

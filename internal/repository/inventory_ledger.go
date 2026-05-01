@@ -8,16 +8,16 @@ import (
 )
 
 type IInventoryLedger interface {
-	IBaseRepository[model.InventoryLedger, int]
-	GetByLedgerId(ledgerId int) (*model.InventoryLedger, error)
+	IBaseRepository[model.InventoryLedger, int32]
+	GetByLedgerId(ledgerId int32) (*model.InventoryLedger, error)
 	GetAllByCondition(query dtos.InventoryLedgerFilter) ([]model.InventoryLedger, int, error)
-	Delete(ids []int) error
+	Delete(ids []int32) error
 	Save(request *model.InventoryLedger) error
 	Update(request *model.InventoryLedger) error
 }
 
 type InventoryLedgerRepository struct {
-	BaseRepository[model.InventoryLedger, int]
+	BaseRepository[model.InventoryLedger, int32]
 	DB *gorm.DB
 }
 
@@ -31,7 +31,7 @@ func NewInventoryLedgerRepository() IInventoryLedger {
 	return inventoryLedgerRepository
 }
 
-func (r *InventoryLedgerRepository) GetByLedgerId(ledgerId int) (*model.InventoryLedger, error) {
+func (r *InventoryLedgerRepository) GetByLedgerId(ledgerId int32) (*model.InventoryLedger, error) {
 	var inventoryLedger *model.InventoryLedger
 	err := r.DB.Where("ledger_id = ?", ledgerId).First(&inventoryLedger).Error
 	if err == gorm.ErrRecordNotFound {
@@ -47,7 +47,7 @@ func (r *InventoryLedgerRepository) GetAllByCondition(query dtos.InventoryLedger
 		"and (? is null or create_at < ?) ", query.Page, query.Size, query.LedgerID, query.LedgerID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
-func (r *InventoryLedgerRepository) Delete(ids []int) error {
+func (r *InventoryLedgerRepository) Delete(ids []int32) error {
 	return r.DB.Exec("delete from inventory_ledger where ledger_id in ?", ids).Error
 }
 

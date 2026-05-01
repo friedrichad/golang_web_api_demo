@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"gorm.io/gorm"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type BaseRepository[E any, T any] struct {
@@ -50,7 +51,7 @@ func (r *BaseRepository[E, T]) GetPage(sql string, page int, size int, values ..
 	if size == 0 {
 		size = 10
 	}
-	offset := page * size
+	offset := (page - 1) * size
 	var slice []E
 	var err error
 	if values == nil {

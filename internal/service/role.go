@@ -1,0 +1,172 @@
+package service
+
+import (
+	"strconv"
+	"time"
+
+	"github.com/friedrichad/golang_web_api_demo/internal/common"
+	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/repository"
+	"github.com/gin-gonic/gin"
+)
+
+type IRoleService interface {
+	GetAllRoles(c *gin.Context) ([]dtos.RoleResponse, int, *common.Error)
+	GetRoleById(c *gin.Context) (*dtos.RoleResponse, *common.Error)
+	CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Error)
+	UpdateRole(c *gin.Context) *common.Error
+	DeleteRole(c *gin.Context) *common.Error
+}
+
+type RoleService struct {
+	roleRepo repository.IRoleRepository
+}
+
+var roleService IRoleService
+
+func NewRoleService() IRoleService {
+	if roleService == nil {
+		roleService = &RoleService{
+			roleRepo: repository.NewRoleRepository(),
+		}
+	}
+	return roleService
+}
+
+func (s *RoleService) GetAllRoles(c *gin.Context) ([]dtos.RoleResponse, int, *common.Error) {
+	var query dtos.RoleFilter
+	if err := c.ShouldBindQuery(&query); err != nil {
+		return nil, 0, common.RequestInvalid
+	}
+
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+	if query.Size <= 0 {
+		query.Size = 10
+	}
+
+	roles, total, err := s.roleRepo.GetAllByCondition(query)
+	if err != nil {
+		return nil, 0, common.SystemError
+	}
+	if total == 0 {
+		return nil, 0, common.NotFound
+	}
+
+	roleResponses := make([]dtos.RoleResponse, len(roles))
+	for i, role := range roles {
+		roleResponses[i] = modelToRoleResponse(&role)
+	}
+
+	return roleResponses, total, nil
+}
+
+func (s *RoleService) GetRoleById(c *gin.Context) (*dtos.RoleResponse, *common.Error) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		return nil, common.RequestInvalid
+	}
+
+	roleId, err := strconv.ParseInt(idStr, 10, 32)
+	if err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	role, err := s.roleRepo.GetById(int32(roleId))
+	if err != nil {
+		return nil, common.NotFound
+	}
+
+	if role == nil {
+		return nil, &common.Error{Code: "404", Message: "Quyền không tồn tại"}
+	}
+
+	roleResponse := modelToRoleResponse(role)
+	return &roleResponse, nil
+}
+
+func (s *RoleService) CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Error) {
+	var req dtos.RoleCreate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	role := &model.Role{
+		RoleName:    req.RoleName,
+		Description: req.Description,
+		CreatedAt:   time.Now(),
+	}
+
+	err := s.roleRepo.Save(role)
+	if err != nil {
+		return nil, common.SystemError
+	}
+
+	roleResponse := modelToRoleResponse(role)
+	return &roleResponse, nil
+}
+
+func (s *RoleService) UpdateRole(c *gin.Context) *common.Error {
+	var req dtos.RoleUpdate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return common.RequestInvalid
+	}
+
+	role, err := s.roleRepo.GetById(int32(req.RoleID))
+	if err != nil {
+		return common.NotFound
+	}
+
+	if role == nil {
+		return &common.Error{Code: "404", Message: "Quyền không tồn tại"}
+	}
+
+	if req.RoleName != "" {
+		role.RoleName = req.RoleName
+	}
+	if req.Description != "" {
+		role.Description = req.Description
+	}
+	role.UpdatedBy = int32(req.UpdatedBy)
+	role.UpdatedAt = time.Now()
+
+	err = s.roleRepo.Update(role)
+	if err != nil {
+		return common.SystemError
+	}
+
+	return nil
+}
+
+func (s *RoleService) DeleteRole(c *gin.Context) *common.Error {
+	var idStrs []string
+	if err := c.ShouldBindJSON(&idStrs); err != nil {
+		return common.RequestInvalid
+	}
+
+	ids := make([]int32, len(idStrs))
+	for i, idStr := range idStrs {
+		roleId, err := strconv.ParseInt(idStr, 10, 32)
+		if err != nil {
+			return common.RequestInvalid
+		}
+		ids[i] = int32(roleId)
+	}
+
+	err := s.roleRepo.Delete(ids)
+	if err != nil {
+		return common.SystemError
+	}
+
+	return nil
+}
+
+func modelToRoleResponse(role *model.Role) dtos.RoleResponse {
+	return dtos.RoleResponse{
+		RoleID:      int(role.RoleID),
+		RoleName:    role.RoleName,
+		Description: role.Description,
+	}
+}

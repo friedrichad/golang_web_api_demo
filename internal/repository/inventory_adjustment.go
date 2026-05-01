@@ -8,16 +8,16 @@ import (
 )
 
 type IInventoryAdjustment interface {
-	IBaseRepository[model.InventoryAdjustment, int]
-	GetByAdjustmentId(adjustmentId int) (*model.InventoryAdjustment, error)
+	IBaseRepository[model.InventoryAdjustment, int32]
+	GetByAuditId(auditId int32) (*model.InventoryAdjustment, error)
 	GetAllByCondition(query dtos.InventoryAdjustmentFilter) ([]model.InventoryAdjustment, int, error)
-	Delete(ids []int) error
+	Delete(ids []int32) error
 	Save(request *model.InventoryAdjustment) error
 	Update(request *model.InventoryAdjustment) error
 }
 
 type InventoryAdjustmentRepository struct {
-	BaseRepository[model.InventoryAdjustment, int]
+	BaseRepository[model.InventoryAdjustment, int32]
 	DB *gorm.DB
 }
 
@@ -30,7 +30,16 @@ func NewInventoryAdjustmentRepository() IInventoryAdjustment {
 	}
 	return inventoryAdjustmentRepository
 }
-func (r *InventoryAdjustmentRepository) GetByAdjustmentId(adjustmentId int) (*model.InventoryAdjustment, error) {
+func (r *InventoryAdjustmentRepository) GetByAuditId(auditId int32) (*model.InventoryAdjustment, error) {
+	var inventoryAdjustment *model.InventoryAdjustment
+	err := r.DB.Where("audit_id = ?", auditId).First(&inventoryAdjustment).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return inventoryAdjustment, err
+}
+
+func (r *InventoryAdjustmentRepository) GetByAdjustmentId(adjustmentId int32) (*model.InventoryAdjustment, error) {
 	var inventoryAdjustment *model.InventoryAdjustment
 	err := r.DB.Where("adjustment_id = ?", adjustmentId).First(&inventoryAdjustment).Error
 	if err == gorm.ErrRecordNotFound {
@@ -45,7 +54,7 @@ func (r *InventoryAdjustmentRepository) GetAllByCondition(query dtos.InventoryAd
 		"and (? is null or create_at >= ?) "+
 		"and (? is null or create_at < ?) ", query.Page, query.Size, query.AdjustmentID, query.AdjustmentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
-func (r *InventoryAdjustmentRepository) Delete(ids []int) error {
+func (r *InventoryAdjustmentRepository) Delete(ids []int32) error {
 	return r.DB.Exec("delete from inventory_adjustment where adjustment_id in ?", ids).Error
 }
 func (r *InventoryAdjustmentRepository) Save(request *model.InventoryAdjustment) error {

@@ -8,18 +8,18 @@ import (
 )
 
 type IRoleRepository interface {
-	IBaseRepository[model.Role, string]
+	IBaseRepository[model.Role, int32]
 	GetByRolename(roleName string) (*model.Role, error)
 	GetAll() ([]model.Role, error)
 	GetAllByCondition(query dtos.RoleFilter) ([]model.Role, int, error)
-	Delete(ids []string) error
+	Delete(ids []int32) error
 	GetRoleByUuid(uuid string) ([]model.Role, error)
 	Save(role *model.Role) error
 	Update(role *model.Role) error
 }
 
 type RoleRepository struct {
-	BaseRepository[model.Role, string]
+	BaseRepository[model.Role, int32]
 	DB *gorm.DB
 }
 
@@ -63,8 +63,8 @@ func (r *RoleRepository) GetAllByCondition(query dtos.RoleFilter) ([]model.Role,
 		query.GetDateFrom(),
 	)
 }
-func (r *RoleRepository) Delete(ids []string) error {
-	return r.DB.Exec("delete r from r where r.role_id in ?", ids).Error
+func (r *RoleRepository) Delete(ids []int32) error {
+	return r.DB.Exec("delete from role where role_id in ?", ids).Error
 }
 func (r *RoleRepository) GetRoleByUuid(uuid string) ([]model.Role, error) {
 	var roles []model.Role

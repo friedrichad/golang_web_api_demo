@@ -21,10 +21,9 @@ type UserResponse struct {
 
 // UserFilter - GET request with query parameters
 type UserFilter struct {
-	Username    string `form:"username"`
-	DisplayName string `form:"display_name"`
-	Email       string `form:"email"`
-	StatusInt   int    `form:"status_int"`
+	Username    *string `form:"username"`
+	DisplayName *string `form:"display_name"`
+	StatusInt   *int32    `form:"status_int"`
 	model.PageSize
 	model.DateRequest
 }

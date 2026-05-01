@@ -8,18 +8,18 @@ import (
 )
 
 type IUserRepository interface {
-	IBaseRepository[model.User, int]
+	IBaseRepository[model.User, int32]
 	GetByUsername(username string) (*model.User, error)
-	GetAuthorities(userId int) ([]string, error)
+	GetAuthorities(userId int32) ([]string, error)
 	GetAllByCondition(query dtos.UserFilter) ([]model.User, int, error)
-	Delete(ids []int) error
-	GetByUuid(id string) (*model.User, error)
+	Delete(ids []int32) error
+	GetById(id int32) (*model.User, error)
 	Save(user *model.User) error
 	Update(user *model.User) error
 }
 
 type UserRepository struct {
-	BaseRepository[model.User, int]
+	BaseRepository[model.User, int32]
 	DB *gorm.DB
 }
 
@@ -43,40 +43,34 @@ func (u *UserRepository) GetByUsername(username string) (*model.User, error) {
 }
 
 func (u *UserRepository) GetAllByCondition(query dtos.UserFilter) ([]model.User, int, error) {
-	var users []model.User
-	var total int64
-	q := u.DB.Model(&model.User{})
-
-	// Apply filters
-	if query.Username != "" {
-		q = q.Where("username LIKE ?", "%"+query.Username+"%")
-	}
-	if query.DisplayName != "" {
-		q = q.Where("display_name LIKE ?", "%"+query.DisplayName+"%")
-	}
-	if query.Email != "" {
-		q = q.Where("email LIKE ?", "%"+query.Email+"%")
-	}
-	if query.StatusInt != 0 {
-		q = q.Where("status_int = ?", query.StatusInt)
+	var username interface{}
+	if query.Username != nil {
+		username = *query.Username
 	}
 
-	// Get total count
-	err := q.Model(&model.User{}).Count(&total).Error
-	if err != nil {
-		return nil, 0, err
+	var statusInt interface{}
+	if query.StatusInt != nil {
+		statusInt = *query.StatusInt
 	}
 
-	// Apply pagination
-	offset := (query.Page - 1) * query.Size
-	err = q.Offset(offset).Limit(query.Size).Find(&users).Error
-	if err != nil {
-		return nil, 0, err
-	}
-	return users, int(total), nil
+	dateFrom := query.GetDateFrom()
+	dateTo := query.GetDateTo()
+
+	return u.GetPage(
+		"Select u.* from user u"+
+			" where (? is null or u.username = ?)"+
+			" and (? is null or u.status_int = ?)"+
+			" and (? is null or u.created_at >= ?)"+
+			" and (? is null or u.created_at < ?)",
+		query.Page,
+		query.Size,
+		username, username,
+		statusInt, statusInt,
+		dateFrom, dateFrom,
+		dateTo, dateTo,
+	)
 }
-
-func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
+func (u *UserRepository) GetAuthorities(userId int32) ([]string, error) {
 	var authorities []string
 	err := u.Instance.Model(&model.Role{}).
 		Select("role.role_name").
@@ -86,9 +80,9 @@ func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
 	return authorities, err
 }
 
-func (u *UserRepository) GetByUuid(id string) (*model.User, error) {
+func (u *UserRepository) GetById(id int32) (*model.User, error) {
 	var user *model.User
-	err := u.Instance.Where("user_uuid = ?", id).First(&user).Error
+	err := u.Instance.Where("user_id = ?", id).First(&user).Error
 	return user, err
 }
 
@@ -100,7 +94,7 @@ func (u *UserRepository) Update(user *model.User) error {
 	return u.BaseRepository.Update(user)
 }
 
-func (u *UserRepository) Delete(ids []int) error {
+func (u *UserRepository) Delete(ids []int32) error {
 	err := u.DB.Where("user_id IN ?", ids).Delete(&model.User{}).Error
 	return err
 }
