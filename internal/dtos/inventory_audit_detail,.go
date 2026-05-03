@@ -8,10 +8,10 @@ import (
 
 // InventoryAuditDetailFilter - GET request with query parameters
 type InventoryAuditDetailFilter struct {
-	AuditDetailID int `form:"audit_detail_id"`
-	AuditID       int `form:"audit_id"`
-	ComponentID   int `form:"component_id"`
-	BinID         int `form:"bin_id"`
+	AuditDetailID *int `form:"audit_detail_id"`
+	AuditID       *int `form:"audit_id"`
+	ComponentID   *int `form:"component_id"`
+	BinID         *int `form:"bin_id"`
 	model.PageSize
 	model.DateRequest
 }

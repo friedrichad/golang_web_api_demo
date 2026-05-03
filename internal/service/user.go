@@ -42,14 +42,6 @@ func (s *UserService) GetAllUsers(c *gin.Context) ([]dtos.UserResponse, int, *co
 		return nil, 0, common.RequestInvalid
 	}
 
-	// Validate pagination
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Size <= 0 {
-		query.Size = 10
-	}
-
 	users, total, err := s.userRepo.GetAllByCondition(query)
 	if err != nil {
 		return nil, 0, common.SystemError

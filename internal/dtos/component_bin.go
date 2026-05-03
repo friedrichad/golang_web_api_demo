@@ -20,9 +20,9 @@ type ComponentBinUpdate struct {
 }
 
 type ComponetBinFilter struct {
-	Quantity    float64 `form:"quantity"`
-	ComponentID int32   `form:"component_id"`
-	BinID       int32   `form:"bin_id"`
+	Quantity    *float64 `form:"quantity"`
+	ComponentID *int32   `form:"component_id"`
+	BinID       *int32   `form:"bin_id"`
 	model.PageSize
 	model.DateRequest
 }

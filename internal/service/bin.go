@@ -1,8 +1,9 @@
 package service
 
 import (
-	"time"
 	"strconv"
+	"time"
+
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -37,13 +38,6 @@ func (s *BinService) GetAllBins(c *gin.Context) ([]dtos.BinResponse, int, *commo
 	var query dtos.BinFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
-	}
-
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Size <= 0 {
-		query.Size = 10
 	}
 
 	bins, total, err := s.binRepo.GetAllByCondition(query)
@@ -152,6 +146,7 @@ func modelToBinResponse(bin *model.Bin) dtos.BinResponse {
 		BinID:               int(bin.BinID),
 		LocationInWarehouse: bin.LocationInWarehouse,
 		StatusInt:           int(bin.StatusInt),
+		WarehouseID:         int (bin.WarehouseID),
 		CreatedBy:           int(bin.CreatedBy),
 		CreatedAt:           bin.CreatedAt,
 		UpdatedBy:           int(bin.UpdatedBy),

@@ -36,13 +36,6 @@ func (s *InventoryLedgerService) GetAllInventoryLedgers(c *gin.Context) ([]dtos.
 		return nil, 0, common.RequestInvalid
 	}
 
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Size <= 0 {
-		query.Size = 10
-	}
-
 	ledgers, total, err := s.ledgerRepo.GetAllByCondition(query)
 	if err != nil {
 		return nil, 0, common.SystemError

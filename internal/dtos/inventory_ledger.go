@@ -8,11 +8,11 @@ import (
 
 // InventoryLedgerFilter - GET request with query parameters
 type InventoryLedgerFilter struct {
-	LedgerID        int `form:"ledger_id"`
-	ComponentID     int `form:"component_id"`
-	WarehouseID     int `form:"warehouse_id"`
-	BinID           int `form:"bin_id"`
-	ReferenceTypeID int `form:"reference_type_id"`
+	LedgerID        *int `form:"ledger_id"`
+	ComponentID     *int `form:"component_id"`
+	WarehouseID     *int `form:"warehouse_id"`
+	BinID           *int `form:"bin_id"`
+	ReferenceTypeID *int `form:"reference_type_id"`
 	model.PageSize
 	model.DateRequest
 }

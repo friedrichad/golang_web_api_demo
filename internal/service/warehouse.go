@@ -1,8 +1,9 @@
 package service
 
 import (
-	"time"
 	"strconv"
+	"time"
+
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -39,13 +40,6 @@ func (s *WarehouseService) GetAllWarehouses(c *gin.Context) ([]dtos.WarehouseRes
 		return nil, 0, common.RequestInvalid
 	}
 
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Size <= 0 {
-		query.Size = 10
-	}
-
 	warehouses, total, err := s.warehouseRepo.GetAllByCondition(query)
 	if err != nil {
 		return nil, 0, common.SystemError
@@ -66,7 +60,7 @@ func (s *WarehouseService) GetWarehouseById(c *gin.Context) (*dtos.WarehouseResp
 		return nil, common.RequestInvalid
 	}
 
-	warehouse, err := s.warehouseRepo.GetById(id)
+	warehouse, err := s.warehouseRepo.GetByWarehouseId(id)
 	if err != nil || warehouse == nil {
 		return nil, common.NotFound
 	}

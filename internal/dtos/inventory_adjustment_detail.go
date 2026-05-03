@@ -6,8 +6,8 @@ import (
 
 // InventoryAdjustmentDetailFilter - GET request with query parameters
 type InventoryAdjustmentDetailFilter struct {
-	AdjustmentDetailID int `form:"adjustment_detail_id"`
-	AdjustmentID       int `form:"adjustment_id"`
+	AdjustmentDetailID *int `form:"adjustment_detail_id"`
+	AdjustmentID       *int `form:"adjustment_id"`
 	model.PageSize
 	model.DateRequest
 }

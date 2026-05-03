@@ -40,13 +40,6 @@ func (s *ComponentCategoryService) GetAllComponentCategories(c *gin.Context) ([]
 		return nil, 0, common.RequestInvalid
 	}
 
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Size <= 0 {
-		query.Size = 10
-	}
-
 	categories, total, err := s.categoryRepo.GetAllByCondition(query)
 	if err != nil {
 		return nil, 0, common.SystemError

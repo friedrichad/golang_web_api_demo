@@ -8,9 +8,9 @@ import (
 
 // RequestFilter - GET request with query parameters
 type RequestFilter struct {
-	RequestID   int    `form:"request_id"`
-	RequestType string `form:"request_type"`
-	StatusInt   int    `form:"status_int"`
+	RequestID   *int    `form:"request_id"`
+	RequestType *string `form:"request_type"`
+	StatusInt   *int    `form:"status_int"`
 	model.PageSize
 	model.DateRequest
 }

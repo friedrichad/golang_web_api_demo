@@ -40,13 +40,6 @@ func (s *RequestService) GetAllRequests(c *gin.Context) ([]dtos.RequestResponse,
 		return nil, 0, common.RequestInvalid
 	}
 
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Size <= 0 {
-		query.Size = 10
-	}
-
 	requests, total, err := s.requestRepo.GetAllByCondition(query)
 	if err != nil {
 		return nil, 0, common.SystemError

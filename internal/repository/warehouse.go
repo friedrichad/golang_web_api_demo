@@ -41,7 +41,11 @@ func (w *WarehouseRepository) GetByWarehouseId(warehouseId int) (*model.Warehous
 }
 
 func (w *WarehouseRepository) GetAllByCondition(query dtos.WarehouseFilter) ([]model.Warehouse, int, error) {
-	return w.GetPage("SELECT w.* FROM warehouse w WHERE w.warehouse_name LIKE ? AND w.warehouse_id = ?", query.Page, query.Size, "%"+query.WarehouseName+"%", query.WarehouseID)
+	return w.GetPage("select w.* from warehouse w"+
+	" where (? is null or w.warehouse_name like ?)"+
+	" and (? is null or w.physical_location = ?)"+
+	" and (? is null or w.created_at >= ?)"+
+	" and (? is null or w.created_at <= ?)", query.Page, query.Size,query.WarehouseName,query.WarehouseName,query.PhysciaLocation,query.PhysciaLocation, query.DateFrom, query.DateFrom, query.DateTo, query.DateTo)
 }
 
 func (w *WarehouseRepository) Delete(ids []int) error {

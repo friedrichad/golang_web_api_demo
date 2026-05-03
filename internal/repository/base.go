@@ -48,10 +48,13 @@ func (r *BaseRepository[E, T]) Update(e *E) error {
 }
 
 func (r *BaseRepository[E, T]) GetPage(sql string, page int, size int, values ...interface{}) ([]E, int, error) {
+	if page <= 0{
+		page = 0
+	}
 	if size == 0 {
 		size = 10
 	}
-	offset := (page - 1) * size
+	offset := page * size
 	var slice []E
 	var err error
 	if values == nil {

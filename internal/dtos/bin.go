@@ -8,10 +8,9 @@ import (
 
 // BinFilter - GET request with query parameters
 type BinFilter struct {
-	BinID               int    `form:"bin_id"`
-	LocationInWarehouse string `form:"location_in_warehouse"`
-	StatusInt           int    `form:"status_int"`
-	WarehouseID         int    `form:"warehouse_id"`
+	LocationInWarehouse *string `form:"location_in_warehouse"`
+	StatusInt           *int    `form:"status_int"`
+	WarehouseID         *int    `form:"warehouse_id"`
 	model.PageSize
 	model.DateRequest
 }
@@ -36,7 +35,7 @@ type BinResponse struct {
 	BinID               int       `json:"bin_id"`
 	LocationInWarehouse string    `json:"location_in_warehouse"`
 	StatusInt           int       `json:"status_int"`
-	WarehouseName       string    `json:"warehouse_name"`
+	WarehouseID         int       `json:"warehouse_id"`
 	CreatedBy           int       `json:"created_by"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedBy           int       `json:"updated_by"`

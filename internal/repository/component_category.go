@@ -36,8 +36,8 @@ func (r *ComponentCategoryRepository) GetAllByCondition(query dtos.ComponentCate
 	var total int64
 	q := r.DB.Model(&model.ComponentCategory{})
 
-	if query.CategoryName != "" {
-		q = q.Where("category_name LIKE ?", "%"+query.CategoryName+"%")
+	if query.CategoryName == nil  {
+		q = q.Where("category_name LIKE ?", query.CategoryName)
 	}
 
 	err := q.Count(&total).Error

@@ -8,9 +8,9 @@ import (
 
 // InventoryAuditFilter - GET request with query parameters
 type InventoryAuditFilter struct {
-	AuditID     int `form:"audit_id"`
-	WarehouseID int `form:"warehouse_id"`
-	StatusInt   int `form:"status_int"`
+	AuditID     *int `form:"audit_id"`
+	WarehouseID *int `form:"warehouse_id"`
+	StatusInt   *int `form:"status_int"`
 	model.PageSize
 	model.DateRequest
 }

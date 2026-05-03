@@ -8,8 +8,8 @@ import (
 
 // ComponentFilter - GET request with query parameters
 type ComponentFilter struct {
-	ComponentID   int    `form:"component_id"`
-	ComponentName string `form:"component_name"`
+	ComponentID   *int    `form:"component_id"`
+	ComponentName *string `form:"component_name"`
 	model.PageSize
 	model.DateRequest
 }

@@ -40,13 +40,6 @@ func (s *InventoryAuditService) GetAllInventoryAudits(c *gin.Context) ([]dtos.In
 		return nil, 0, common.RequestInvalid
 	}
 
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Size <= 0 {
-		query.Size = 10
-	}
-
 	audits, total, err := s.auditRepo.GetAllByCondition(query)
 	if err != nil {
 		return nil, 0, common.SystemError

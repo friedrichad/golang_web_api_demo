@@ -8,8 +8,9 @@ import (
 
 // WarehouseFilter - GET request with query parameters
 type WarehouseFilter struct {
-	WarehouseID   int    `form:"warehouse_id"`
-	WarehouseName string `form:"warehouse_name"`
+	WarehouseID     *int    `form:"warehouse_id"`
+	WarehouseName   *string `form:"warehouse_name"`
+	PhysciaLocation *string `form:"physcial_location"`
 	model.PageSize
 	model.DateRequest
 }
