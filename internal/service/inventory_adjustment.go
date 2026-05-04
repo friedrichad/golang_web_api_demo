@@ -67,7 +67,7 @@ func (s *InventoryAdjustmentService) GetInventoryAdjustmentById(c *gin.Context) 
 		return nil, common.RequestInvalid
 	}
 
-	adjustment, err := s.adjustmentRepo.GetById(int32(adjustmentId))
+	adjustment, err := s.adjustmentRepo.GetByAuditId(int(adjustmentId))
 	if err != nil {
 		return nil, common.NotFound
 	}
@@ -87,7 +87,7 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (
 	}
 
 	adjustment := &model.InventoryAdjustment{
-		AuditID:     int32(req.AuditID),
+		AuditID:     int(req.AuditID),
 		Description: req.Description,
 		Note:        req.Note,
 		StatusInt:   1,
@@ -109,7 +109,7 @@ func (s *InventoryAdjustmentService) UpdateInventoryAdjustment(c *gin.Context) *
 		return common.RequestInvalid
 	}
 
-	adjustment, err := s.adjustmentRepo.GetById(int32(req.AdjustmentID))
+	adjustment, err := s.adjustmentRepo.GetByAuditId(int(req.AdjustmentID))
 	if err != nil {
 		return common.NotFound
 	}
@@ -119,7 +119,7 @@ func (s *InventoryAdjustmentService) UpdateInventoryAdjustment(c *gin.Context) *
 	}
 
 	if req.ApprovedID != 0 {
-		adjustment.ApprovedID = int32(req.ApprovedID)
+		adjustment.ApprovedID = int(req.ApprovedID)
 	}
 	if req.Description != "" {
 		adjustment.Description = req.Description
@@ -128,12 +128,12 @@ func (s *InventoryAdjustmentService) UpdateInventoryAdjustment(c *gin.Context) *
 		adjustment.ApprovedTime = req.ApprovedTime
 	}
 	if req.StatusInt != 0 {
-		adjustment.StatusInt = int32(req.StatusInt)
+		adjustment.StatusInt = int(req.StatusInt)
 	}
 	if req.Note != "" {
 		adjustment.Note = req.Note
 	}
-	adjustment.UpdatedBy = int32(req.UpdatedBy)
+	adjustment.UpdatedBy = int(req.UpdatedBy)
 	adjustment.UpdatedAt = time.Now()
 
 	err = s.adjustmentRepo.Update(adjustment)
@@ -150,13 +150,13 @@ func (s *InventoryAdjustmentService) DeleteInventoryAdjustment(c *gin.Context) *
 		return common.RequestInvalid
 	}
 
-	ids := make([]int32, len(idStrs))
+	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
 		adjustmentId, err := strconv.ParseInt(idStr, 10, 32)
 		if err != nil {
 			return common.RequestInvalid
 		}
-		ids[i] = int32(adjustmentId)
+		ids[i] = int(adjustmentId)
 	}
 
 	err := s.adjustmentRepo.Delete(ids)

@@ -26,6 +26,7 @@ type RequestCreate struct {
 	PartnerID     int       `json:"partner_id"`
 	RequestDate   time.Time `json:"request_date"`
 	Note          string    `json:"note"`
+	RequestDetail []RequestDetailDTO `json:"request_detail" binding:"required"`
 }
 
 // RequestUpdate - PUT request body

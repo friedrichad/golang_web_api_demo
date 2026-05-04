@@ -13,7 +13,7 @@ type IRoleRepository interface {
 	GetAll() ([]model.Role, error)
 	GetAllByCondition(query dtos.RoleFilter) ([]model.Role, int, error)
 	Delete(ids []int) error
-	GetRoleById(roleId int) (model.Role, error)
+	GetRoleById(roleId int) (*model.Role, error)
 	Save(role *model.Role) error
 	Update(role *model.Role) error
 }
@@ -67,13 +67,13 @@ func (r *RoleRepository) GetAllByCondition(query dtos.RoleFilter) ([]model.Role,
 func (r *RoleRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from role where role_id in ?", ids).Error
 }
-func (r *RoleRepository) GetRoleById(roleId int) (model.Role, error) {
+func (r *RoleRepository) GetRoleById(roleId int) (*model.Role, error) {
     var role model.Role
     err := r.DB.Where("role_id = ?", roleId).First(&role).Error
     if err != nil {
-        return model.Role{}, err
+        return nil, err
     }
-    return role, nil
+    return &role, nil
 }
 
 func (r *RoleRepository) Save(role *model.Role) error {

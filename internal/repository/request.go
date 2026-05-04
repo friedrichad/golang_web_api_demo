@@ -8,16 +8,16 @@ import (
 )
 
 type IRequestRepository interface {
-	IBaseRepository[model.Request, int32]
-	GetByRequestId(requestId int32) (*model.Request, error)
+	IBaseRepository[model.Request, int]
+	GetByRequestId(requestId int) (*model.Request, error)
 	GetAllByCondition(query dtos.RequestFilter) ([]model.Request, int, error)
-	Delete(ids []int32) error
+	Delete(ids []int) error
 	Save(request *model.Request) error
 	Update(request *model.Request) error
 }
 
 type RequestRepository struct {
-	BaseRepository[model.Request, int32]
+	BaseRepository[model.Request, int]
 	DB *gorm.DB
 }
 
@@ -31,7 +31,7 @@ func NewRequestRepository() IRequestRepository {
 	return requestRepository
 }
 
-func (r *RequestRepository) GetByRequestId(requestId int32) (*model.Request, error) {
+func (r *RequestRepository) GetByRequestId(requestId int) (*model.Request, error) {
 	var request *model.Request
 	err := r.DB.Where("request_id = ?", requestId).First(&request).Error
 	if err == gorm.ErrRecordNotFound {
@@ -47,7 +47,7 @@ func (r *RequestRepository) GetAllByCondition(query dtos.RequestFilter) ([]model
 		" and (? is null or created_at >= ?) "+
 		" and (? is null or created_at < ?) ", query.Page, query.Size, query.RequestID, query.RequestID, query.RequestType, query.RequestType, query.StatusInt, query.StatusInt, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
-func (r *RequestRepository) Delete(ids []int32) error {
+func (r *RequestRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from request where request_id in ?", ids).Error
 }
 func (r *RequestRepository) Save(request *model.Request) error {

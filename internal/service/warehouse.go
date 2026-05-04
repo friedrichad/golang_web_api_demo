@@ -116,7 +116,7 @@ func (s *WarehouseService) UpdateWarehouse(c *gin.Context) *common.Error {
 		warehouse.ImageURL = req.ImageURL
 	}
 	if req.UpdatedBy != 0 {
-		warehouse.UpdatedBy = int32(req.UpdatedBy)
+		warehouse.UpdatedBy = int(req.UpdatedBy)
 	}
 	warehouse.UpdatedAt = time.Now()
 

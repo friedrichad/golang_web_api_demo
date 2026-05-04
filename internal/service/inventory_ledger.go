@@ -63,7 +63,7 @@ func (s *InventoryLedgerService) GetInventoryLedgerById(c *gin.Context) (*dtos.I
 		return nil, common.RequestInvalid
 	}
 
-	ledger, err := s.ledgerRepo.GetById(int32(ledgerId))
+	ledger, err := s.ledgerRepo.GetByLedgerId(int(ledgerId))
 	if err != nil {
 		return nil, common.NotFound
 	}

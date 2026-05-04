@@ -8,8 +8,8 @@ const TableNameRoleMenu = "role_menu"
 
 // RoleMenu mapped from table <role_menu>
 type RoleMenu struct {
-	RoleID int32 `gorm:"column:role_id" json:"role_id"`
-	MenuID int32 `gorm:"column:menu_id" json:"menu_id"`
+	RoleID int `gorm:"column:role_id" json:"role_id"`
+	MenuID int `gorm:"column:menu_id" json:"menu_id"`
 }
 
 // TableName RoleMenu's table name

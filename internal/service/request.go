@@ -67,7 +67,7 @@ func (s *RequestService) GetRequestById(c *gin.Context) (*dtos.RequestResponse, 
 		return nil, common.RequestInvalid
 	}
 
-	request, err := s.requestRepo.GetById(int32(requestId))
+	request, err := s.requestRepo.GetByRequestId(int(requestId))
 	if err != nil {
 		return nil, common.NotFound
 	}
@@ -89,11 +89,11 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 	request := &model.Request{
 		RequestType:   req.RequestType,
 		Description:   req.Description,
-		WarehouseID:   int32(req.WarehouseID),
-		BinFrom:       int32(req.BinFrom),
-		BinTo:         int32(req.BinTo),
-		PerformedByID: int32(req.PerformedByID),
-		PartnerID:     int32(req.PartnerID),
+		WarehouseID:   int(req.WarehouseID),
+		BinFrom:       int(req.BinFrom),
+		BinTo:         int(req.BinTo),
+		PerformedByID: int(req.PerformedByID),
+		PartnerID:     int(req.PartnerID),
 		RequestDate:   time.Now(),
 		Note:          req.Note,
 		StatusInt:     1,
@@ -115,7 +115,7 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	request, err := s.requestRepo.GetByRequestId(int32(req.RequestID))
+	request, err := s.requestRepo.GetByRequestId(int(req.RequestID))
 	if err != nil {
 		return common.NotFound
 	}
@@ -131,30 +131,30 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 		request.Description = req.Description
 	}
 	if req.WarehouseID != 0 {
-		request.WarehouseID = int32(req.WarehouseID)
+		request.WarehouseID = int(req.WarehouseID)
 	}
 	if req.BinFrom != 0 {
-		request.BinFrom = int32(req.BinFrom)
+		request.BinFrom = int(req.BinFrom)
 	}
 	if req.BinTo != 0 {
-		request.BinTo = int32(req.BinTo)
+		request.BinTo = int(req.BinTo)
 	}
 	if req.PerformedByID != 0 {
-		request.PerformedByID = int32(req.PerformedByID)
+		request.PerformedByID = int(req.PerformedByID)
 	}
 	if req.ApproverID != 0 {
-		request.ApproverID = int32(req.ApproverID)
+		request.ApproverID = int(req.ApproverID)
 	}
 	if req.PartnerID != 0 {
-		request.PartnerID = int32(req.PartnerID)
+		request.PartnerID = int(req.PartnerID)
 	}
 	if req.StatusInt != 0 {
-		request.StatusInt = int32(req.StatusInt)
+		request.StatusInt = int(req.StatusInt)
 	}
 	if req.Note != "" {
 		request.Note = req.Note
 	}
-	request.UpdatedBy = int32(req.UpdatedBy)
+	request.UpdatedBy = int(req.UpdatedBy)
 	request.UpdatedAt = time.Now()
 
 	err = s.requestRepo.Update(request)
@@ -171,13 +171,13 @@ func (s *RequestService) DeleteRequest(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	ids := make([]int32, len(idStrs))
+	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
 		requestId, err := strconv.ParseInt(idStr, 10, 32)
 		if err != nil {
 			return common.RequestInvalid
 		}
-		ids[i] = int32(requestId)
+		ids[i] = int(requestId)
 	}
 
 	err := s.requestRepo.Delete(ids)

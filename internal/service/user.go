@@ -65,13 +65,13 @@ func (s *UserService) GetUserByUuid(c *gin.Context) (*dtos.UserResponse, *common
 		return nil, common.RequestInvalid
 	}
 
-	// Convert string to int32
+	// Convert string to int
 	userId, err := strconv.ParseInt(idStr, 10, 32)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
 
-	user, err := s.userRepo.GetById(int32(userId))
+	user, err := s.userRepo.GetById(int(userId))
 	if err != nil {
 		return nil, common.NotFound
 	}
@@ -178,14 +178,14 @@ func (s *UserService) DeleteUser(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	// Convert string IDs to int32
-	ids := make([]int32, len(idStrs))
+	// Convert string IDs to int
+	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
 		id, err := strconv.ParseInt(idStr, 10, 32)
 		if err != nil {
 			return common.RequestInvalid
 		}
-		ids[i] = int32(id)
+		ids[i] = int(id)
 	}
 
 	err := s.userRepo.Delete(ids)
@@ -202,13 +202,13 @@ func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Erro
 		return nil, common.RequestInvalid
 	}
 
-	// Convert string to int32
+	// Convert string to int
 	userId, err := strconv.ParseInt(idStr, 10, 32)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
 
-	authorities, err := s.userRepo.GetAuthorities(int32(userId))
+	authorities, err := s.userRepo.GetAuthorities(int(userId))
 	if err != nil {
 		return nil, common.SystemError
 	}

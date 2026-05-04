@@ -60,7 +60,7 @@ func (s *CustomerService) GetCustomerById(c *gin.Context) (*dtos.CustomerRespons
 		return nil, common.RequestInvalid
 	}
 
-	cust, err := s.customerRepo.GetById(id)
+	cust, err := s.customerRepo.GetByCustomerId(id)
 	if err != nil || cust == nil {
 		return nil, common.NotFound
 	}
@@ -117,10 +117,10 @@ func (s *CustomerService) UpdateCustomer(c *gin.Context) *common.Error {
 		cust.Address = req.Address
 	}
 	if req.StatusInt != nil {
-		cust.StatusInt = int32(*req.StatusInt)
+		cust.StatusInt = int(*req.StatusInt)
 	}
 	if req.UpdatedBy != 0 {
-		cust.UpdatedBy = int32(req.UpdatedBy)
+		cust.UpdatedBy = int(req.UpdatedBy)
 	}
 	cust.UpdatedAt = time.Now()
 

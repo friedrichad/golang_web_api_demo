@@ -40,10 +40,10 @@ func (r *InventoryAuditDetailRepository) GetByInventoryAuditDetailId(auditDetail
 }
 func (r *InventoryAuditDetailRepository) GetAllByCondition(query dtos.InventoryAuditDetailFilter) ([]model.InventoryAuditDetail, int, error) {
 	return r.GetPage("Select iad.* from inventory_audit_detail as iad "+
-		"where (? is Null or iad.audit_detail_id = ?))"+
-		"and (? is Null or iad.audit_id = ?)) "+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.AuditDetailID, query.AuditID, query.AuditID, query.AuditID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		"where (? is Null or iad.audit_detail_id = ?)"+
+		"and (? is Null or iad.audit_id = ?) "+
+		"and (? is null or iad.created_at >= ?) "+
+		"and (? is null or iad.created_at < ?) ", query.Page, query.Size, query.AuditDetailID, query.AuditID, query.AuditID, query.AuditID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 func (r *InventoryAuditDetailRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from inventory_audit_detail where audit_detail_id in ?", ids).Error

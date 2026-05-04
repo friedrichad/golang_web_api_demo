@@ -39,11 +39,10 @@ func (r *RequestDetailRepository) GetByRequestId(requestId int) (*model.RequestD
 }
 func (r *RequestDetailRepository) GetAllByCondition(query dtos.RequestDetailFilter) ([]model.RequestDetail, int, error) {
 	return r.GetPage("Select rd.* from request_detail as rd "+
-		"where (? is Null or rd.request_id = ?))"+
-		"request_id = ?)) "+
-		"and (? is Null or rd.component_id = ?)) "+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.RequestID, query.RequestID, query.ComponentID, query.ComponentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" where (? is Null or rd.request_id = ?) "+
+		" and (? is Null or rd.component_id = ?) "+
+		" and (? is null or rd.created_at >= ?) "+
+		" and (? is null or rd.created_at < ?) ", query.Page, query.Size, query.RequestID, query.RequestID, query.ComponentID, query.ComponentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
 func (r *RequestDetailRepository) Delete(ids []int) error {

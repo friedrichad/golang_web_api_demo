@@ -10,6 +10,7 @@ type ComponentCategoryFilter struct {
 	CategoryID   *int    `form:"category_id"`
 	CategoryName *string `form:"category_name"`
 	model.PageSize
+	model.DateRequest
 }
 
 type ComponentCategoryCreate struct {

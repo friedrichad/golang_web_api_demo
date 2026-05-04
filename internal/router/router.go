@@ -162,3 +162,12 @@ func initComponentCategoryRouter(router *gin.Engine) {
 		categoryGroup.DELETE("", categoryController.DeleteCategory())
 	}
 }
+
+func initAuthRouter(router *gin.Engine) {
+	authController := controller.NewAuthController()
+	authGroup := router.Group("/auth")
+	{
+		authGroup.POST("/login", authController.GetToken())
+		authGroup.POST("/refresh", authController.GetToken())
+	}
+}

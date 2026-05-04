@@ -67,7 +67,7 @@ func (s *ComponentCategoryService) GetComponentCategoryById(c *gin.Context) (*dt
 		return nil, common.RequestInvalid
 	}
 
-	category, err := s.categoryRepo.GetById(int32(categoryId))
+	category, err := s.categoryRepo.GetById(int(categoryId))
 	if err != nil {
 		return nil, common.NotFound
 	}
@@ -106,7 +106,7 @@ func (s *ComponentCategoryService) UpdateComponentCategory(c *gin.Context) *comm
 		return common.RequestInvalid
 	}
 
-	category, err := s.categoryRepo.GetById(int32(req.CategoryID))
+	category, err := s.categoryRepo.GetById(int(req.CategoryID))
 	if err != nil {
 		return common.NotFound
 	}
@@ -118,7 +118,7 @@ func (s *ComponentCategoryService) UpdateComponentCategory(c *gin.Context) *comm
 	if req.CategoryName != "" {
 		category.CategoryName = req.CategoryName
 	}
-	category.UpdatedBy = int32(req.UpdatedBy)
+	category.UpdatedBy = int(req.UpdatedBy)
 	category.UpdatedAt = time.Now()
 
 	err = s.categoryRepo.Update(category)
@@ -135,13 +135,13 @@ func (s *ComponentCategoryService) DeleteComponentCategory(c *gin.Context) *comm
 		return common.RequestInvalid
 	}
 
-	ids := make([]int32, len(idStrs))
+	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
 		categoryId, err := strconv.ParseInt(idStr, 10, 32)
 		if err != nil {
 			return common.RequestInvalid
 		}
-		ids[i] = int32(categoryId)
+		ids[i] = int(categoryId)
 	}
 
 	err := s.categoryRepo.Delete(ids)

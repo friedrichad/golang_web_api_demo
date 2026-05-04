@@ -67,7 +67,7 @@ func (s *ComponentService) GetComponentById(c *gin.Context) (*dtos.ComponentResp
 		return nil, common.RequestInvalid
 	}
 
-	comp, err := s.componentRepo.GetById(id)
+	comp, err := s.componentRepo.GetByComponentId(id)
 	if err != nil || comp == nil {
 		return nil, common.NotFound
 	}
@@ -99,7 +99,7 @@ func (s *ComponentService) CreateComponent(c *gin.Context) (*dtos.ComponentRespo
 		for _, cat := range req.ComponentCategory {
 			mapEntry := &model.ComponentCategoryMap{
 				ComponentID: comp.ComponentID,
-				CategoryID:  int32(cat.CategoryID),
+				CategoryID:  int(cat.CategoryID),
 			}
 			if err := tx.Create(mapEntry).Error; err != nil {
 				return err
@@ -123,7 +123,7 @@ func (s *ComponentService) UpdateComponent(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	comp, err := s.componentRepo.GetById(req.ComponentID)
+	comp, err := s.componentRepo.GetByComponentId(req.ComponentID)
 	if err != nil || comp == nil {
 		return common.NotFound
 	}
@@ -141,7 +141,7 @@ func (s *ComponentService) UpdateComponent(c *gin.Context) *common.Error {
 		comp.UnitPrice = req.UnitPrice
 	}
 	if req.UpdatedBy != 0 {
-		comp.UpdatedBy = int32(req.UpdatedBy)
+		comp.UpdatedBy = int(req.UpdatedBy)
 	}
 	comp.UpdatedAt = time.Now()
 
@@ -159,7 +159,7 @@ func (s *ComponentService) UpdateComponent(c *gin.Context) *common.Error {
 		for _, cat := range req.ComponentCategory {
 			mapEntry := &model.ComponentCategoryMap{
 				ComponentID: comp.ComponentID,
-				CategoryID:  int32(cat.CategoryID),
+				CategoryID:  int(cat.CategoryID),
 			}
 			if err := tx.Create(mapEntry).Error; err != nil {
 				return err

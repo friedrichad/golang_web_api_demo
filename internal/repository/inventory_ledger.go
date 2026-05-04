@@ -8,16 +8,16 @@ import (
 )
 
 type IInventoryLedger interface {
-	IBaseRepository[model.InventoryLedger, int32]
-	GetByLedgerId(ledgerId int32) (*model.InventoryLedger, error)
+	IBaseRepository[model.InventoryLedger, int]
+	GetByLedgerId(ledgerId int) (*model.InventoryLedger, error)
 	GetAllByCondition(query dtos.InventoryLedgerFilter) ([]model.InventoryLedger, int, error)
-	Delete(ids []int32) error
+	Delete(ids []int) error
 	Save(request *model.InventoryLedger) error
 	Update(request *model.InventoryLedger) error
 }
 
 type InventoryLedgerRepository struct {
-	BaseRepository[model.InventoryLedger, int32]
+	BaseRepository[model.InventoryLedger, int]
 	DB *gorm.DB
 }
 
@@ -31,7 +31,7 @@ func NewInventoryLedgerRepository() IInventoryLedger {
 	return inventoryLedgerRepository
 }
 
-func (r *InventoryLedgerRepository) GetByLedgerId(ledgerId int32) (*model.InventoryLedger, error) {
+func (r *InventoryLedgerRepository) GetByLedgerId(ledgerId int) (*model.InventoryLedger, error) {
 	var inventoryLedger *model.InventoryLedger
 	err := r.DB.Where("ledger_id = ?", ledgerId).First(&inventoryLedger).Error
 	if err == gorm.ErrRecordNotFound {
@@ -42,12 +42,16 @@ func (r *InventoryLedgerRepository) GetByLedgerId(ledgerId int32) (*model.Invent
 
 func (r *InventoryLedgerRepository) GetAllByCondition(query dtos.InventoryLedgerFilter) ([]model.InventoryLedger, int, error) {
 	return r.GetPage("Select il.* from inventory_ledger as il "+
-		"where (? is Null or il.ledger_id = ?))"+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.LedgerID, query.LedgerID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" where (? is Null or il.ledger_id = ?))"+
+		" and (? is null or il.component_id = ?) "+
+		" and (? is null or  il.warehouse_id = ?) "+
+	    " and (? is null or  il.bin_id = ?) "+
+		" and (? is null or  il.reference_id = ?) "+
+		" and (? is null or il.created_at >= ?) "+
+		" and (? is null or il.created_at < ?) ", query.Page, query.Size, query.LedgerID, query.LedgerID, query.ComponentID, query.ComponentID, query.WarehouseID, query.WarehouseID, query.BinID, query.BinID, query.ReferenceTypeID, query.ReferenceTypeID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
-func (r *InventoryLedgerRepository) Delete(ids []int32) error {
+func (r *InventoryLedgerRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from inventory_ledger where ledger_id in ?", ids).Error
 }
 

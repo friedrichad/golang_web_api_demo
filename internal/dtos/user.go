@@ -12,7 +12,7 @@ type UserResponse struct {
 	DisplayName string    `json:"display_name"`
 	Email       string    `json:"email"`
 	StatusInt   int       `json:"status_int"`
-	UserRole    []string  `json:"user_role"`
+	UserRole    []int  `json:"user_role"`
 	CreatedBy   int       `json:"created_by"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedBy   int       `json:"updated_by"`
@@ -23,7 +23,7 @@ type UserResponse struct {
 type UserFilter struct {
 	Username    *string `form:"username"`
 	DisplayName *string `form:"display_name"`
-	StatusInt   *int32    `form:"status_int"`
+	StatusInt   *int    `form:"status_int"`
 	model.PageSize
 	model.DateRequest
 }
@@ -39,14 +39,14 @@ type UserCreate struct {
 
 // UserUpdate - PUT request body
 type UserUpdate struct {
-	UserID      int32 `json:"user_id" binding:"required"`
+	UserID      int    `json:"user_id" binding:"required"`
 	Username    string `json:"username" binding:"min=3,max=50"`
 	DisplayName string `json:"display_name" binding:"min=1,max=100"`
 	Email       string `json:"email" binding:"email"`
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password" binding:"min=6"`
-	StatusInt   int32   `json:"status_int"`
-	UpdatedBy   int32   `json:"updated_by"`
+	StatusInt   int    `json:"status_int"`
+	UpdatedBy   int    `json:"updated_by"`
 }
 
 type LoginRequest struct {

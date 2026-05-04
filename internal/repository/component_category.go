@@ -8,16 +8,16 @@ import (
 )
 
 type IComponentCategoryRepository interface {
-	IBaseRepository[model.ComponentCategory, int32]
+	IBaseRepository[model.ComponentCategory, int]
 	GetAllByCondition(query dtos.ComponentCategoryFilter) ([]model.ComponentCategory, int, error)
-	Delete(ids []int32) error
-	GetById(id int32) (*model.ComponentCategory, error)
+	Delete(ids []int) error
+	GetById(id int) (*model.ComponentCategory, error)
 	Save(category *model.ComponentCategory) error
 	Update(category *model.ComponentCategory) error
 }
 
 type ComponentCategoryRepository struct {
-	BaseRepository[model.ComponentCategory, int32]
+	BaseRepository[model.ComponentCategory, int]
 	DB *gorm.DB
 }
 
@@ -32,32 +32,17 @@ func NewComponentCategoryRepository() IComponentCategoryRepository {
 }
 
 func (r *ComponentCategoryRepository) GetAllByCondition(query dtos.ComponentCategoryFilter) ([]model.ComponentCategory, int, error) {
-	var categories []model.ComponentCategory
-	var total int64
-	q := r.DB.Model(&model.ComponentCategory{})
-
-	if query.CategoryName == nil  {
-		q = q.Where("category_name LIKE ?", query.CategoryName)
-	}
-
-	err := q.Count(&total).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	offset := (query.Page - 1) * query.Size
-	err = q.Offset(offset).Limit(query.Size).Find(&categories).Error
-	if err != nil {
-		return nil, 0, err
-	}
-	return categories, int(total), nil
+	return r.GetPage("select cc.* from ComponentCategory cc"+
+	" where (? is null or cc.category_name like ?)"+
+	" and (? is null or cc.created_at >= ?)"+
+	" and (? is null or cc.created_at <= ?)", query.Page, query.Size,query.CategoryName, query.CategoryName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
-func (r *ComponentCategoryRepository) Delete(ids []int32) error {
-	return r.DB.Where("category_id IN ?", ids).Delete(&model.ComponentCategory{}).Error
+func (r *ComponentCategoryRepository) Delete(ids []int) error {
+	return r.DB.Where("category_id in ?", ids).Delete(&model.ComponentCategory{}).Error
 }
 
-func (r *ComponentCategoryRepository) GetById(id int32) (*model.ComponentCategory, error) {
+func (r *ComponentCategoryRepository) GetById(id int) (*model.ComponentCategory, error) {
 	var category *model.ComponentCategory
 	err := r.DB.Where("category_id = ?", id).First(&category).Error
 	return category, err

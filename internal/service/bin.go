@@ -80,7 +80,7 @@ func (s *BinService) CreateBin(c *gin.Context) (*dtos.BinResponse, *common.Error
 
 	bin := &model.Bin{
 		LocationInWarehouse: req.LocationInWarehouse,
-		WarehouseID:         int32(req.WarehouseID),
+		WarehouseID:         int(req.WarehouseID),
 		StatusInt:           1,
 		CreatedAt:           time.Now(),
 	}
@@ -109,13 +109,13 @@ func (s *BinService) UpdateBin(c *gin.Context) *common.Error {
 		bin.LocationInWarehouse = req.LocationInWarehouse
 	}
 	if req.WarehouseID != 0 {
-		bin.WarehouseID = int32(req.WarehouseID)
+		bin.WarehouseID = int(req.WarehouseID)
 	}
 	if req.StatusInt != 0 {
-		bin.StatusInt = int32(req.StatusInt)
+		bin.StatusInt = int(req.StatusInt)
 	}
 	if req.UpdatedBy != 0 {
-		bin.UpdatedBy = int32(req.UpdatedBy)
+		bin.UpdatedBy = int(req.UpdatedBy)
 	}
 	bin.UpdatedAt = time.Now()
 
@@ -146,7 +146,7 @@ func modelToBinResponse(bin *model.Bin) dtos.BinResponse {
 		BinID:               int(bin.BinID),
 		LocationInWarehouse: bin.LocationInWarehouse,
 		StatusInt:           int(bin.StatusInt),
-		WarehouseID:         int (bin.WarehouseID),
+		WarehouseID:         int(bin.WarehouseID),
 		CreatedBy:           int(bin.CreatedBy),
 		CreatedAt:           bin.CreatedAt,
 		UpdatedBy:           int(bin.UpdatedBy),

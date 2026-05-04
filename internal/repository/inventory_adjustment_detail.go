@@ -40,10 +40,10 @@ func (r *InventoryAdjustmentDetailRepository) GetByAdjustmentDetailId(adjustment
 
 func (r *InventoryAdjustmentDetailRepository) GetAllByCondition(query dtos.InventoryAdjustmentDetailFilter) ([]model.InventoryAdjustmentDetail, int, error) {
 	return r.GetPage("Select iad.* from inventory_adjustment_detail as iad "+
-		"where (? is Null or iad.adjustment_detail_id = ?))"+
-		"and (? is Null or iad.adjustment_id = ?)) "+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.AdjustmentDetailID, query.AdjustmentDetailID, query.AdjustmentID, query.AdjustmentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		"where (? is Null or iad.adjustment_detail_id = ?)"+
+		"and (? is Null or iad.adjustment_id = ?) "+
+		"and (? is null or iad.created_at >= ?) "+
+		"and (? is null or iad.created_at < ?) ", query.Page, query.Size, query.AdjustmentDetailID, query.AdjustmentDetailID, query.AdjustmentID, query.AdjustmentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
 func (r *InventoryAdjustmentDetailRepository) Delete(ids []int) error {

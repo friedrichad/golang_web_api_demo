@@ -12,9 +12,9 @@ const TableNameUserRole = "user_role"
 
 // UserRole mapped from table <user_role>
 type UserRole struct {
-	UserID    int32     `gorm:"column:user_id;primaryKey" json:"user_id"`
-	RoleID    int32     `gorm:"column:role_id;primaryKey" json:"role_id"`
-	CreatedBy int32     `gorm:"column:created_by" json:"created_by"`
+	UserID    int       `gorm:"column:user_id;primaryKey" json:"user_id"`
+	RoleID    int       `gorm:"column:role_id;primaryKey" json:"role_id"`
+	CreatedBy int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
 }
 

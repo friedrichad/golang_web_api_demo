@@ -67,7 +67,7 @@ func (s *InventoryAuditService) GetInventoryAuditById(c *gin.Context) (*dtos.Inv
 		return nil, common.RequestInvalid
 	}
 
-	audit, err := s.auditRepo.GetById(int32(auditId))
+	audit, err := s.auditRepo.GetByRequestId(int(auditId))
 	if err != nil {
 		return nil, common.NotFound
 	}
@@ -87,7 +87,7 @@ func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*dtos.Inve
 	}
 
 	audit := &model.InventoryAudit{
-		WarehouseID: int32(req.WarehouseID),
+		WarehouseID: int(req.WarehouseID),
 		Note:        req.Note,
 		StatusInt:   1,
 		CreatedAt:   time.Now(),
@@ -108,7 +108,7 @@ func (s *InventoryAuditService) UpdateInventoryAudit(c *gin.Context) *common.Err
 		return common.RequestInvalid
 	}
 
-	audit, err := s.auditRepo.GetById(int32(req.AuditID))
+	audit, err := s.auditRepo.GetByRequestId(int(req.AuditID))
 	if err != nil {
 		return common.NotFound
 	}
@@ -118,12 +118,12 @@ func (s *InventoryAuditService) UpdateInventoryAudit(c *gin.Context) *common.Err
 	}
 
 	if req.StatusInt != 0 {
-		audit.StatusInt = int32(req.StatusInt)
+		audit.StatusInt = int(req.StatusInt)
 	}
 	if req.Note != "" {
 		audit.Note = req.Note
 	}
-	audit.UpdatedBy = int32(req.UpdatedBy)
+	audit.UpdatedBy = int(req.UpdatedBy)
 	audit.UpdatedAt = time.Now()
 
 	err = s.auditRepo.Update(audit)
@@ -140,13 +140,13 @@ func (s *InventoryAuditService) DeleteInventoryAudit(c *gin.Context) *common.Err
 		return common.RequestInvalid
 	}
 
-	ids := make([]int32, len(idStrs))
+	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
 		auditId, err := strconv.ParseInt(idStr, 10, 32)
 		if err != nil {
 			return common.RequestInvalid
 		}
-		ids[i] = int32(auditId)
+		ids[i] = int(auditId)
 	}
 
 	err := s.auditRepo.Delete(ids)

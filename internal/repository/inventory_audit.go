@@ -8,16 +8,16 @@ import (
 )
 
 type IInventoryAudit interface {
-	IBaseRepository[model.InventoryAudit, int32]
-	GetByRequestId(auditId int32) (*model.InventoryAudit, error)
+	IBaseRepository[model.InventoryAudit, int]
+	GetByRequestId(auditId int) (*model.InventoryAudit, error)
 	GetAllByCondition(query dtos.InventoryAuditFilter) ([]model.InventoryAudit, int, error)
-	Delete(ids []int32) error
+	Delete(ids []int) error
 	Save(request *model.InventoryAudit) error
 	Update(request *model.InventoryAudit) error
 }
 
 type InventoryAuditRepository struct {
-	BaseRepository[model.InventoryAudit, int32]
+	BaseRepository[model.InventoryAudit, int]
 	DB *gorm.DB
 }
 
@@ -31,7 +31,7 @@ func NewInventoryAuditRepository() IInventoryAudit {
 	return inventoryAuditRepository
 }
 
-func (r *InventoryAuditRepository) GetByRequestId(auditId int32) (*model.InventoryAudit, error) {
+func (r *InventoryAuditRepository) GetByRequestId(auditId int) (*model.InventoryAudit, error) {
 	var inventoryAudit *model.InventoryAudit
 	err := r.DB.Where("audit_id = ?", auditId).First(&inventoryAudit).Error
 	if err == gorm.ErrRecordNotFound {
@@ -41,11 +41,12 @@ func (r *InventoryAuditRepository) GetByRequestId(auditId int32) (*model.Invento
 }
 func (r *InventoryAuditRepository) GetAllByCondition(query dtos.InventoryAuditFilter) ([]model.InventoryAudit, int, error) {
 	return r.GetPage("Select ia.* from inventory_audit as ia "+
-		"where (? is Null or ia.audit_id = ?))"+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.AuditID, query.AuditID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" where (? is Null or ia.audit_id = ?)"+
+		" and (? is null or ia.warehouse_id = ?) "+
+		" and (? is null or ia.created_at >= ?) "+
+		" and (? is null or ia.created_at < ?) ", query.Page, query.Size, query.AuditID, query.AuditID,query.WarehouseID,query.WarehouseID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
-func (r *InventoryAuditRepository) Delete(ids []int32) error {
+func (r *InventoryAuditRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from inventory_audit where audit_id in ?", ids).Error
 }
 func (r *InventoryAuditRepository) Save(request *model.InventoryAudit) error {
