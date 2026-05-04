@@ -17,6 +17,8 @@ type RequestDetail struct {
 	ComponentID     int       `gorm:"column:component_id" json:"component_id"`
 	Quantity        int       `gorm:"column:quantity" json:"quantity"`
 	UnitPrice       float64   `gorm:"column:unit_price" json:"unit_price"`
+	BinFromID       int       `gorm:"column:bin_from_id" json:"bin_from_id"`
+	BinToID         int       `gorm:"column:bin_to_id" json:"bin_to_id"`
 	CreatedBy       int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt       time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy       int       `gorm:"column:updated_by" json:"updated_by"`

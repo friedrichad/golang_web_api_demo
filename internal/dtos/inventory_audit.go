@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -21,12 +22,28 @@ type InventoryAuditCreate struct {
 	Note        string `json:"note"`
 }
 
+// Verify validates the InventoryAuditCreate struct.
+func (i *InventoryAuditCreate) Verify() error {
+	if i.WarehouseID == 0 {
+		return fmt.Errorf("WarehouseID is required")
+	}
+	return nil
+}
+
 // InventoryAuditUpdate - PUT request body
 type InventoryAuditUpdate struct {
 	AuditID   int    `json:"audit_id" binding:"required"`
 	StatusInt int    `json:"status_int"`
 	Note      string `json:"note"`
 	UpdatedBy int    `json:"updated_by"`
+}
+
+// Verify validates the InventoryAuditUpdate struct.
+func (i *InventoryAuditUpdate) Verify() error {
+	if i.AuditID == 0 {
+		return fmt.Errorf("AuditID is required")
+	}
+	return nil
 }
 
 type InventoryAuditResponse struct {

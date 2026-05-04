@@ -29,6 +29,12 @@ func NewRequestDetailRepository() IRequestDetailRepository {
 	}
 	return requestDetailRepository
 }
+func (r *RequestDetailRepository) WithTx(tx *gorm.DB) *RequestDetailRepository {
+	return &RequestDetailRepository{
+		BaseRepository: BaseRepository[model.RequestDetail, int]{Instance: tx},
+		DB:             tx,
+	}
+}
 func (r *RequestDetailRepository) GetByRequestId(requestId int) (*model.RequestDetail, error) {
 	var requestDetail *model.RequestDetail
 	err := r.DB.Where("request_id = ?", requestId).First(&requestDetail).Error

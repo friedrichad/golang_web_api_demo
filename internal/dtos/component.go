@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -23,6 +24,20 @@ type ComponentCreate struct {
 	ComponentCategory []ComponentCategoryDTO `json:"component_category"`
 }
 
+// Verify validates the ComponentCreate struct.
+func (c *ComponentCreate) Verify() error {
+	if c.ComponentName == "" {
+		return fmt.Errorf("ComponentName is required")
+	}
+	if c.Unit == "" {
+		return fmt.Errorf("Unit is required")
+	}
+	if c.UnitPrice <= 0 {
+		return fmt.Errorf("UnitPrice must be greater than 0")
+	}
+	return nil
+}
+
 // ComponentUpdate - PUT request body
 type ComponentUpdate struct {
 	ComponentID       int                    `json:"component_id" binding:"required"`
@@ -32,6 +47,14 @@ type ComponentUpdate struct {
 	UnitPrice         float64                `json:"unit_price"`
 	ComponentCategory []ComponentCategoryDTO `json:"component_category"`
 	UpdatedBy         int                    `json:"updated_by"`
+}
+
+// Verify validates the ComponentUpdate struct.
+func (c *ComponentUpdate) Verify() error {
+	if c.ComponentID == 0 {
+		return fmt.Errorf("ComponentID is required")
+	}
+	return nil
 }
 
 type ComponentResponse struct {

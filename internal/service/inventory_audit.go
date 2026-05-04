@@ -86,6 +86,10 @@ func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*dtos.Inve
 		return nil, common.RequestInvalid
 	}
 
+	if err := req.Verify(); err != nil {
+		return nil, &common.Error{Code: "400", Message: err.Error()}
+	}
+
 	audit := &model.InventoryAudit{
 		WarehouseID: int(req.WarehouseID),
 		Note:        req.Note,
@@ -106,6 +110,10 @@ func (s *InventoryAuditService) UpdateInventoryAudit(c *gin.Context) *common.Err
 	var req dtos.InventoryAuditUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
+	}
+
+	if err := req.Verify(); err != nil {
+		return &common.Error{Code: "400", Message: err.Error()}
 	}
 
 	audit, err := s.auditRepo.GetByRequestId(int(req.AuditID))

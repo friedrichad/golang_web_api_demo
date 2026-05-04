@@ -86,6 +86,10 @@ func (s *RoleService) CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Er
 		return nil, common.RequestInvalid
 	}
 
+	if err := req.Verify(); err != nil {
+		return nil, &common.Error{Code: "400", Message: err.Error()}
+	}
+
 	role := &model.Role{
 		RoleName:    req.RoleName,
 		Description: req.Description,
@@ -105,6 +109,10 @@ func (s *RoleService) UpdateRole(c *gin.Context) *common.Error {
 	var req dtos.RoleUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
+	}
+
+	if err := req.Verify(); err != nil {
+		return &common.Error{Code: "400", Message: err.Error()}
 	}
 
 	role, err := s.roleRepo.GetRoleById(int(req.RoleID))

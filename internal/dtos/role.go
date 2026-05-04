@@ -1,6 +1,10 @@
 package dtos
 
-import "github.com/friedrichad/golang_web_api_demo/internal/model"
+import (
+	"fmt"
+
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
+)
 
 type RoleDTO struct {
 	RoleID      int    `json:"role_id"`
@@ -10,7 +14,7 @@ type RoleDTO struct {
 
 // RoleFilter - GET request with query parameters
 type RoleFilter struct {
-	RoleName    *string `form:"role_name"`
+	RoleName *string `form:"role_name"`
 	model.PageSize
 	model.DateRequest
 }
@@ -21,12 +25,28 @@ type RoleCreate struct {
 	Description string `json:"description"`
 }
 
+// Verify validates the RoleCreate struct.
+func (r *RoleCreate) Verify() error {
+	if r.RoleName == "" {
+		return fmt.Errorf("RoleName is required")
+	}
+	return nil
+}
+
 // RoleUpdate - PUT request body
 type RoleUpdate struct {
 	RoleID      int    `json:"role_id" binding:"required"`
 	RoleName    string `json:"role_name"`
 	Description string `json:"description"`
 	UpdatedBy   int    `json:"updated_by"`
+}
+
+// Verify validates the RoleUpdate struct.
+func (r *RoleUpdate) Verify() error {
+	if r.RoleID == 0 {
+		return fmt.Errorf("RoleID is required")
+	}
+	return nil
 }
 
 type RoleResponse struct {

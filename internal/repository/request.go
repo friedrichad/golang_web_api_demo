@@ -56,3 +56,10 @@ func (r *RequestRepository) Save(request *model.Request) error {
 func (r *RequestRepository) Update(request *model.Request) error {
 	return r.BaseRepository.Update(request)
 }
+
+func (r *RequestRepository) WithTx(tx *gorm.DB) *RequestRepository {
+	return &RequestRepository{
+		BaseRepository: BaseRepository[model.Request, int]{Instance: tx},
+		DB:             tx,
+	}
+}

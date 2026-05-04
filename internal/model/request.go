@@ -16,8 +16,6 @@ type Request struct {
 	RequestType   string    `gorm:"column:request_type" json:"request_type"`
 	Description   string    `gorm:"column:description" json:"description"`
 	WarehouseID   int       `gorm:"column:warehouse_id" json:"warehouse_id"`
-	BinTo         int       `gorm:"column:bin_to" json:"bin_to"`
-	BinFrom       int       `gorm:"column:bin_from" json:"bin_from"`
 	PerformedByID int       `gorm:"column:performed_by_id" json:"performed_by_id"`
 	ApproverID    int       `gorm:"column:approver_id" json:"approver_id"`
 	PartnerID     int       `gorm:"column:partner_id" json:"partner_id"`

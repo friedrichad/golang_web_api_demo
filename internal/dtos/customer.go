@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -24,6 +25,17 @@ type CustomerCreate struct {
 	Address      string `json:"address"`
 }
 
+// CustomerCreateVerify - Verify method for CustomerCreate
+func (c *CustomerCreate) Verify() error {
+	if c.CustomerName == "" {
+		return fmt.Errorf("CustomerName is required")
+	}
+	if c.Email == "" {
+		return fmt.Errorf("Email is required")
+	}
+	return nil
+}
+
 // CustomerUpdate - PUT request body
 type CustomerUpdate struct {
 	CustomerID   int    `json:"customer_id" binding:"required"`
@@ -33,6 +45,14 @@ type CustomerUpdate struct {
 	Address      string `json:"address"`
 	StatusInt    *int   `json:"status_int"`
 	UpdatedBy    int    `json:"updated_by"`
+}
+
+// CustomerUpdateVerify - Verify method for CustomerUpdate
+func (c *CustomerUpdate) Verify() error {
+	if c.CustomerID == 0 {
+		return fmt.Errorf("CustomerID is required")
+	}
+	return nil
 }
 
 // CustomerResponse - Response body

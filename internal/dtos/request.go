@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -17,32 +18,32 @@ type RequestFilter struct {
 
 // RequestCreate - POST request body
 type RequestCreate struct {
-	RequestType   string    `json:"request_type" binding:"required"`
-	Description   string    `json:"description"`
-	WarehouseID   int       `json:"warehouse_id" binding:"required"`
-	BinFrom       int       `json:"bin_from"`
-	BinTo         int       `json:"bin_to"`
-	PerformedByID int       `json:"performed_by_id"`
-	PartnerID     int       `json:"partner_id"`
-	RequestDate   time.Time `json:"request_date"`
-	Note          string    `json:"note"`
+	RequestType   string             `json:"request_type" binding:"required"`
+	Description   string             `json:"description"`
+	WarehouseID   int                `json:"warehouse_id" binding:"required"`
+	BinFrom       int                `json:"bin_from"`
+	BinTo         int                `json:"bin_to"`
+	PerformedByID int                `json:"performed_by_id"`
+	PartnerID     int                `json:"partner_id"`
+	RequestDate   time.Time          `json:"request_date"`
+	Note          string             `json:"note"`
 	RequestDetail []RequestDetailDTO `json:"request_detail" binding:"required"`
 }
 
 // RequestUpdate - PUT request body
 type RequestUpdate struct {
-	RequestID     int       `json:"request_id" binding:"required"`
-	RequestType   string    `json:"request_type"`
-	Description   string    `json:"description"`
-	WarehouseID   int       `json:"warehouse_id"`
-	BinTo         int       `json:"bin_to"`
-	BinFrom       int       `json:"bin_from"`
-	PerformedByID int       `json:"performed_by_id"`
-	ApproverID    int       `json:"approver_id"`
-	PartnerID     int       `json:"partner_id"`
-	StatusInt     int       `json:"status_int"`
-	Note          string    `json:"note"`
-	UpdatedBy     int       `json:"updated_by"`
+	RequestID     int    `json:"request_id" binding:"required"`
+	RequestType   string `json:"request_type"`
+	Description   string `json:"description"`
+	WarehouseID   int    `json:"warehouse_id"`
+	BinTo         int    `json:"bin_to"`
+	BinFrom       int    `json:"bin_from"`
+	PerformedByID int    `json:"performed_by_id"`
+	ApproverID    int    `json:"approver_id"`
+	PartnerID     int    `json:"partner_id"`
+	StatusInt     int    `json:"status_int"`
+	Note          string `json:"note"`
+	UpdatedBy     int    `json:"updated_by"`
 }
 
 // RequestResponse - Response body
@@ -63,4 +64,26 @@ type RequestResponse struct {
 	CreateBy      int       `json:"create_by"`
 	UpdatedAt     time.Time `json:"updated_at"`
 	UpdatedBy     int       `json:"updated_by"`
+}
+
+// Verify validates the RequestCreate struct.
+func (r *RequestCreate) Verify() error {
+	if r.RequestType == "" {
+		return fmt.Errorf("RequestType is required")
+	}
+	if r.WarehouseID == 0 {
+		return fmt.Errorf("WarehouseID is required")
+	}
+	if len(r.RequestDetail) == 0 {
+		return fmt.Errorf("At least one RequestDetail is required")
+	}
+	return nil
+}
+
+// Verify validates the RequestUpdate struct.
+func (r *RequestUpdate) Verify() error {
+	if r.RequestID == 0 {
+		return fmt.Errorf("RequestID is required")
+	}
+	return nil
 }

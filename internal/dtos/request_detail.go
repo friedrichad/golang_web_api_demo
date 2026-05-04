@@ -1,12 +1,16 @@
 package dtos
 
-import "github.com/friedrichad/golang_web_api_demo/internal/model"
+import (
+	"fmt"
+
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
+)
 
 type RequestDetailDTO struct {
-	RequestID       *int     `json:"request_id"`
-	ComponentID     *int     `json:"component_id"`
-	Quantity        *int     `json:"quantity"`
-	UnitPrice       *float64 `json:"unit_price"`
+	RequestID   *int     `json:"request_id"`
+	ComponentID *int     `json:"component_id"`
+	Quantity    *int     `json:"quantity"`
+	UnitPrice   *float64 `json:"unit_price"`
 }
 
 // RequestDetailFilter - GET request with query parameters
@@ -26,6 +30,20 @@ type RequestDetailCreate struct {
 	UnitPrice   float64 `json:"unit_price" binding:"required"`
 }
 
+// Verify validates the RequestDetailCreate struct.
+func (r *RequestDetailCreate) Verify() error {
+	if r.RequestID == 0 {
+		return fmt.Errorf("RequestID is required")
+	}
+	if r.ComponentID == 0 {
+		return fmt.Errorf("ComponentID is required")
+	}
+	if r.Quantity <= 0 {
+		return fmt.Errorf("Quantity must be greater than 0")
+	}
+	return nil
+}
+
 // RequestDetailUpdate - PUT request body
 type RequestDetailUpdate struct {
 	RequestDetailID int     `json:"request_detail_id" binding:"required"`
@@ -34,6 +52,14 @@ type RequestDetailUpdate struct {
 	Quantity        int     `json:"quantity"`
 	UnitPrice       float64 `json:"unit_price"`
 	UpdatedBy       int     `json:"updated_by"`
+}
+
+// Verify validates the RequestDetailUpdate struct.
+func (r *RequestDetailUpdate) Verify() error {
+	if r.RequestDetailID == 0 {
+		return fmt.Errorf("RequestDetailID is required")
+	}
+	return nil
 }
 
 type RequestDetailResponse struct {

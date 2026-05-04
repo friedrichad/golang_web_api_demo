@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -20,7 +21,8 @@ type IRequestService interface {
 }
 
 type RequestService struct {
-	requestRepo repository.IRequestRepository
+	requestRepo       repository.IRequestRepository
+	requestDetailRepo repository.IRequestDetailRepository
 }
 
 var requestService IRequestService
@@ -28,7 +30,8 @@ var requestService IRequestService
 func NewRequestService() IRequestService {
 	if requestService == nil {
 		requestService = &RequestService{
-			requestRepo: repository.NewRequestRepository(),
+			requestRepo:       repository.NewRequestRepository(),
+			requestDetailRepo: repository.NewRequestDetailRepository(),
 		}
 	}
 	return requestService
@@ -86,6 +89,24 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 		return nil, common.RequestInvalid
 	}
 
+	if err := req.Verify(); err != nil {
+		return nil, &common.Error{Code: "400", Message: err.Error()}
+	}
+
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	requestRepoTx := s.requestRepo.(*repository.RequestRepository).WithTx(tx)
+	requestDetailRepoTx := s.requestDetailRepo.(*repository.RequestDetailRepository).WithTx(tx)
+
 	request := &model.Request{
 		RequestType:   req.RequestType,
 		Description:   req.Description,
@@ -100,8 +121,32 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 		CreatedAt:     time.Now(),
 	}
 
-	err := s.requestRepo.Save(request)
+	err := requestRepoTx.Save(request)
 	if err != nil {
+		tx.Rollback()
+		return nil, common.SystemError
+	}
+	for _, detailDto := range req.RequestDetail {
+		if detailDto.ComponentID == nil || detailDto.Quantity == nil || detailDto.UnitPrice == nil {
+			tx.Rollback()
+			return nil, common.RequestInvalid
+		}
+
+		detail := &model.RequestDetail{
+			RequestID:   int(request.RequestID),
+			ComponentID: *detailDto.ComponentID,
+			Quantity:    *detailDto.Quantity,
+			UnitPrice:   *detailDto.UnitPrice,
+		}
+
+		err = requestDetailRepoTx.Save(detail)
+		if err != nil {
+			tx.Rollback()
+			return nil, common.SystemError
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return nil, common.SystemError
 	}
 

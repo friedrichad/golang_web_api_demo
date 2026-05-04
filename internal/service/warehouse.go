@@ -75,6 +75,10 @@ func (s *WarehouseService) CreateWarehouse(c *gin.Context) (*dtos.WarehouseRespo
 		return nil, common.RequestInvalid
 	}
 
+	if err := req.Verify(); err != nil {
+		return nil, &common.Error{Code: "400", Message: err.Error()}
+	}
+
 	warehouse := &model.Warehouse{
 		WarehouseName:    req.WarehouseName,
 		Description:      req.Description,
@@ -96,6 +100,10 @@ func (s *WarehouseService) UpdateWarehouse(c *gin.Context) *common.Error {
 	var req dtos.WarehouseUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
+	}
+
+	if err := req.Verify(); err != nil {
+		return &common.Error{Code: "400", Message: err.Error()}
 	}
 
 	warehouse, err := s.warehouseRepo.GetByWarehouseId(req.WarehouseID)

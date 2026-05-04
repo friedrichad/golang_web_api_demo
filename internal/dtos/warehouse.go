@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -23,6 +24,14 @@ type WarehouseCreate struct {
 	ImageURL         string `json:"image_url"`
 }
 
+// WarehouseCreateVerify - Verify method for WarehouseCreate
+func (w *WarehouseCreate) Verify() error {
+	if w.WarehouseName == "" {
+		return fmt.Errorf("WarehouseName is required")
+	}
+	return nil
+}
+
 // WarehouseUpdate - PUT request body
 type WarehouseUpdate struct {
 	WarehouseID      int    `json:"warehouse_id" binding:"required"`
@@ -31,6 +40,14 @@ type WarehouseUpdate struct {
 	PhysicalLocation string `json:"physical_location"`
 	ImageURL         string `json:"image_url"`
 	UpdatedBy        int    `json:"updated_by"`
+}
+
+// WarehouseUpdateVerify - Verify method for WarehouseUpdate
+func (w *WarehouseUpdate) Verify() error {
+	if w.WarehouseID == 0 {
+		return fmt.Errorf("WarehouseID is required")
+	}
+	return nil
 }
 
 // WarehouseResponse - Response body

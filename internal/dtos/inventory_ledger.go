@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -15,6 +16,14 @@ type InventoryLedgerFilter struct {
 	ReferenceTypeID *int `form:"reference_type_id"`
 	model.PageSize
 	model.DateRequest
+}
+
+// Verify validates the InventoryLedgerFilter struct.
+func (i *InventoryLedgerFilter) Verify() error {
+	if i.LedgerID == nil && i.ComponentID == nil {
+		return fmt.Errorf("At least one of LedgerID or ComponentID is required")
+	}
+	return nil
 }
 
 type InventoryLedgerResponse struct {

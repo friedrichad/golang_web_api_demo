@@ -83,6 +83,10 @@ func (s *ComponentService) CreateComponent(c *gin.Context) (*dtos.ComponentRespo
 		return nil, common.RequestInvalid
 	}
 
+	if err := req.Verify(); err != nil {
+		return nil, &common.Error{Code: "400", Message: err.Error()}
+	}
+
 	comp := &model.Component{
 		ComponentName: req.ComponentName,
 		MetadataJSON:  req.MetadataJSON,
@@ -123,6 +127,10 @@ func (s *ComponentService) UpdateComponent(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
+	if err := req.Verify(); err != nil {
+		return &common.Error{Code: "400", Message: err.Error()}
+	}
+
 	comp, err := s.componentRepo.GetByComponentId(req.ComponentID)
 	if err != nil || comp == nil {
 		return common.NotFound
@@ -150,12 +158,10 @@ func (s *ComponentService) UpdateComponent(c *gin.Context) *common.Error {
 			return err
 		}
 
-		// Delete existing associations
 		if err := tx.Where("component_id = ?", comp.ComponentID).Delete(&model.ComponentCategoryMap{}).Error; err != nil {
 			return err
 		}
 
-		// Insert new associations
 		for _, cat := range req.ComponentCategory {
 			mapEntry := &model.ComponentCategoryMap{
 				ComponentID: comp.ComponentID,
