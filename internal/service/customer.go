@@ -99,7 +99,7 @@ func (s *CustomerService) UpdateCustomer(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	cust, err := s.customerRepo.GetById(req.CustomerID)
+	cust, err := s.customerRepo.GetByCustomerId(req.CustomerID)
 	if err != nil || cust == nil {
 		return common.NotFound
 	}

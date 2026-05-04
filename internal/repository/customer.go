@@ -40,9 +40,9 @@ func (r *CustomerRepository) GetByCustomerId(customerId int) (*model.Customer, e
 
 func (r *CustomerRepository) GetAllByCondition(query dtos.CustomerFilter) ([]model.Customer, int, error) {
 	return r.GetPage("Select c.* from customer as c "+
-		"where (? is Null or c.customer_name = ?))"+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.CustomerName, query.CustomerName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" where (? is Null or c.customer_name = ?)"+
+		" and (? is null or created_at >= ?) "+
+		" and (? is null or created_at <= ?) ", query.Page, query.Size,query.CustomerName, query.CustomerName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 func (r *CustomerRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from customer where customer_id in ?", ids).Error

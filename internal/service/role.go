@@ -67,7 +67,7 @@ func (s *RoleService) GetRoleById(c *gin.Context) (*dtos.RoleResponse, *common.E
 		return nil, common.RequestInvalid
 	}
 
-	role, err := s.roleRepo.GetById(int32(roleId))
+	role, err := s.roleRepo.GetById(int(roleId))
 	if err != nil {
 		return nil, common.NotFound
 	}
@@ -102,36 +102,36 @@ func (s *RoleService) CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Er
 }
 
 func (s *RoleService) UpdateRole(c *gin.Context) *common.Error {
-	var req dtos.RoleUpdate
-	if err := c.ShouldBindJSON(&req); err != nil {
-		return common.RequestInvalid
-	}
+    var req dtos.RoleUpdate
+    if err := c.ShouldBindJSON(&req); err != nil {
+        return common.RequestInvalid
+    }
 
-	role, err := s.roleRepo.GetById(int32(req.RoleID))
-	if err != nil {
-		return common.NotFound
-	}
+    role, err := s.roleRepo.GetById(int(req.RoleID))
+    if err != nil {
+        return common.NotFound
+    }
+    if role == nil {
+        return &common.Error{Code: "404", Message: "Quyền không tồn tại"}
+    }
 
-	if role == nil {
-		return &common.Error{Code: "404", Message: "Quyền không tồn tại"}
-	}
+    if req.RoleName != "" {
+        role.RoleName = req.RoleName
+    }
+    if req.Description != "" {
+        role.Description = req.Description
+    }
+    role.UpdatedBy = int32(req.UpdatedBy)
+    role.UpdatedAt = time.Now()
 
-	if req.RoleName != "" {
-		role.RoleName = req.RoleName
-	}
-	if req.Description != "" {
-		role.Description = req.Description
-	}
-	role.UpdatedBy = int32(req.UpdatedBy)
-	role.UpdatedAt = time.Now()
+    err = s.roleRepo.Update(role)
+    if err != nil {
+        return common.SystemError
+    }
 
-	err = s.roleRepo.Update(role)
-	if err != nil {
-		return common.SystemError
-	}
-
-	return nil
+    return nil
 }
+
 
 func (s *RoleService) DeleteRole(c *gin.Context) *common.Error {
 	var idStrs []string
@@ -139,13 +139,13 @@ func (s *RoleService) DeleteRole(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	ids := make([]int32, len(idStrs))
+	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
 		roleId, err := strconv.ParseInt(idStr, 10, 32)
 		if err != nil {
 			return common.RequestInvalid
 		}
-		ids[i] = int32(roleId)
+		ids[i] = int(roleId)
 	}
 
 	err := s.roleRepo.Delete(ids)

@@ -50,9 +50,9 @@ func (r *InventoryAdjustmentRepository) GetByAdjustmentId(adjustmentId int32) (*
 
 func (r *InventoryAdjustmentRepository) GetAllByCondition(query dtos.InventoryAdjustmentFilter) ([]model.InventoryAdjustment, int, error) {
 	return r.GetPage("Select ia.* from inventory_adjustment as ia "+
-		"where (? is Null or ia.adjustment_id = ?))"+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.AdjustmentID, query.AdjustmentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" where (? is Null or ia.adjustment_id = ?)"+
+		" and (? is null or created_at >= ?) "+
+		" and (? is null or created_at < ?) ", query.Page, query.Size, query.AdjustmentID, query.AdjustmentID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 func (r *InventoryAdjustmentRepository) Delete(ids []int32) error {
 	return r.DB.Exec("delete from inventory_adjustment where adjustment_id in ?", ids).Error

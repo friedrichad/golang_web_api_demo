@@ -8,18 +8,18 @@ import (
 )
 
 type IRoleRepository interface {
-	IBaseRepository[model.Role, int32]
+	IBaseRepository[model.Role, int]
 	GetByRolename(roleName string) (*model.Role, error)
 	GetAll() ([]model.Role, error)
 	GetAllByCondition(query dtos.RoleFilter) ([]model.Role, int, error)
-	Delete(ids []int32) error
-	GetRoleByUuid(uuid string) ([]model.Role, error)
+	Delete(ids []int) error
+	GetRoleById(roleId int) (model.Role, error)
 	Save(role *model.Role) error
 	Update(role *model.Role) error
 }
 
 type RoleRepository struct {
-	BaseRepository[model.Role, int32]
+	BaseRepository[model.Role, int]
 	DB *gorm.DB
 }
 
@@ -49,13 +49,14 @@ func (r *RoleRepository) GetAll() ([]model.Role, error) {
 
 func (r *RoleRepository) GetAllByCondition(query dtos.RoleFilter) ([]model.Role, int, error) {
 	return r.GetPage(
-		`SELECT r.* 
-	 FROM role r 
-	 WHERE r.role_name LIKE ?
-	 AND (? IS NULL OR r.create_at >= ?)
-	 AND (? IS NULL OR r.create_at < ?)`,
+		`select r.* 
+	 from role r 
+	 where (? is null or r.role_name like ?)
+	 and (? is null OR r.created_at >= ?)
+	 and (? is null OR r.created_at < ?)`,
 		query.Page,
 		query.Size,
+		query.RoleName,
 		query.RoleName,
 		query.GetDateTo(),
 		query.GetDateTo(),
@@ -63,26 +64,18 @@ func (r *RoleRepository) GetAllByCondition(query dtos.RoleFilter) ([]model.Role,
 		query.GetDateFrom(),
 	)
 }
-func (r *RoleRepository) Delete(ids []int32) error {
+func (r *RoleRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from role where role_id in ?", ids).Error
 }
-func (r *RoleRepository) GetRoleByUuid(uuid string) ([]model.Role, error) {
-	var roles []model.Role
-
-	err := r.DB.Raw(`
-		SELECT r.*
-		FROM role AS r
-		JOIN user_role ur ON ur.role_id = r.role_id
-		JOIN user u ON ur.user_uuid = u.user_uuid
-		WHERE u.user_uuid = ?
-	`, uuid).Scan(&roles).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return roles, nil
+func (r *RoleRepository) GetRoleById(roleId int) (model.Role, error) {
+    var role model.Role
+    err := r.DB.Where("role_id = ?", roleId).First(&role).Error
+    if err != nil {
+        return model.Role{}, err
+    }
+    return role, nil
 }
+
 func (r *RoleRepository) Save(role *model.Role) error {
 	return r.BaseRepository.Create(role)
 }

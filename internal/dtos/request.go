@@ -39,7 +39,6 @@ type RequestUpdate struct {
 	PerformedByID int       `json:"performed_by_id"`
 	ApproverID    int       `json:"approver_id"`
 	PartnerID     int       `json:"partner_id"`
-	RequestDate   time.Time `json:"request_date"`
 	StatusInt     int       `json:"status_int"`
 	Note          string    `json:"note"`
 	UpdatedBy     int       `json:"updated_by"`

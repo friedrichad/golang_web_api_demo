@@ -11,7 +11,6 @@ type RoleDTO struct {
 // RoleFilter - GET request with query parameters
 type RoleFilter struct {
 	RoleName    *string `form:"role_name"`
-	Description *string `form:"description"`
 	model.PageSize
 	model.DateRequest
 }

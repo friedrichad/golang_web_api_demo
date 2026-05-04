@@ -94,7 +94,7 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 		BinTo:         int32(req.BinTo),
 		PerformedByID: int32(req.PerformedByID),
 		PartnerID:     int32(req.PartnerID),
-		RequestDate:   req.RequestDate,
+		RequestDate:   time.Now(),
 		Note:          req.Note,
 		StatusInt:     1,
 		CreatedAt:     time.Now(),
@@ -115,7 +115,7 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	request, err := s.requestRepo.GetById(int32(req.RequestID))
+	request, err := s.requestRepo.GetByRequestId(int32(req.RequestID))
 	if err != nil {
 		return common.NotFound
 	}
@@ -147,9 +147,6 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 	}
 	if req.PartnerID != 0 {
 		request.PartnerID = int32(req.PartnerID)
-	}
-	if !req.RequestDate.IsZero() {
-		request.RequestDate = req.RequestDate
 	}
 	if req.StatusInt != 0 {
 		request.StatusInt = int32(req.StatusInt)

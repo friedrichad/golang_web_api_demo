@@ -98,7 +98,7 @@ func (s *WarehouseService) UpdateWarehouse(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	warehouse, err := s.warehouseRepo.GetById(req.WarehouseID)
+	warehouse, err := s.warehouseRepo.GetByWarehouseId(req.WarehouseID)
 	if err != nil || warehouse == nil {
 		return common.NotFound
 	}

@@ -40,11 +40,11 @@ func (c *ComponentRepository) GetByComponentId(componentId int) (*model.Componen
 	return component, err
 }
 func (c *ComponentRepository) GetAllByCondition(query dtos.ComponentFilter) ([]model.Component, int, error) {
-	return c.GetPage("Select c.* from component as c "+
-		"where (? is Null or c.component_id = ?))"+
-		"and (? is Null or c.component_name = ?)) "+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.ComponentID, query.ComponentName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+	return c.GetPage("Select c.* from component c "+
+		" where (? is Null or c.component_id = ?)"+
+		" and (? is Null or c.component_name = ?) "+
+		" and (? is null or created_at >= ?) "+
+		" and (? is null or created_at <= ?) ", query.Page, query.Size, query.ComponentID,query.ComponentID, query.ComponentName, query.ComponentName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 func (c *ComponentRepository) Delete(ids []int) error {
 	return c.DB.Exec("delete from component where component_id in ?", ids).Error

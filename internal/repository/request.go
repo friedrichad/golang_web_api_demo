@@ -41,11 +41,11 @@ func (r *RequestRepository) GetByRequestId(requestId int32) (*model.Request, err
 }
 func (r *RequestRepository) GetAllByCondition(query dtos.RequestFilter) ([]model.Request, int, error) {
 	return r.GetPage("Select r.* from request as r "+
-		"where (? is Null or r.request_id = ?))"+
-		" and (? is Null or r.request_type = ?)) "+
-		"and (?  is Null or r.status_int = ?)) "+
-		"and (? is null or create_at >= ?) "+
-		"and (? is null or create_at < ?) ", query.Page, query.Size, query.RequestID, query.RequestID, query.RequestType, query.RequestType, query.StatusInt, query.StatusInt, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" where (? is Null or r.request_id = ?)"+
+		" and (? is Null or r.request_type = ?) "+
+		" and (?  is Null or r.status_int = ?) "+
+		" and (? is null or created_at >= ?) "+
+		" and (? is null or created_at < ?) ", query.Page, query.Size, query.RequestID, query.RequestID, query.RequestType, query.RequestType, query.StatusInt, query.StatusInt, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 func (r *RequestRepository) Delete(ids []int32) error {
 	return r.DB.Exec("delete from request where request_id in ?", ids).Error
