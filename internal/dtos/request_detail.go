@@ -11,6 +11,8 @@ type RequestDetailDTO struct {
 	ComponentID *int     `json:"component_id"`
 	Quantity    *int     `json:"quantity"`
 	UnitPrice   *float64 `json:"unit_price"`
+	BinFromID   *int     `json:"bin_from_id"`
+	BinToID     *int     `json:"bin_to_id"`
 }
 
 // RequestDetailFilter - GET request with query parameters
@@ -28,6 +30,8 @@ type RequestDetailCreate struct {
 	ComponentID int     `json:"component_id" binding:"required"`
 	Quantity    int     `json:"quantity" binding:"required"`
 	UnitPrice   float64 `json:"unit_price" binding:"required"`
+	BinFromID   int     `json:"bin_from_id"`
+	BinToID     int     `json:"bin_to_id"`
 }
 
 // Verify validates the RequestDetailCreate struct.
@@ -51,6 +55,8 @@ type RequestDetailUpdate struct {
 	ComponentID     int     `json:"component_id"`
 	Quantity        int     `json:"quantity"`
 	UnitPrice       float64 `json:"unit_price"`
+	BinFromID       int     `json:"bin_from_id"`
+	BinToID         int     `json:"bin_to_id"`
 	UpdatedBy       int     `json:"updated_by"`
 }
 
@@ -68,4 +74,6 @@ type RequestDetailResponse struct {
 	ComponentID     int     `json:"component_id"`
 	Quantity        int     `json:"quantity"`
 	UnitPrice       float64 `json:"unit_price"`
+	BinFromID       int     `json:"bin_from_id"`
+	BinToID         int     `json:"bin_to_id"`
 }

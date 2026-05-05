@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +20,8 @@ type IRequestService interface {
 	CreateRequest(c *gin.Context) (*dtos.RequestResponse, *common.Error)
 	UpdateRequest(c *gin.Context) *common.Error
 	DeleteRequest(c *gin.Context) *common.Error
+	ApprovalRequest(c *gin.Context) *common.Error
+	ConfirmRequest(c *gin.Context) *common.Error
 }
 
 type RequestService struct {
@@ -111,8 +115,6 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 		RequestType:   req.RequestType,
 		Description:   req.Description,
 		WarehouseID:   int(req.WarehouseID),
-		BinFrom:       int(req.BinFrom),
-		BinTo:         int(req.BinTo),
 		PerformedByID: int(req.PerformedByID),
 		PartnerID:     int(req.PartnerID),
 		RequestDate:   time.Now(),
@@ -137,6 +139,12 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 			ComponentID: *detailDto.ComponentID,
 			Quantity:    *detailDto.Quantity,
 			UnitPrice:   *detailDto.UnitPrice,
+		}
+		if detailDto.BinFromID != nil {
+			detail.BinFromID = *detailDto.BinFromID
+		}
+		if detailDto.BinToID != nil {
+			detail.BinToID = *detailDto.BinToID
 		}
 
 		err = requestDetailRepoTx.Save(detail)
@@ -166,7 +174,7 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 	}
 
 	if request == nil {
-		return &common.Error{Code: "404", Message: "Yêu cầu không tồn tại"}
+		return common.NotFound
 	}
 
 	if req.RequestType != "" {
@@ -177,12 +185,6 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 	}
 	if req.WarehouseID != 0 {
 		request.WarehouseID = int(req.WarehouseID)
-	}
-	if req.BinFrom != 0 {
-		request.BinFrom = int(req.BinFrom)
-	}
-	if req.BinTo != 0 {
-		request.BinTo = int(req.BinTo)
 	}
 	if req.PerformedByID != 0 {
 		request.PerformedByID = int(req.PerformedByID)
@@ -218,7 +220,7 @@ func (s *RequestService) DeleteRequest(c *gin.Context) *common.Error {
 
 	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
-		requestId, err := strconv.ParseInt(idStr, 10, 32)
+		requestId, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			return common.RequestInvalid
 		}
@@ -239,8 +241,6 @@ func modelToRequestResponse(request *model.Request) dtos.RequestResponse {
 		RequestType:   request.RequestType,
 		Description:   request.Description,
 		WarehouseID:   int(request.WarehouseID),
-		BinTo:         int(request.BinTo),
-		BinFrom:       int(request.BinFrom),
 		PerformedByID: int(request.PerformedByID),
 		ApproverID:    int(request.ApproverID),
 		PartnerID:     int(request.PartnerID),
@@ -252,4 +252,133 @@ func modelToRequestResponse(request *model.Request) dtos.RequestResponse {
 		UpdatedAt:     request.UpdatedAt,
 		UpdatedBy:     int(request.UpdatedBy),
 	}
+}
+func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
+	var req dtos.ApprovalRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return common.RequestInvalid
+	}
+	request, err := s.requestRepo.GetByRequestId(int(req.RequestID))
+	if err != nil {
+		return common.SystemError
+	}
+	if request == nil {
+		return common.NotFound
+	}
+	request.ApproverID = int(req.ApproverID)
+	if !constants.IsValidRequestStatus(req.StatusInt) {
+		return &common.Error{Code: "400", Message: "Trạng thái yêu cầu không hợp lệ!"}
+	}
+	if request.StatusInt == constants.RequestStatusApproved || request.StatusInt == constants.RequestStatusRejected {
+		return &common.Error{Code: "400", Message: "Không thể phê duyệt lại yêu cầu đã được phê duyệt!"}
+	}
+	if req.StatusInt != constants.RequestStatusApproved && req.StatusInt != constants.RequestStatusRejected {
+		return &common.Error{Code: "400", Message: "Yêu cầu chỉ có thể được phê duyệt hoặc từ chối!"}
+	}
+	request.StatusInt = int(req.StatusInt)
+	request.Note = req.Note
+	request.UpdatedAt = time.Now()
+	err = s.requestRepo.Update(request)
+	if err != nil {
+		return common.SystemError
+	}
+	return nil
+}
+
+func (s *RequestService) ConfirmRequest(c *gin.Context) *common.Error {
+	var req dtos.ConfirmRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return common.RequestInvalid
+	}
+	var request *model.Request
+	if req.RequestID == 0 {
+		return common.RequestInvalid
+	}
+	request, err := s.requestRepo.GetByRequestId(int(req.RequestID))
+	if err != nil {
+		return common.SystemError
+	}
+	if request == nil {
+		return common.NotFound
+	}
+	if !constants.IsValidRequestStatus(req.StatusInt) {
+		return &common.Error{Code: "400", Message: "Trạng thái yêu cầu không hợp lệ!"}
+	}
+
+	if request.StatusInt != constants.RequestStatusApproved {
+		return &common.Error{Code: "400", Message: "Chỉ có thể xác nhận yêu cầu đã được phê duyệt!"}
+	}
+	if req.StatusInt == constants.RequestStatusCompleted {
+		if err := s.ApplyRequestDetails(c, int(req.RequestID)); err != nil {
+			return &common.Error{Code: "400", Message: err.Error()}
+		}
+	}
+	request.StatusInt = req.StatusInt
+	request.UpdatedAt = time.Now()
+	err = s.requestRepo.Update(request)
+	if err != nil {
+		return common.SystemError
+	}
+	return nil
+}
+func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) error {
+	details, err := s.requestDetailRepo.GetByRequestId(requestID)
+	if err != nil {
+		return err
+	}
+	compBinRepo := repository.NewComponentBinRepository()
+
+	for _, detail := range details {
+
+		if detail.BinFromID > 0 {
+			var fromBin *model.ComponentBin
+			if err := db.Instance.Where("component_id = ? AND bin_id = ?", detail.ComponentID, detail.BinFromID).First(&fromBin).Error; err != nil {
+				if err.Error() == "record not found" {
+					return fmt.Errorf("bin %d không tồn tại", detail.BinFromID)
+				}
+				return err
+			}
+
+			if fromBin.Quantity < float64(detail.Quantity) {
+				return fmt.Errorf("không đủ hàng trong bin %d, hiện có %.0f, cần %d", detail.BinFromID, fromBin.Quantity, detail.Quantity)
+			}
+
+			fromBin.Quantity -= float64(detail.Quantity)
+			if err := compBinRepo.Update(fromBin); err != nil {
+				return err
+			}
+		}
+
+
+		if detail.BinToID > 0 {
+			var toBin *model.ComponentBin
+			err := db.Instance.Where("component_id = ? AND bin_id = ?", detail.ComponentID, detail.BinToID).First(&toBin).Error
+
+			if err != nil && err.Error() != "record not found" {
+				return err
+			}
+
+			if err != nil && err.Error() == "record not found" {
+			
+				newBin := &model.ComponentBin{
+					ComponentID: detail.ComponentID,
+					BinID:       detail.BinToID,
+					Quantity:    float64(detail.Quantity),
+					CreatedBy:   detail.CreatedBy,
+					CreatedAt:   time.Now(),
+				}
+				if err := compBinRepo.Save(newBin); err != nil {
+					return err
+				}
+			} else {
+
+				toBin.Quantity += float64(detail.Quantity)
+				if err := compBinRepo.Update(toBin); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }

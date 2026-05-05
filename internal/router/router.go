@@ -115,6 +115,8 @@ func initRequestRouter(router *gin.Engine) {
 		requestGroup.POST("", requestController.CreateRequest())
 		requestGroup.PUT("", requestController.UpdateRequest())
 		requestGroup.DELETE("", requestController.DeleteRequest())
+		requestGroup.POST("/approval", requestController.ApprovalRequest())
+		requestGroup.POST("/confirm", requestController.ConfirmRequest())
 	}
 }
 

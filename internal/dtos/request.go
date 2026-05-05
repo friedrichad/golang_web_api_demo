@@ -21,8 +21,6 @@ type RequestCreate struct {
 	RequestType   string             `json:"request_type" binding:"required"`
 	Description   string             `json:"description"`
 	WarehouseID   int                `json:"warehouse_id" binding:"required"`
-	BinFrom       int                `json:"bin_from"`
-	BinTo         int                `json:"bin_to"`
 	PerformedByID int                `json:"performed_by_id"`
 	PartnerID     int                `json:"partner_id"`
 	RequestDate   time.Time          `json:"request_date"`
@@ -36,8 +34,6 @@ type RequestUpdate struct {
 	RequestType   string `json:"request_type"`
 	Description   string `json:"description"`
 	WarehouseID   int    `json:"warehouse_id"`
-	BinTo         int    `json:"bin_to"`
-	BinFrom       int    `json:"bin_from"`
 	PerformedByID int    `json:"performed_by_id"`
 	ApproverID    int    `json:"approver_id"`
 	PartnerID     int    `json:"partner_id"`
@@ -52,8 +48,6 @@ type RequestResponse struct {
 	RequestType   string    `json:"request_type"`
 	Description   string    `json:"description"`
 	WarehouseID   int       `json:"warehouse_id"`
-	BinTo         int       `json:"bin_to"`
-	BinFrom       int       `json:"bin_from"`
 	PerformedByID int       `json:"performed_by_id"`
 	ApproverID    int       `json:"approver_id"`
 	PartnerID     int       `json:"partner_id"`
@@ -64,6 +58,16 @@ type RequestResponse struct {
 	CreateBy      int       `json:"create_by"`
 	UpdatedAt     time.Time `json:"updated_at"`
 	UpdatedBy     int       `json:"updated_by"`
+}
+type ApprovalRequest struct {
+    RequestID    int       `json:"request_id"`
+    ApproverID   int       `json:"approver_id"`
+    StatusInt    int       `json:"status_int"`
+    Note         string    `json:"note"`
+}
+type ConfirmRequest struct {
+	RequestID    int       `json:"request_id"`
+	StatusInt    int       `json:"status_int"`
 }
 
 // Verify validates the RequestCreate struct.
@@ -87,3 +91,4 @@ func (r *RequestUpdate) Verify() error {
 	}
 	return nil
 }
+

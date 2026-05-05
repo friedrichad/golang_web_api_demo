@@ -60,3 +60,9 @@ func (r *ComponentBinRepository) Save(componentBin *model.ComponentBin) error{
 func (r *ComponentBinRepository) Update(request *model.ComponentBin) error {
 	return r.BaseRepository.Update(request)
 }
+func (r *ComponentBinRepository) WithTx(tx *gorm.DB) *ComponentBinRepository {
+	return &ComponentBinRepository{
+		BaseRepository: BaseRepository[model.ComponentBin, int]{Instance: tx},
+		DB:             tx,
+	}
+}

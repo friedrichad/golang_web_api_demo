@@ -12,6 +12,8 @@ type IRequestController interface {
 	CreateRequest() gin.HandlerFunc
 	UpdateRequest() gin.HandlerFunc
 	DeleteRequest() gin.HandlerFunc
+	ApprovalRequest() gin.HandlerFunc
+	ConfirmRequest() gin.HandlerFunc
 }
 
 type RequestController struct {
@@ -43,4 +45,12 @@ func (c *RequestController) UpdateRequest() gin.HandlerFunc {
 
 func (c *RequestController) DeleteRequest() gin.HandlerFunc {
 	return c.ResponseSuccessOnly(c.requestService.DeleteRequest)
+}
+
+func (c *RequestController) ApprovalRequest() gin.HandlerFunc {
+	return c.ResponseSuccessOnly(c.requestService.ApprovalRequest)
+}
+
+func (c *RequestController) ConfirmRequest() gin.HandlerFunc {
+	return c.ResponseSuccessOnly(c.requestService.ConfirmRequest)
 }

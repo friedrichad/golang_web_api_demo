@@ -9,11 +9,12 @@ import (
 
 type IRequestDetailRepository interface {
 	IBaseRepository[model.RequestDetail, int]
-	GetByRequestId(requestId int) (*model.RequestDetail, error)
+	GetByRequestId(requestId int) ([]model.RequestDetail, error)
 	GetAllByCondition(query dtos.RequestDetailFilter) ([]model.RequestDetail, int, error)
 	Delete(ids []int) error
 	Save(request *model.RequestDetail) error
 	Update(request *model.RequestDetail) error
+	GetByRequestDetailId(requestDetailId int) (*model.RequestDetail, error)
 }
 type RequestDetailRepository struct {
 	BaseRepository[model.RequestDetail, int]
@@ -35,9 +36,9 @@ func (r *RequestDetailRepository) WithTx(tx *gorm.DB) *RequestDetailRepository {
 		DB:             tx,
 	}
 }
-func (r *RequestDetailRepository) GetByRequestId(requestId int) (*model.RequestDetail, error) {
-	var requestDetail *model.RequestDetail
-	err := r.DB.Where("request_id = ?", requestId).First(&requestDetail).Error
+func (r *RequestDetailRepository) GetByRequestId(requestId int) ([]model.RequestDetail, error) {
+	var requestDetail []model.RequestDetail
+	err := r.DB.Where("request_id = ?", requestId).Find(&requestDetail).Error
 	if err != nil {
 		return nil, err
 	}
@@ -59,4 +60,12 @@ func (r *RequestDetailRepository) Save(request *model.RequestDetail) error {
 }
 func (r *RequestDetailRepository) Update(request *model.RequestDetail) error {
 	return r.BaseRepository.Update(request)
+}
+func (r *RequestDetailRepository) GetByRequestDetailId(requestDetailId int) (*model.RequestDetail, error) {
+	var requestDetail *model.RequestDetail
+	err := r.DB.Where("request_detail_id = ?", requestDetailId).First(&requestDetail).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return requestDetail, err
 }
