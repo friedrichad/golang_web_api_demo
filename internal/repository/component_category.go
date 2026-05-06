@@ -33,9 +33,9 @@ func NewComponentCategoryRepository() IComponentCategoryRepository {
 
 func (r *ComponentCategoryRepository) GetAllByCondition(query dtos.ComponentCategoryFilter) ([]model.ComponentCategory, int, error) {
 	return r.GetPage("select cc.* from ComponentCategory cc"+
-	" where (? is null or cc.category_name like ?)"+
-	" and (? is null or cc.created_at >= ?)"+
-	" and (? is null or cc.created_at <= ?)", query.Page, query.Size,query.CategoryName, query.CategoryName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" where (? is null or cc.category_name like ?)"+
+		" and (? is null or cc.created_at >= ?)"+
+		" and (? is null or cc.created_at <= ?)", query.Page, query.Size, query.CategoryName, query.CategoryName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
 func (r *ComponentCategoryRepository) Delete(ids []int) error {
@@ -54,4 +54,11 @@ func (r *ComponentCategoryRepository) Save(category *model.ComponentCategory) er
 
 func (r *ComponentCategoryRepository) Update(category *model.ComponentCategory) error {
 	return r.BaseRepository.Update(category)
+}
+
+func (r *ComponentCategoryRepository) WithTx(tx *gorm.DB) *ComponentCategoryRepository {
+	return &ComponentCategoryRepository{
+		BaseRepository: BaseRepository[model.ComponentCategory, int]{Instance: tx},
+		DB:             tx,
+	}
 }

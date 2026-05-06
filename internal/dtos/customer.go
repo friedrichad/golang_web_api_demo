@@ -20,7 +20,7 @@ type CustomerFilter struct {
 // CustomerCreate - POST request body
 type CustomerCreate struct {
 	CustomerName string `json:"customer_name" binding:"required"`
-	Phone        string `json:"phone"`
+	Phone        string `json:"phone" binding:"required"`
 	Email        string `json:"email" binding:"email"`
 	Address      string `json:"address"`
 }
@@ -29,6 +29,9 @@ type CustomerCreate struct {
 func (c *CustomerCreate) Verify() error {
 	if c.CustomerName == "" {
 		return fmt.Errorf("CustomerName is required")
+	}
+	if c.Phone == "" {
+		return fmt.Errorf("Phone is required")
 	}
 	if c.Email == "" {
 		return fmt.Errorf("Email is required")

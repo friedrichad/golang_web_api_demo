@@ -10,6 +10,7 @@ import (
 func InitRouter() *gin.Engine {
 	router := gin.Default()
 	configCors(router)
+	initAuthRouter(router)
 	initUserRouter(router)
 	initBinRouter(router)
 	initWarehouseRouter(router)
@@ -17,8 +18,10 @@ func InitRouter() *gin.Engine {
 	initCustomerRouter(router)
 	initRoleRouter(router)
 	initRequestRouter(router)
+	initRequestDetailRouter(router)
 	initInventoryAdjustmentRouter(router)
 	initInventoryAuditRouter(router)
+	initInventoryAuditDetailRouter(router)
 	initInventoryLedgerRouter(router)
 	initComponentCategoryRouter(router)
 	return router
@@ -120,6 +123,18 @@ func initRequestRouter(router *gin.Engine) {
 	}
 }
 
+func initRequestDetailRouter(router *gin.Engine) {
+	requestDetailController := controller.NewRequestDetailController()
+	requestDetailGroup := router.Group("/request-details")
+	{
+		requestDetailGroup.GET("", requestDetailController.GetAllRequestDetails())
+		requestDetailGroup.GET("/:id", requestDetailController.GetRequestDetailById())
+		requestDetailGroup.POST("", requestDetailController.CreateRequestDetail())
+		requestDetailGroup.PUT("", requestDetailController.UpdateRequestDetail())
+		requestDetailGroup.DELETE("", requestDetailController.DeleteRequestDetail())
+	}
+}
+
 func initInventoryAdjustmentRouter(router *gin.Engine) {
 	adjustmentController := controller.NewInventoryAdjustmentController()
 	adjustmentGroup := router.Group("/adjustments")
@@ -129,6 +144,7 @@ func initInventoryAdjustmentRouter(router *gin.Engine) {
 		adjustmentGroup.POST("", adjustmentController.CreateAdjustment())
 		adjustmentGroup.PUT("", adjustmentController.UpdateAdjustment())
 		adjustmentGroup.DELETE("", adjustmentController.DeleteAdjustment())
+		adjustmentGroup.POST("/approval", adjustmentController.ApproveAdjustment())
 	}
 }
 
@@ -141,6 +157,17 @@ func initInventoryAuditRouter(router *gin.Engine) {
 		auditGroup.POST("", auditController.CreateAudit())
 		auditGroup.PUT("", auditController.UpdateAudit())
 		auditGroup.DELETE("", auditController.DeleteAudit())
+	}
+}
+func initInventoryAuditDetailRouter(router *gin.Engine) {
+	auditDetailController := controller.NewInventoryAuditDetailController()
+	auditDetailGroup := router.Group("/audit-details")
+	{
+		auditDetailGroup.GET("", auditDetailController.GetAllInventoryAuditDetails())
+		// auditDetailGroup.GET("/:id", auditDetailController.GetInventoryAuditDetailById())
+		auditDetailGroup.POST("", auditDetailController.CreateInventoryAuditDetail())
+		auditDetailGroup.PUT("", auditDetailController.UpdateInventoryAuditDetail())
+		auditDetailGroup.DELETE("", auditDetailController.DeleteInventoryAuditDetail())
 	}
 }
 

@@ -42,7 +42,7 @@ func (r *CustomerRepository) GetAllByCondition(query dtos.CustomerFilter) ([]mod
 	return r.GetPage("Select c.* from customer as c "+
 		" where (? is Null or c.customer_name = ?)"+
 		" and (? is null or c.created_at >= ?) "+
-		" and (? is null or c.created_at <= ?) ", query.Page, query.Size,query.CustomerName, query.CustomerName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" and (? is null or c.created_at <= ?) ", query.Page, query.Size, query.CustomerName, query.CustomerName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 func (r *CustomerRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from customer where customer_id in ?", ids).Error
@@ -52,4 +52,11 @@ func (r *CustomerRepository) Save(request *model.Customer) error {
 }
 func (r *CustomerRepository) Update(request *model.Customer) error {
 	return r.BaseRepository.Update(request)
+}
+
+func (r *CustomerRepository) WithTx(tx *gorm.DB) *CustomerRepository {
+	return &CustomerRepository{
+		BaseRepository: BaseRepository[model.Customer, int]{Instance: tx},
+		DB:             tx,
+	}
 }

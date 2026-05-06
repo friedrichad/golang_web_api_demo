@@ -98,3 +98,10 @@ func (u *UserRepository) Delete(ids []int) error {
 	err := u.DB.Where("user_id IN ?", ids).Delete(&model.User{}).Error
 	return err
 }
+
+func (u *UserRepository) WithTx(tx *gorm.DB) *UserRepository {
+	return &UserRepository{
+		BaseRepository: BaseRepository[model.User, int]{Instance: tx},
+		DB:             tx,
+	}
+}

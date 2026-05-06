@@ -45,7 +45,7 @@ func (r *InventoryLedgerRepository) GetAllByCondition(query dtos.InventoryLedger
 		" where (? is Null or il.ledger_id = ?))"+
 		" and (? is null or il.component_id = ?) "+
 		" and (? is null or  il.warehouse_id = ?) "+
-	    " and (? is null or  il.bin_id = ?) "+
+		" and (? is null or  il.bin_id = ?) "+
 		" and (? is null or  il.reference_id = ?) "+
 		" and (? is null or il.created_at >= ?) "+
 		" and (? is null or il.created_at < ?) ", query.Page, query.Size, query.LedgerID, query.LedgerID, query.ComponentID, query.ComponentID, query.WarehouseID, query.WarehouseID, query.BinID, query.BinID, query.ReferenceTypeID, query.ReferenceTypeID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
@@ -61,4 +61,11 @@ func (r *InventoryLedgerRepository) Save(request *model.InventoryLedger) error {
 
 func (r *InventoryLedgerRepository) Update(request *model.InventoryLedger) error {
 	return r.BaseRepository.Update(request)
+}
+
+func (r *InventoryLedgerRepository) WithTx(tx *gorm.DB) *InventoryLedgerRepository {
+	return &InventoryLedgerRepository{
+		BaseRepository: BaseRepository[model.InventoryLedger, int]{Instance: tx},
+		DB:             tx,
+	}
 }

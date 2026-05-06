@@ -44,7 +44,7 @@ func (c *ComponentRepository) GetAllByCondition(query dtos.ComponentFilter) ([]m
 		" where (? is Null or c.component_id = ?)"+
 		" and (? is Null or c.component_name = ?) "+
 		" and (? is null or created_at >= ?) "+
-		" and (? is null or created_at <= ?) ", query.Page, query.Size, query.ComponentID,query.ComponentID, query.ComponentName, query.ComponentName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" and (? is null or created_at <= ?) ", query.Page, query.Size, query.ComponentID, query.ComponentID, query.ComponentName, query.ComponentName, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 func (c *ComponentRepository) Delete(ids []int) error {
 	return c.DB.Exec("delete from component where component_id in ?", ids).Error
@@ -54,4 +54,11 @@ func (c *ComponentRepository) Save(component *model.Component) error {
 }
 func (c *ComponentRepository) Update(component *model.Component) error {
 	return c.BaseRepository.Update(component)
+}
+
+func (c *ComponentRepository) WithTx(tx *gorm.DB) *ComponentRepository {
+	return &ComponentRepository{
+		BaseRepository: BaseRepository[model.Component, int]{Instance: tx},
+		DB:             tx,
+	}
 }

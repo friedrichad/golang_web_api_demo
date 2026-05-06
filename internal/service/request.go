@@ -22,6 +22,12 @@ type IRequestService interface {
 	DeleteRequest(c *gin.Context) *common.Error
 	ApprovalRequest(c *gin.Context) *common.Error
 	ConfirmRequest(c *gin.Context) *common.Error
+	// RequestDetail CRUD operations
+	GetAllRequestDetails(c *gin.Context) ([]dtos.RequestDetailResponse, int, *common.Error)
+	GetRequestDetailById(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error)
+	CreateRequestDetail(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error)
+	UpdateRequestDetail(c *gin.Context) *common.Error
+	DeleteRequestDetail(c *gin.Context) *common.Error
 }
 
 type RequestService struct {
@@ -331,12 +337,13 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 	for _, detail := range details {
 
 		if detail.BinFromID > 0 {
-			var fromBin *model.ComponentBin
-			if err := db.Instance.Where("component_id = ? AND bin_id = ?", detail.ComponentID, detail.BinFromID).First(&fromBin).Error; err != nil {
-				if err.Error() == "record not found" {
-					return fmt.Errorf("bin %d không tồn tại", detail.BinFromID)
-				}
+			fromBin, err := compBinRepo.GetByComponentAndBinId(detail.ComponentID, detail.BinFromID)
+			if err != nil {
 				return err
+			}
+
+			if fromBin == nil {
+				return fmt.Errorf("bin %d không tồn tại", detail.BinFromID)
 			}
 
 			if fromBin.Quantity < float64(detail.Quantity) {
@@ -349,17 +356,13 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 			}
 		}
 
-
 		if detail.BinToID > 0 {
-			var toBin *model.ComponentBin
-			err := db.Instance.Where("component_id = ? AND bin_id = ?", detail.ComponentID, detail.BinToID).First(&toBin).Error
-
-			if err != nil && err.Error() != "record not found" {
+			toBin, err := compBinRepo.GetByComponentAndBinId(detail.ComponentID, detail.BinToID)
+			if err != nil {
 				return err
 			}
 
-			if err != nil && err.Error() == "record not found" {
-			
+			if toBin == nil {
 				newBin := &model.ComponentBin{
 					ComponentID: detail.ComponentID,
 					BinID:       detail.BinToID,
@@ -371,7 +374,6 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 					return err
 				}
 			} else {
-
 				toBin.Quantity += float64(detail.Quantity)
 				if err := compBinRepo.Update(toBin); err != nil {
 					return err
@@ -381,4 +383,169 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 	}
 
 	return nil
+}
+
+// RequestDetail CRUD operations
+
+func (s *RequestService) GetAllRequestDetails(c *gin.Context) ([]dtos.RequestDetailResponse, int, *common.Error) {
+	var query dtos.RequestDetailFilter
+	if err := c.ShouldBindQuery(&query); err != nil {
+		return nil, 0, common.RequestInvalid
+	}
+
+	details, total, err := s.requestDetailRepo.GetAllByCondition(query)
+	if err != nil {
+		return nil, 0, common.SystemError
+	}
+	if total == 0 {
+		return nil, 0, common.NotFound
+	}
+
+	detailResponses := make([]dtos.RequestDetailResponse, len(details))
+	for i, detail := range details {
+		detailResponses[i] = modelToRequestDetailResponse(&detail)
+	}
+
+	return detailResponses, total, nil
+}
+
+func (s *RequestService) GetRequestDetailById(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		return nil, common.RequestInvalid
+	}
+
+	detailId, err := strconv.ParseInt(idStr, 10, 32)
+	if err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	detail, err := s.requestDetailRepo.GetByRequestDetailId(int(detailId))
+	if err != nil {
+		return nil, common.NotFound
+	}
+
+	if detail == nil {
+		return nil, &common.Error{Code: "404", Message: "Chi tiết yêu cầu không tồn tại"}
+	}
+
+	detailResponse := modelToRequestDetailResponse(detail)
+	return &detailResponse, nil
+}
+
+func (s *RequestService) CreateRequestDetail(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error) {
+	var req dtos.RequestDetailCreate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	if err := req.Verify(); err != nil {
+		return nil, &common.Error{Code: "400", Message: err.Error()}
+	}
+
+	// Verify request exists
+	request, err := s.requestRepo.GetByRequestId(req.RequestID)
+	if err != nil || request == nil {
+		return nil, &common.Error{Code: "404", Message: "Yêu cầu không tồn tại"}
+	}
+
+	detail := &model.RequestDetail{
+		RequestID:   req.RequestID,
+		ComponentID: req.ComponentID,
+		Quantity:    req.Quantity,
+		UnitPrice:   req.UnitPrice,
+		BinFromID:   req.BinFromID,
+		BinToID:     req.BinToID,
+		CreatedAt:   time.Now(),
+	}
+
+	err = s.requestDetailRepo.Save(detail)
+	if err != nil {
+		return nil, common.SystemError
+	}
+
+	detailResponse := modelToRequestDetailResponse(detail)
+	return &detailResponse, nil
+}
+
+func (s *RequestService) UpdateRequestDetail(c *gin.Context) *common.Error {
+	var req dtos.RequestDetailUpdate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return common.RequestInvalid
+	}
+
+	if err := req.Verify(); err != nil {
+		return &common.Error{Code: "400", Message: err.Error()}
+	}
+
+	detail, err := s.requestDetailRepo.GetByRequestDetailId(req.RequestDetailID)
+	if err != nil || detail == nil {
+		return &common.Error{Code: "404", Message: "Chi tiết yêu cầu không tồn tại"}
+	}
+
+	// Update fields if provided
+	if req.RequestID != 0 {
+		detail.RequestID = req.RequestID
+	}
+	if req.ComponentID != 0 {
+		detail.ComponentID = req.ComponentID
+	}
+	if req.Quantity != 0 {
+		detail.Quantity = req.Quantity
+	}
+	if req.UnitPrice != 0 {
+		detail.UnitPrice = req.UnitPrice
+	}
+	if req.BinFromID != 0 {
+		detail.BinFromID = req.BinFromID
+	}
+	if req.BinToID != 0 {
+		detail.BinToID = req.BinToID
+	}
+	if req.UpdatedBy != 0 {
+		detail.UpdatedBy = req.UpdatedBy
+	}
+	detail.UpdatedAt = time.Now()
+
+	err = s.requestDetailRepo.Update(detail)
+	if err != nil {
+		return common.SystemError
+	}
+
+	return nil
+}
+
+func (s *RequestService) DeleteRequestDetail(c *gin.Context) *common.Error {
+	var idStrs []string
+	if err := c.ShouldBindJSON(&idStrs); err != nil {
+		return common.RequestInvalid
+	}
+
+	ids := make([]int, len(idStrs))
+	for i, idStr := range idStrs {
+		detailId, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return common.RequestInvalid
+		}
+		ids[i] = int(detailId)
+	}
+
+	err := s.requestDetailRepo.Delete(ids)
+	if err != nil {
+		return common.SystemError
+	}
+
+	return nil
+}
+
+func modelToRequestDetailResponse(detail *model.RequestDetail) dtos.RequestDetailResponse {
+	return dtos.RequestDetailResponse{
+		RequestDetailID: detail.RequestDetailID,
+		RequestID:       detail.RequestID,
+		ComponentID:     detail.ComponentID,
+		Quantity:        detail.Quantity,
+		UnitPrice:       detail.UnitPrice,
+		BinFromID:       detail.BinFromID,
+		BinToID:         detail.BinToID,
+	}
 }

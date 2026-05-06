@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -90,14 +91,32 @@ func (s *RoleService) CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Er
 		return nil, &common.Error{Code: "400", Message: err.Error()}
 	}
 
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleRepoTx := s.roleRepo.(*repository.RoleRepository).WithTx(tx)
+
 	role := &model.Role{
 		RoleName:    req.RoleName,
 		Description: req.Description,
 		CreatedAt:   time.Now(),
 	}
 
-	err := s.roleRepo.Save(role)
+	err := roleRepoTx.Save(role)
 	if err != nil {
+		tx.Rollback()
+		return nil, common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return nil, common.SystemError
 	}
 
@@ -115,11 +134,26 @@ func (s *RoleService) UpdateRole(c *gin.Context) *common.Error {
 		return &common.Error{Code: "400", Message: err.Error()}
 	}
 
-	role, err := s.roleRepo.GetRoleById(int(req.RoleID))
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleRepoTx := s.roleRepo.(*repository.RoleRepository).WithTx(tx)
+
+	role, err := roleRepoTx.GetRoleById(int(req.RoleID))
 	if err != nil {
+		tx.Rollback()
 		return common.NotFound
 	}
 	if role == nil {
+		tx.Rollback()
 		return &common.Error{Code: "404", Message: "Quyền không tồn tại"}
 	}
 
@@ -132,8 +166,13 @@ func (s *RoleService) UpdateRole(c *gin.Context) *common.Error {
 	role.UpdatedBy = int(req.UpdatedBy)
 	role.UpdatedAt = time.Now()
 
-	err = s.roleRepo.Update(role)
+	err = roleRepoTx.Update(role)
 	if err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return common.SystemError
 	}
 
@@ -155,8 +194,26 @@ func (s *RoleService) DeleteRole(c *gin.Context) *common.Error {
 		ids[i] = int(roleId)
 	}
 
-	err := s.roleRepo.Delete(ids)
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleRepoTx := s.roleRepo.(*repository.RoleRepository).WithTx(tx)
+
+	err := roleRepoTx.Delete(ids)
 	if err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return common.SystemError
 	}
 

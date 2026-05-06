@@ -68,12 +68,12 @@ func (r *RoleRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from role where role_id in ?", ids).Error
 }
 func (r *RoleRepository) GetRoleById(roleId int) (*model.Role, error) {
-    var role model.Role
-    err := r.DB.Where("role_id = ?", roleId).First(&role).Error
-    if err != nil {
-        return nil, err
-    }
-    return &role, nil
+	var role model.Role
+	err := r.DB.Where("role_id = ?", roleId).First(&role).Error
+	if err != nil {
+		return nil, err
+	}
+	return &role, nil
 }
 
 func (r *RoleRepository) Save(role *model.Role) error {
@@ -82,4 +82,11 @@ func (r *RoleRepository) Save(role *model.Role) error {
 
 func (r *RoleRepository) Update(role *model.Role) error {
 	return r.BaseRepository.Update(role)
+}
+
+func (r *RoleRepository) WithTx(tx *gorm.DB) *RoleRepository {
+	return &RoleRepository{
+		BaseRepository: BaseRepository[model.Role, int]{Instance: tx},
+		DB:             tx,
+	}
 }

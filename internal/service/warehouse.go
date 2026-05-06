@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -79,6 +80,19 @@ func (s *WarehouseService) CreateWarehouse(c *gin.Context) (*dtos.WarehouseRespo
 		return nil, &common.Error{Code: "400", Message: err.Error()}
 	}
 
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	warehouseRepoTx := s.warehouseRepo.(*repository.WarehouseRepository).WithTx(tx)
+
 	warehouse := &model.Warehouse{
 		WarehouseName:    req.WarehouseName,
 		Description:      req.Description,
@@ -87,8 +101,13 @@ func (s *WarehouseService) CreateWarehouse(c *gin.Context) (*dtos.WarehouseRespo
 		CreatedAt:        time.Now(),
 	}
 
-	err := s.warehouseRepo.Save(warehouse)
+	err := warehouseRepoTx.Save(warehouse)
 	if err != nil {
+		tx.Rollback()
+		return nil, common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return nil, common.SystemError
 	}
 
@@ -106,8 +125,22 @@ func (s *WarehouseService) UpdateWarehouse(c *gin.Context) *common.Error {
 		return &common.Error{Code: "400", Message: err.Error()}
 	}
 
-	warehouse, err := s.warehouseRepo.GetByWarehouseId(req.WarehouseID)
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	warehouseRepoTx := s.warehouseRepo.(*repository.WarehouseRepository).WithTx(tx)
+
+	warehouse, err := warehouseRepoTx.GetByWarehouseId(req.WarehouseID)
 	if err != nil || warehouse == nil {
+		tx.Rollback()
 		return common.NotFound
 	}
 
@@ -128,8 +161,13 @@ func (s *WarehouseService) UpdateWarehouse(c *gin.Context) *common.Error {
 	}
 	warehouse.UpdatedAt = time.Now()
 
-	err = s.warehouseRepo.Update(warehouse)
+	err = warehouseRepoTx.Update(warehouse)
 	if err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return common.SystemError
 	}
 
@@ -142,8 +180,26 @@ func (s *WarehouseService) DeleteWarehouse(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	err := s.warehouseRepo.Delete(ids)
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	warehouseRepoTx := s.warehouseRepo.(*repository.WarehouseRepository).WithTx(tx)
+
+	err := warehouseRepoTx.Delete(ids)
 	if err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return common.SystemError
 	}
 
