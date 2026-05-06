@@ -17,30 +17,33 @@ type InventoryAdjustmentFilter struct {
 
 // InventoryAdjustmentCreate - POST request body
 type InventoryAdjustmentCreate struct {
-	AuditID     int    `json:"audit_id" binding:"required"`
-	Description string `json:"description"`
-	Note        string `json:"note"`
+	AuditID     int                               `json:"audit_id" binding:"required"`
+	Description string                            `json:"description"`
+	Note        string                            `json:"note"`
+	Details     []InventoryAdjustmentDetailCreate `json:"details"`
 }
 
 // InventoryAdjustmentUpdate - PUT request body
 type InventoryAdjustmentUpdate struct {
-	AdjustmentID int       `json:"adjustment_id" binding:"required"`
-	ApprovedID   int       `json:"approved_id"`
-	Description  string    `json:"description"`
-	ApprovedTime time.Time `json:"approved_time"`
-	StatusInt    int       `json:"status_int"`
-	Note         string    `json:"note"`
-	UpdatedBy    int       `json:"updated_by"`
+	AdjustmentID int                               `json:"adjustment_id" binding:"required"`
+	ApprovedID   int                               `json:"approved_id"`
+	Description  string                            `json:"description"`
+	ApprovedTime time.Time                         `json:"approved_time"`
+	StatusInt    int                               `json:"status_int"`
+	Note         string                            `json:"note"`
+	UpdatedBy    int                               `json:"updated_by"`
+	Details      []InventoryAdjustmentDetailUpdate `json:"details"`
 }
 
 type InventoryAdjustmentResponse struct {
-	AdjustmentID int       `json:"adjustment_id"`
-	AuditID      int       `json:"audit_id"`
-	ApprovedID   int       `json:"approved_id"`
-	Description  string    `json:"description"`
-	ApprovedTime time.Time `json:"approved_time"`
-	StatusInt    int       `json:"status_int"`
-	Note         string    `json:"note"`
-	CreatedBy    int       `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	AdjustmentID int                                 `json:"adjustment_id"`
+	AuditID      int                                 `json:"audit_id"`
+	ApprovedID   int                                 `json:"approved_id"`
+	Description  string                              `json:"description"`
+	ApprovedTime time.Time                           `json:"approved_time"`
+	StatusInt    int                                 `json:"status_int"`
+	Note         string                              `json:"note"`
+	CreatedBy    int                                 `json:"created_by"`
+	CreatedAt    time.Time                           `json:"created_at"`
+	Details      []InventoryAdjustmentDetailResponse `json:"details"`
 }

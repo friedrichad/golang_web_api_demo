@@ -12,6 +12,7 @@ type IInventoryAdjustmentController interface {
 	CreateAdjustment() gin.HandlerFunc
 	UpdateAdjustment() gin.HandlerFunc
 	DeleteAdjustment() gin.HandlerFunc
+	ApproveAdjustment() gin.HandlerFunc
 }
 
 type InventoryAdjustmentController struct {
@@ -43,4 +44,8 @@ func (c *InventoryAdjustmentController) UpdateAdjustment() gin.HandlerFunc {
 
 func (c *InventoryAdjustmentController) DeleteAdjustment() gin.HandlerFunc {
 	return c.ResponseSuccessOnly(c.adjustmentService.DeleteInventoryAdjustment)
+}
+
+func (c *InventoryAdjustmentController) ApproveAdjustment() gin.HandlerFunc {
+	return c.ResponseSuccessOnly(c.adjustmentService.ApproveInventoryAdjustment)
 }

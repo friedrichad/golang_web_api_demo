@@ -54,3 +54,10 @@ func (r *InventoryAuditDetailRepository) Save(request *model.InventoryAuditDetai
 func (r *InventoryAuditDetailRepository) Update(request *model.InventoryAuditDetail) error {
 	return r.BaseRepository.Update(request)
 }
+
+func (r *InventoryAuditDetailRepository) WithTx(tx *gorm.DB) *InventoryAuditDetailRepository {
+	return &InventoryAuditDetailRepository{
+		BaseRepository: BaseRepository[model.InventoryAuditDetail, int]{Instance: tx},
+		DB:             tx,
+	}
+}

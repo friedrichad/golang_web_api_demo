@@ -44,7 +44,7 @@ func (r *InventoryAuditRepository) GetAllByCondition(query dtos.InventoryAuditFi
 		" where (? is Null or ia.audit_id = ?)"+
 		" and (? is null or ia.warehouse_id = ?) "+
 		" and (? is null or ia.created_at >= ?) "+
-		" and (? is null or ia.created_at < ?) ", query.Page, query.Size, query.AuditID, query.AuditID,query.WarehouseID,query.WarehouseID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" and (? is null or ia.created_at < ?) ", query.Page, query.Size, query.AuditID, query.AuditID, query.WarehouseID, query.WarehouseID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 func (r *InventoryAuditRepository) Delete(ids []int) error {
 	return r.DB.Exec("delete from inventory_audit where audit_id in ?", ids).Error
@@ -54,4 +54,11 @@ func (r *InventoryAuditRepository) Save(request *model.InventoryAudit) error {
 }
 func (r *InventoryAuditRepository) Update(request *model.InventoryAudit) error {
 	return r.BaseRepository.Update(request)
+}
+
+func (r *InventoryAuditRepository) WithTx(tx *gorm.DB) *InventoryAuditRepository {
+	return &InventoryAuditRepository{
+		BaseRepository: BaseRepository[model.InventoryAudit, int]{Instance: tx},
+		DB:             tx,
+	}
 }

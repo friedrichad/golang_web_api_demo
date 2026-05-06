@@ -20,6 +20,7 @@ type InventoryAuditFilter struct {
 type InventoryAuditCreate struct {
 	WarehouseID int    `json:"warehouse_id" binding:"required"`
 	Note        string `json:"note"`
+	AuditDetail []InventoryAuditDetailCreate `json:"audit_detail"`
 }
 
 // Verify validates the InventoryAuditCreate struct.
@@ -55,4 +56,15 @@ type InventoryAuditResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedBy   int       `json:"updated_by"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type ApprovalAudit struct {
+	AuditID   int    `json:"audit_id" binding:"required"`
+	StatusInt int    `json:"status_int" binding:"required"`
+	Note      string `json:"note"`
+}
+
+type ConfirmAudit struct {
+	AuditID   int `json:"audit_id" binding:"required"`
+	StatusInt int `json:"status_int" binding:"required"`
 }
