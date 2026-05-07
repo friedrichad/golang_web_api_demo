@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type IInventoryAdjustmentService interface {
@@ -76,7 +76,7 @@ func (s *InventoryAdjustmentService) GetInventoryAdjustmentById(c *gin.Context) 
 		return nil, common.RequestInvalid
 	}
 
-	adjustmentId, err := strconv.ParseInt(idStr, 10, 32)
+	adjustmentId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -109,6 +109,20 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (
 		return nil, common.RequestInvalid
 	}
 
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	adjustmentRepoTx := s.adjustmentRepo.(*repository.InventoryAdjustmentRepository).WithTx(tx)
+	detailRepoTx := s.detailRepo.(*repository.InventoryAdjustmentDetailRepository).WithTx(tx)
+
 	adjustment := &model.InventoryAdjustment{
 		AuditID:     int(req.AuditID),
 		Description: req.Description,
@@ -117,23 +131,33 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (
 		CreatedAt:   time.Now(),
 	}
 
-	// Prepare details
-	details := make([]model.InventoryAdjustmentDetail, len(req.Details))
-	for i, detailReq := range req.Details {
-		details[i] = model.InventoryAdjustmentDetail{
-			ComponentID:        detailReq.ComponentID,
-			BinID:              detailReq.BinID,
-			WarehouseID:        detailReq.WarehouseID,
-			QuantityBefore:     detailReq.QuantityBefore,
-			QuantityAfter:      detailReq.QuantityAfter,
-			AdjustmentQuantity: detailReq.AdjustmentQuantity,
-			CreatedAt:          time.Now(),
+	err := adjustmentRepoTx.Save(adjustment)
+	if err != nil {
+		tx.Rollback()
+		return nil, common.SystemError
+	}
+
+	if len(req.Details) > 0 {
+		for _, detailReq := range req.Details {
+			detail := &model.InventoryAdjustmentDetail{
+				AdjustmentID:       adjustment.AdjustmentID,
+				ComponentID:        detailReq.ComponentID,
+				BinID:              detailReq.BinID,
+				WarehouseID:        detailReq.WarehouseID,
+				QuantityBefore:     detailReq.QuantityBefore,
+				QuantityAfter:      detailReq.QuantityAfter,
+				AdjustmentQuantity: detailReq.AdjustmentQuantity,
+				CreatedAt:          time.Now(),
+			}
+			err := detailRepoTx.Save(detail)
+			if err != nil {
+				tx.Rollback()
+				return nil, common.SystemError
+			}
 		}
 	}
 
-	// Repository handles transaction
-	err := s.adjustmentRepo.CreateWithDetails(adjustment, details)
-	if err != nil {
+	if err := tx.Commit().Error; err != nil {
 		return nil, common.SystemError
 	}
 
@@ -147,12 +171,27 @@ func (s *InventoryAdjustmentService) UpdateInventoryAdjustment(c *gin.Context) *
 		return common.RequestInvalid
 	}
 
-	adjustment, err := s.adjustmentRepo.GetByAdjustmentId(int(req.AdjustmentID))
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	adjustmentRepoTx := s.adjustmentRepo.(*repository.InventoryAdjustmentRepository).WithTx(tx)
+
+	adjustment, err := adjustmentRepoTx.GetByAdjustmentId(int(req.AdjustmentID))
 	if err != nil || adjustment == nil {
+		tx.Rollback()
 		return common.NotFound
 	}
 
 	if adjustment.StatusInt != constants.InventoryAdjustmentStatusPending {
+		tx.Rollback()
 		return &common.Error{Code: "403", Message: "Chỉ được phép chỉnh sửa đơn ở trạng thái chờ duyệt"}
 	}
 
@@ -165,8 +204,13 @@ func (s *InventoryAdjustmentService) UpdateInventoryAdjustment(c *gin.Context) *
 	adjustment.UpdatedBy = int(req.UpdatedBy)
 	adjustment.UpdatedAt = time.Now()
 
-	err = s.adjustmentRepo.Update(adjustment)
+	err = adjustmentRepoTx.Update(adjustment)
 	if err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return common.SystemError
 	}
 
@@ -181,19 +225,44 @@ func (s *InventoryAdjustmentService) DeleteInventoryAdjustment(c *gin.Context) *
 
 	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
-		adjustmentId, err := strconv.ParseInt(idStr, 10, 32)
+		adjustmentId, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			return common.RequestInvalid
 		}
 		ids[i] = int(adjustmentId)
 	}
 
-	// Repository handles transaction and validation
-	err := s.adjustmentRepo.DeleteIfPending(ids)
-	if err != nil {
-		if err == gorm.ErrInvalidData {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	adjustmentRepoTx := s.adjustmentRepo.(*repository.InventoryAdjustmentRepository).WithTx(tx)
+
+	for _, id := range ids {
+		adjustment, err := adjustmentRepoTx.GetByAdjustmentId(id)
+		if err != nil || adjustment == nil {
+			continue
+		}
+		if adjustment.StatusInt != constants.InventoryAdjustmentStatusPending {
+			tx.Rollback()
 			return &common.Error{Code: "403", Message: "Chỉ được xóa đơn ở trạng thái chờ duyệt"}
 		}
+	}
+
+	err := adjustmentRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return common.SystemError
 	}
 
@@ -206,32 +275,83 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 		return common.RequestInvalid
 	}
 
-	// Fetch adjustment to validate
-	adjustment, err := s.adjustmentRepo.GetByAdjustmentId(int(req.AdjustmentID))
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return common.SystemError
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	adjustmentRepoTx := s.adjustmentRepo.(*repository.InventoryAdjustmentRepository).WithTx(tx)
+	detailRepoTx := s.detailRepo.(*repository.InventoryAdjustmentDetailRepository).WithTx(tx)
+	componentBinRepoTx := s.componentBinRepo.(*repository.ComponentBinRepository).WithTx(tx)
+
+	adjustment, err := adjustmentRepoTx.GetByAdjustmentId(int(req.AdjustmentID))
 	if err != nil || adjustment == nil {
+		tx.Rollback()
 		return common.NotFound
 	}
 
 	if adjustment.StatusInt != constants.InventoryAdjustmentStatusPending {
+		tx.Rollback()
 		return &common.Error{Code: "403", Message: "Đơn đã được xử lý"}
 	}
 
-	// Fetch details
-	details, err := s.detailRepo.GetByAdjustmentId(adjustment.AdjustmentID)
+	// Update adjustment status
+	adjustment.StatusInt = constants.InventoryAdjustmentStatusApproved
+	adjustment.ApprovedID = int(req.UpdatedBy)
+	adjustment.ApprovedTime = time.Now()
+	adjustment.UpdatedAt = time.Now()
+	adjustment.UpdatedBy = int(req.UpdatedBy)
+
+	err = adjustmentRepoTx.Update(adjustment)
 	if err != nil {
+		tx.Rollback()
 		return common.SystemError
 	}
 
-	// Set approval info
-	adjustment.StatusInt = constants.InventoryAdjustmentStatusApproved
-	adjustment.ApprovedID = req.UpdatedBy
-	adjustment.ApprovedTime = time.Now()
-	adjustment.UpdatedAt = time.Now()
-	adjustment.UpdatedBy = req.UpdatedBy
-
-	// Repository handles transaction
-	err = s.adjustmentRepo.ApproveWithComponentBinUpdate(adjustment, details, req.UpdatedBy)
+	// Fetch details and update component bins
+	details, err := detailRepoTx.GetByAdjustmentId(adjustment.AdjustmentID)
 	if err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	for _, detail := range details {
+		compBin, err := componentBinRepoTx.GetByComponentAndBinId(detail.ComponentID, detail.BinID)
+		if err != nil {
+			tx.Rollback()
+			return common.SystemError
+		}
+
+		if compBin == nil {
+			// Create if not exists? Usually adjustment should be on existing bins
+			compBin = &model.ComponentBin{
+				ComponentID: detail.ComponentID,
+				BinID:       detail.BinID,
+				Quantity:    detail.QuantityAfter,
+				CreatedAt:   time.Now(),
+				CreatedBy:   int(req.UpdatedBy),
+			}
+			err = componentBinRepoTx.Save(compBin)
+		} else {
+			compBin.Quantity = detail.QuantityAfter
+			compBin.UpdatedAt = time.Now()
+			compBin.UpdatedBy = int(req.UpdatedBy)
+			err = componentBinRepoTx.Update(compBin)
+		}
+
+		if err != nil {
+			tx.Rollback()
+			return common.SystemError
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return common.SystemError
 	}
 
@@ -295,7 +415,7 @@ func (s *InventoryAdjustmentService) GetInventoryAdjustmentDetailById(c *gin.Con
 		return nil, common.RequestInvalid
 	}
 
-	detailId, err := strconv.ParseInt(idStr, 10, 32)
+	detailId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -403,19 +523,29 @@ func (s *InventoryAdjustmentService) DeleteInventoryAdjustmentDetail(c *gin.Cont
 
 	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
-		detailId, err := strconv.ParseInt(idStr, 10, 32)
+		detailId, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			return common.RequestInvalid
 		}
 		ids[i] = int(detailId)
 	}
 
-	// Repository handles validation and deletion
-	err := s.detailRepo.DeleteIfAdjustmentPending(ids)
-	if err != nil {
-		if err == gorm.ErrInvalidData {
-			return &common.Error{Code: "403", Message: "Chỉ được xóa chi tiết của đơn ở trạng thái chờ duyệt"}
+	// Check if adjustment is pending for all details
+	for _, id := range ids {
+		detail, err := s.detailRepo.GetByAdjustmentDetailId(id)
+		if err != nil || detail == nil {
+			continue
 		}
+		adjustment, err := s.adjustmentRepo.GetByAdjustmentId(detail.AdjustmentID)
+		if err == nil && adjustment != nil {
+			if adjustment.StatusInt != constants.InventoryAdjustmentStatusPending {
+				return &common.Error{Code: "403", Message: "Chỉ được xóa chi tiết của đơn ở trạng thái chờ duyệt"}
+			}
+		}
+	}
+
+	err := s.detailRepo.Delete(ids)
+	if err != nil {
 		return common.SystemError
 	}
 

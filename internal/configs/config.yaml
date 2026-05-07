@@ -15,3 +15,8 @@ oauth:
   client-secret: ewmn@#123919
   jwt-secret: super-secretkey
 
+
+
+upload:
+  base_path: 'C:\Users\Hiro\Documents\golang_web_api_demo\internal\upload'
+  return_url: 'http://localhost:8080/uploads'

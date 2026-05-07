@@ -4,7 +4,6 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
-	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +13,6 @@ type IInventoryAdjustmentDetail interface {
 	GetByAdjustmentId(adjustmentId int) ([]model.InventoryAdjustmentDetail, error)
 	GetAllByCondition(query dtos.InventoryAdjustmentDetailFilter) ([]model.InventoryAdjustmentDetail, int, error)
 	Delete(ids []int) error
-	DeleteIfAdjustmentPending(ids []int) error
 	Save(request *model.InventoryAdjustmentDetail) error
 	Update(request *model.InventoryAdjustmentDetail) error
 }
@@ -75,29 +73,4 @@ func (r *InventoryAdjustmentDetailRepository) WithTx(tx *gorm.DB) *InventoryAdju
 		BaseRepository: BaseRepository[model.InventoryAdjustmentDetail, int]{Instance: tx},
 		DB:             tx,
 	}
-}
-
-func (r *InventoryAdjustmentDetailRepository) DeleteIfAdjustmentPending(ids []int) error {
-	// Check if all details belong to adjustments with pending status
-	for _, id := range ids {
-		detail, err := r.GetByAdjustmentDetailId(id)
-		if err != nil || detail == nil {
-			continue
-		}
-
-		// Check if adjustment is pending
-		adjustment := &model.InventoryAdjustment{}
-		result := r.DB.Where("adjustment_id = ?", detail.AdjustmentID).First(adjustment)
-
-		if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
-			return result.Error
-		}
-
-		if result.Error == nil && adjustment.StatusInt != constants.InventoryAdjustmentStatusPending {
-			return gorm.ErrInvalidData
-		}
-	}
-
-	// All are OK to delete
-	return r.Delete(ids)
 }

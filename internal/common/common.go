@@ -12,6 +12,7 @@ var AuthenticationFail = &Error{Code: "400", Message: "Username hoặc mật kh�
 var SystemError = &Error{Code: "999", Message: "Có lỗi xảy ra, vui lòng quay lại sau"}
 var TokenInvalid = &Error{Code: "401", Message: "Token không hợp lệ hoặc đã hết hạn"}
 var FileEmpty = &Error{Code: "400", Message: "File không được để trống"}
+var FileError = &Error{Code: "400", Message: "Có sự cố khi đăng tải file"}
 var CreateBucketFailed = &Error{Code: "500", Message: "Không tạo được bucket"}
 var UploadFileFailed = &Error{Code: "500", Message: "Upload file không thành công"}
 var RequestInvalid = &Error{Code: "400", Message: "Request không hợp lệ"}
