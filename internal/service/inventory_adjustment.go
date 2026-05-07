@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -33,6 +34,7 @@ type InventoryAdjustmentService struct {
 	adjustmentRepo   repository.IInventoryAdjustment
 	detailRepo       repository.IInventoryAdjustmentDetail
 	componentBinRepo repository.IComponentBin
+	ledgerService    IInventoryLedgerService
 }
 
 var inventoryAdjustmentService IInventoryAdjustmentService
@@ -43,6 +45,7 @@ func NewInventoryAdjustmentService() IInventoryAdjustmentService {
 			adjustmentRepo:   repository.NewInventoryAdjustmentRepository(),
 			detailRepo:       repository.NewInventoryAdjustmentDetailRepository(),
 			componentBinRepo: repository.NewComponentBinRepository(),
+			ledgerService:    NewInventoryLedgerService(),
 		}
 	}
 	return inventoryAdjustmentService
@@ -321,6 +324,8 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 		return common.SystemError
 	}
 
+	binRepo := repository.NewBinRepository()
+
 	for _, detail := range details {
 		compBin, err := componentBinRepoTx.GetByComponentAndBinId(detail.ComponentID, detail.BinID)
 		if err != nil {
@@ -348,6 +353,31 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 		if err != nil {
 			tx.Rollback()
 			return common.SystemError
+		}
+
+		// Create ledger entry after updating bin
+		binInfo, _ := binRepo.GetById(detail.BinID)
+		warehouseID := 0
+		if binInfo != nil {
+			warehouseID = binInfo.WarehouseID
+		}
+
+		quantityChange := detail.QuantityAfter - detail.QuantityBefore
+		ledgerReq := &dtos.InventoryLedgerCreate{
+			ComponentID:     detail.ComponentID,
+			WarehouseID:     warehouseID,
+			BinID:           detail.BinID,
+			ReferenceType:   constants.LedgerReferenceTypeAdjustment,
+			ReferenceTypeID: adjustment.AdjustmentID,
+			Description:     fmt.Sprintf("Điều chỉnh từ khoá #%d", adjustment.AdjustmentID),
+			QuantityChange:  quantityChange,
+			QuantityAfter:   detail.QuantityAfter,
+			Note:            adjustment.Note,
+			CreatedBy:       int(req.UpdatedBy),
+		}
+		if err := s.ledgerService.CreateInventoryLedgerEntry(ledgerReq); err != nil {
+			tx.Rollback()
+			return &common.Error{Code: "500", Message: fmt.Sprintf("Lỗi tạo sổ cái: %v", err)}
 		}
 	}
 

@@ -10,6 +10,7 @@ import (
 type IInventoryAuditDetail interface {
 	IBaseRepository[model.InventoryAuditDetail, int]
 	GetByInventoryAuditDetailId(auditDetailId int) (*model.InventoryAuditDetail, error)
+	GetByAuditId(auditId int) ([]model.InventoryAuditDetail, error)
 	GetAllByCondition(query dtos.InventoryAuditDetailFilter) ([]model.InventoryAuditDetail, int, error)
 	Delete(ids []int) error
 	Save(request *model.InventoryAuditDetail) error
@@ -37,6 +38,12 @@ func (r *InventoryAuditDetailRepository) GetByInventoryAuditDetailId(auditDetail
 		return nil, err
 	}
 	return inventoryAuditDetail, nil
+}
+
+func (r *InventoryAuditDetailRepository) GetByAuditId(auditId int) ([]model.InventoryAuditDetail, error) {
+	var details []model.InventoryAuditDetail
+	err := r.DB.Where("audit_id = ?", auditId).Find(&details).Error
+	return details, err
 }
 func (r *InventoryAuditDetailRepository) GetAllByCondition(query dtos.InventoryAuditDetailFilter) ([]model.InventoryAuditDetail, int, error) {
 	return r.GetPage("Select iad.* from inventory_audit_detail as iad "+

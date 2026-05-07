@@ -66,7 +66,7 @@ func (s *UserService) GetUserByUuid(c *gin.Context) (*dtos.UserResponse, *common
 	}
 
 	// Convert string to int
-	userId, err := strconv.ParseInt(idStr, 10, 32)
+	userId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -181,7 +181,7 @@ func (s *UserService) DeleteUser(c *gin.Context) *common.Error {
 	// Convert string IDs to int
 	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
-		id, err := strconv.ParseInt(idStr, 10, 32)
+		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			return common.RequestInvalid
 		}
@@ -203,7 +203,7 @@ func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Erro
 	}
 
 	// Convert string to int
-	userId, err := strconv.ParseInt(idStr, 10, 32)
+	userId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}

@@ -63,7 +63,7 @@ func (s *ComponentCategoryService) GetComponentCategoryById(c *gin.Context) (*dt
 		return nil, common.RequestInvalid
 	}
 
-	categoryId, err := strconv.ParseInt(idStr, 10, 32)
+	categoryId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -176,7 +176,7 @@ func (s *ComponentCategoryService) DeleteComponentCategory(c *gin.Context) *comm
 
 	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
-		categoryId, err := strconv.ParseInt(idStr, 10, 32)
+		categoryId, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			return common.RequestInvalid
 		}

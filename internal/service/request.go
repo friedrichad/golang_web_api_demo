@@ -33,6 +33,7 @@ type IRequestService interface {
 type RequestService struct {
 	requestRepo       repository.IRequestRepository
 	requestDetailRepo repository.IRequestDetailRepository
+	ledgerService     IInventoryLedgerService
 }
 
 var requestService IRequestService
@@ -42,6 +43,7 @@ func NewRequestService() IRequestService {
 		requestService = &RequestService{
 			requestRepo:       repository.NewRequestRepository(),
 			requestDetailRepo: repository.NewRequestDetailRepository(),
+			ledgerService:     NewInventoryLedgerService(),
 		}
 	}
 	return requestService
@@ -75,7 +77,7 @@ func (s *RequestService) GetRequestById(c *gin.Context) (*dtos.RequestResponse, 
 		return nil, common.RequestInvalid
 	}
 
-	requestId, err := strconv.ParseInt(idStr, 10, 32)
+	requestId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -243,20 +245,20 @@ func (s *RequestService) DeleteRequest(c *gin.Context) *common.Error {
 
 func modelToRequestResponse(request *model.Request) dtos.RequestResponse {
 	return dtos.RequestResponse{
-		RequestID:     int(request.RequestID),
+		RequestID:     request.RequestID,
 		RequestType:   request.RequestType,
 		Description:   request.Description,
-		WarehouseID:   int(request.WarehouseID),
-		PerformedByID: int(request.PerformedByID),
-		ApproverID:    int(request.ApproverID),
-		PartnerID:     int(request.PartnerID),
+		WarehouseID:   request.WarehouseID,
+		PerformedByID: request.PerformedByID,
+		ApproverID:    request.ApproverID,
+		PartnerID:     request.PartnerID,
 		RequestDate:   request.RequestDate,
-		StatusInt:     int(request.StatusInt),
+		StatusInt:     request.StatusInt,
 		Note:          request.Note,
 		CreatedAt:     request.CreatedAt,
-		CreateBy:      int(request.CreatedBy),
+		CreateBy:      request.CreatedBy,
 		UpdatedAt:     request.UpdatedAt,
-		UpdatedBy:     int(request.UpdatedBy),
+		UpdatedBy:     request.UpdatedBy,
 	}
 }
 func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
@@ -307,6 +309,9 @@ func (s *RequestService) ConfirmRequest(c *gin.Context) *common.Error {
 	if request == nil {
 		return common.NotFound
 	}
+	if request.StatusInt != constants.RequestStatusCompleted && request.StatusInt != constants.RequestStatusCancelled {
+		return &common.Error{Code: "400", Message: "Đơn đã hoàn thành/hủy, không thể chỉnh sửa!"}
+	}
 	if !constants.IsValidRequestStatus(req.StatusInt) {
 		return &common.Error{Code: "400", Message: "Trạng thái yêu cầu không hợp lệ!"}
 	}
@@ -332,7 +337,22 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 	if err != nil {
 		return err
 	}
+
+	// Get request to know the type
+	request, err := s.requestRepo.GetByRequestId(requestID)
+	if err != nil || request == nil {
+		return fmt.Errorf("yêu cầu không tồn tại")
+	}
+
+	// Get user ID from context for ledger
+	userIDInterface, _ := c.Get("user_id")
+	userID := 0
+	if userIDInterface != nil {
+		userID = userIDInterface.(int)
+	}
+
 	compBinRepo := repository.NewComponentBinRepository()
+	binRepo := repository.NewBinRepository()
 
 	for _, detail := range details {
 
@@ -354,6 +374,29 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 			if err := compBinRepo.Update(fromBin); err != nil {
 				return err
 			}
+
+			// Create ledger entry for source bin
+			binInfo, _ := binRepo.GetById(detail.BinFromID)
+			warehouseID := 0
+			if binInfo != nil {
+				warehouseID = binInfo.WarehouseID
+			}
+
+			ledgerReq := &dtos.InventoryLedgerCreate{
+				ComponentID:     detail.ComponentID,
+				WarehouseID:     warehouseID,
+				BinID:           detail.BinFromID,
+				ReferenceType:   constants.LedgerReferenceTypeRequest,
+				ReferenceTypeID: requestID,
+				Description:     fmt.Sprintf("Export từ yêu cầu #%d", requestID),
+				QuantityChange:  -float64(detail.Quantity),
+				QuantityAfter:   fromBin.Quantity,
+				Note:            request.Note,
+				CreatedBy:       userID,
+			}
+			if err := s.ledgerService.CreateInventoryLedgerEntry(ledgerReq); err != nil {
+				return fmt.Errorf("lỗi tạo sổ cái: %v", err)
+			}
 		}
 
 		if detail.BinToID > 0 {
@@ -362,22 +405,47 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 				return err
 			}
 
+			newQuantity := float64(detail.Quantity)
 			if toBin == nil {
 				newBin := &model.ComponentBin{
 					ComponentID: detail.ComponentID,
 					BinID:       detail.BinToID,
-					Quantity:    float64(detail.Quantity),
+					Quantity:    newQuantity,
 					CreatedBy:   detail.CreatedBy,
 					CreatedAt:   time.Now(),
 				}
 				if err := compBinRepo.Save(newBin); err != nil {
 					return err
 				}
+				toBin = newBin
 			} else {
-				toBin.Quantity += float64(detail.Quantity)
+				toBin.Quantity += newQuantity
 				if err := compBinRepo.Update(toBin); err != nil {
 					return err
 				}
+			}
+
+			// Create ledger entry for target bin
+			binInfo, _ := binRepo.GetById(detail.BinToID)
+			warehouseID := 0
+			if binInfo != nil {
+				warehouseID = binInfo.WarehouseID
+			}
+
+			ledgerReq := &dtos.InventoryLedgerCreate{
+				ComponentID:     detail.ComponentID,
+				WarehouseID:     warehouseID,
+				BinID:           detail.BinToID,
+				ReferenceType:   constants.LedgerReferenceTypeRequest,
+				ReferenceTypeID: requestID,
+				Description:     fmt.Sprintf("Import từ yêu cầu #%d", requestID),
+				QuantityChange:  newQuantity,
+				QuantityAfter:   toBin.Quantity,
+				Note:            request.Note,
+				CreatedBy:       userID,
+			}
+			if err := s.ledgerService.CreateInventoryLedgerEntry(ledgerReq); err != nil {
+				return fmt.Errorf("lỗi tạo sổ cái: %v", err)
 			}
 		}
 	}
@@ -415,7 +483,7 @@ func (s *RequestService) GetRequestDetailById(c *gin.Context) (*dtos.RequestDeta
 		return nil, common.RequestInvalid
 	}
 
-	detailId, err := strconv.ParseInt(idStr, 10, 32)
+	detailId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}

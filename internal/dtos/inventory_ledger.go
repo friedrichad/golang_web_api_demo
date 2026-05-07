@@ -26,6 +26,20 @@ func (i *InventoryLedgerFilter) Verify() error {
 	return nil
 }
 
+// InventoryLedgerCreate - for internal use when creating ledger entries
+type InventoryLedgerCreate struct {
+	ComponentID     int     `json:"component_id" binding:"required"`
+	WarehouseID     int     `json:"warehouse_id" binding:"required"`
+	BinID           int     `json:"bin_id" binding:"required"`
+	ReferenceType   int     `json:"reference_type" binding:"required"`
+	ReferenceTypeID int     `json:"reference_type_id" binding:"required"`
+	Description     string  `json:"description"`
+	QuantityChange  float64 `json:"quantity_change" binding:"required"`
+	QuantityAfter   float64 `json:"quantity_after" binding:"required"`
+	Note            string  `json:"note"`
+	CreatedBy       int     `json:"created_by" binding:"required"`
+}
+
 type InventoryLedgerResponse struct {
 	LedgerID        int       `json:"ledger_id"`
 	ComponentID     int       `json:"component_id"`

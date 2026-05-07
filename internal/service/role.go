@@ -63,7 +63,7 @@ func (s *RoleService) GetRoleById(c *gin.Context) (*dtos.RoleResponse, *common.E
 		return nil, common.RequestInvalid
 	}
 
-	roleId, err := strconv.ParseInt(idStr, 10, 32)
+	roleId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -187,7 +187,7 @@ func (s *RoleService) DeleteRole(c *gin.Context) *common.Error {
 
 	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
-		roleId, err := strconv.ParseInt(idStr, 10, 32)
+		roleId, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			return common.RequestInvalid
 		}

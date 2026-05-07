@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -33,6 +34,7 @@ type IInventoryAuditService interface {
 type InventoryAuditService struct {
 	auditRepo       repository.IInventoryAudit
 	auditDetailRepo repository.IInventoryAuditDetail
+	ledgerService   IInventoryLedgerService
 }
 
 var inventoryAuditService IInventoryAuditService
@@ -42,6 +44,7 @@ func NewInventoryAuditService() IInventoryAuditService {
 		inventoryAuditService = &InventoryAuditService{
 			auditRepo:       repository.NewInventoryAuditRepository(),
 			auditDetailRepo: repository.NewInventoryAuditDetailRepository(),
+			ledgerService:   NewInventoryLedgerService(),
 		}
 	}
 	return inventoryAuditService
@@ -201,7 +204,7 @@ func (s *InventoryAuditService) DeleteInventoryAudit(c *gin.Context) *common.Err
 
 	ids := make([]int, len(idStrs))
 	for i, idStr := range idStrs {
-		auditId, err := strconv.ParseInt(idStr, 10, 32)
+		auditId, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			return common.RequestInvalid
 		}
@@ -295,12 +298,108 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 		return &common.Error{Code: "400", Message: "Chỉ có thể xác nhận kiểm kê đã được phê duyệt!"}
 	}
 
-	audit.StatusInt = req.StatusInt
-	audit.UpdatedAt = time.Now()
+	// If applying the audit (status = APPLIED), update component bins and create ledger entries
+	if req.StatusInt == constants.InventoryAuditStatusApplied {
+		tx := db.Instance.Begin()
+		if tx.Error != nil {
+			return common.SystemError
+		}
 
-	err = s.auditRepo.Update(audit)
-	if err != nil {
-		return common.SystemError
+		defer func() {
+			if r := recover(); r != nil {
+				tx.Rollback()
+			}
+		}()
+
+		compBinRepoTx := repository.NewComponentBinRepository().(*repository.ComponentBinRepository).WithTx(tx)
+		auditDetailRepoTx := s.auditDetailRepo.(*repository.InventoryAuditDetailRepository).WithTx(tx)
+
+		// Get audit details
+		details, err := auditDetailRepoTx.GetByAuditId(int(audit.AuditID))
+		if err != nil {
+			tx.Rollback()
+			return common.SystemError
+		}
+
+		binRepo := repository.NewBinRepository()
+
+		// Update component bins and create ledger entries
+		for _, detail := range details {
+			compBin, err := compBinRepoTx.GetByComponentAndBinId(detail.ComponentID, detail.BinID)
+			if err != nil {
+				tx.Rollback()
+				return common.SystemError
+			}
+
+			if compBin == nil {
+				// Create if not exists
+				compBin = &model.ComponentBin{
+					ComponentID: detail.ComponentID,
+					BinID:       detail.BinID,
+					Quantity:    detail.ActualQuantity,
+					CreatedAt:   time.Now(),
+					CreatedBy:   int(audit.CreatedBy),
+				}
+				err = compBinRepoTx.Save(compBin)
+			} else {
+				compBin.Quantity = detail.ActualQuantity
+				compBin.UpdatedAt = time.Now()
+				err = compBinRepoTx.Update(compBin)
+			}
+
+			if err != nil {
+				tx.Rollback()
+				return common.SystemError
+			}
+
+			// Create ledger entry if there's a difference
+			if detail.DifferenceQuantity != 0 {
+				binInfo, _ := binRepo.GetById(detail.BinID)
+				warehouseID := 0
+				if binInfo != nil {
+					warehouseID = binInfo.WarehouseID
+				}
+
+				ledgerReq := &dtos.InventoryLedgerCreate{
+					ComponentID:     detail.ComponentID,
+					WarehouseID:     warehouseID,
+					BinID:           detail.BinID,
+					ReferenceType:   constants.LedgerReferenceTypeAudit,
+					ReferenceTypeID: audit.AuditID,
+					Description:     fmt.Sprintf("Kiểm kê số #%d", audit.AuditID),
+					QuantityChange:  detail.DifferenceQuantity,
+					QuantityAfter:   detail.ActualQuantity,
+					Note:            detail.Note,
+					CreatedBy:       int(audit.CreatedBy),
+				}
+				if err := s.ledgerService.CreateInventoryLedgerEntry(ledgerReq); err != nil {
+					tx.Rollback()
+					return &common.Error{Code: "500", Message: fmt.Sprintf("Lỗi tạo sổ cái: %v", err)}
+				}
+			}
+		}
+
+		// Update audit status
+		audit.StatusInt = req.StatusInt
+		audit.UpdatedAt = time.Now()
+		err = s.auditRepo.Update(audit)
+		if err != nil {
+			tx.Rollback()
+			return common.SystemError
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			return common.SystemError
+		}
+	} else {
+		// For other status changes, just update the audit without ledger entries
+		audit.StatusInt = req.StatusInt
+		audit.UpdatedAt = time.Now()
+
+		err = s.auditRepo.Update(audit)
+		if err != nil {
+			return common.SystemError
+		}
 	}
 
 	return nil

@@ -1,11 +1,14 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +16,8 @@ import (
 type IInventoryLedgerService interface {
 	GetAllInventoryLedgers(c *gin.Context) ([]dtos.InventoryLedgerResponse, int, *common.Error)
 	GetInventoryLedgerById(c *gin.Context) (*dtos.InventoryLedgerResponse, *common.Error)
+	// Internal method for creating ledger entries from other services
+	CreateInventoryLedgerEntry(req *dtos.InventoryLedgerCreate) error
 }
 
 type InventoryLedgerService struct {
@@ -58,7 +63,7 @@ func (s *InventoryLedgerService) GetInventoryLedgerById(c *gin.Context) (*dtos.I
 		return nil, common.RequestInvalid
 	}
 
-	ledgerId, err := strconv.ParseInt(idStr, 10, 32)
+	ledgerId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -91,4 +96,36 @@ func modelToInventoryLedgerResponse(ledger *model.InventoryLedger) dtos.Inventor
 		CreatedAt:       ledger.CreatedAt,
 		CreatedBy:       int(ledger.CreatedBy),
 	}
+}
+
+// CreateInventoryLedgerEntry - Internal method to create ledger entries from other services
+func (s *InventoryLedgerService) CreateInventoryLedgerEntry(req *dtos.InventoryLedgerCreate) error {
+	// Validate reference type
+	if !constants.IsValidLedgerReferenceType(req.ReferenceType) {
+		return fmt.Errorf("loại tham chiếu không hợp lệ")
+	}
+
+	// Create ledger model
+	ledger := &model.InventoryLedger{
+		ComponentID:     req.ComponentID,
+		WarehouseID:     req.WarehouseID,
+		BinID:           req.BinID,
+		ReferenceType:   req.ReferenceType,
+		ReferenceTypeID: req.ReferenceTypeID,
+		Description:     req.Description,
+		QuantityChange:  req.QuantityChange,
+		QuantityAfter:   req.QuantityAfter,
+		Note:            req.Note,
+		CreatedBy:       req.CreatedBy,
+		CreatedAt:       time.Now(),
+		UpdatedBy:       req.CreatedBy,
+		UpdatedAt:       time.Now(),
+	}
+
+	// Save ledger entry
+	if err := s.ledgerRepo.Save(ledger); err != nil {
+		return err
+	}
+
+	return nil
 }
