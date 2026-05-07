@@ -9,6 +9,7 @@ import (
 
 func InitRouter() *gin.Engine {
 	router := gin.Default()
+	router.Static("/uploads", "./internal/upload")
 	configCors(router)
 	initAuthRouter(router)
 	initUserRouter(router)
@@ -24,6 +25,7 @@ func InitRouter() *gin.Engine {
 	initInventoryAuditDetailRouter(router)
 	initInventoryLedgerRouter(router)
 	initComponentCategoryRouter(router)
+	initUploadRouter(router)
 	return router
 }
 
@@ -198,5 +200,15 @@ func initAuthRouter(router *gin.Engine) {
 	{
 		authGroup.POST("/login", authController.GetToken())
 		authGroup.POST("/refresh", authController.GetToken())
+	}
+}
+
+func initUploadRouter(router *gin.Engine) {
+	uploadController := controller.NewUploadController()
+	uploadGroup := router.Group("/uploads")
+	{
+		uploadGroup.POST("/base64", uploadController.UploadBase64())
+		uploadGroup.POST("/multipart", uploadController.UploadMultipart())
+		uploadGroup.POST("/multiple", uploadController.UploadMultiple())
 	}
 }
