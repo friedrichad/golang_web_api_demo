@@ -130,6 +130,7 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (
 		AuditID:     int(req.AuditID),
 		Description: req.Description,
 		Note:        req.Note,
+		ApprovedTime: nil,
 		StatusInt:   constants.InventoryAdjustmentStatusPending,
 		CreatedAt:   time.Now(),
 	}
@@ -307,7 +308,8 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 	// Update adjustment status
 	adjustment.StatusInt = constants.InventoryAdjustmentStatusApproved
 	adjustment.ApprovedID = int(req.UpdatedBy)
-	adjustment.ApprovedTime = time.Now()
+	now := time.Now()
+	adjustment.ApprovedTime = &now
 	adjustment.UpdatedAt = time.Now()
 	adjustment.UpdatedBy = int(req.UpdatedBy)
 
@@ -394,7 +396,6 @@ func modelToInventoryAdjustmentResponse(adjustment *model.InventoryAdjustment) d
 		AuditID:      int(adjustment.AuditID),
 		ApprovedID:   int(adjustment.ApprovedID),
 		Description:  adjustment.Description,
-		ApprovedTime: adjustment.ApprovedTime,
 		StatusInt:    int(adjustment.StatusInt),
 		Note:         adjustment.Note,
 		CreatedBy:    int(adjustment.CreatedBy),

@@ -42,11 +42,11 @@ func (r *InventoryLedgerRepository) GetByLedgerId(ledgerId int) (*model.Inventor
 
 func (r *InventoryLedgerRepository) GetAllByCondition(query dtos.InventoryLedgerFilter) ([]model.InventoryLedger, int, error) {
 	return r.GetPage("Select il.* from inventory_ledger as il "+
-		" where (? is Null or il.ledger_id = ?))"+
+		" where (? is Null or il.ledger_id = ?)"+
 		" and (? is null or il.component_id = ?) "+
-		" and (? is null or  il.warehouse_id = ?) "+
-		" and (? is null or  il.bin_id = ?) "+
-		" and (? is null or  il.reference_id = ?) "+
+		" and (? is null or il.warehouse_id = ?) "+
+		" and (? is null or il.bin_id = ?) "+
+		" and (? is null or il.reference_type_id = ?) "+
 		" and (? is null or il.created_at >= ?) "+
 		" and (? is null or il.created_at < ?) ", query.Page, query.Size, query.LedgerID, query.LedgerID, query.ComponentID, query.ComponentID, query.WarehouseID, query.WarehouseID, query.BinID, query.BinID, query.ReferenceTypeID, query.ReferenceTypeID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }

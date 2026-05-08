@@ -159,6 +159,8 @@ func initInventoryAuditRouter(router *gin.Engine) {
 		auditGroup.POST("", auditController.CreateAudit())
 		auditGroup.PUT("", auditController.UpdateAudit())
 		auditGroup.DELETE("", auditController.DeleteAudit())
+		auditGroup.POST("/approval", auditController.ApproveAudit())
+		auditGroup.POST("/confirm", auditController.ConfirmAudit())
 	}
 }
 func initInventoryAuditDetailRouter(router *gin.Engine) {
@@ -178,6 +180,7 @@ func initInventoryLedgerRouter(router *gin.Engine) {
 	ledgerGroup := router.Group("/ledgers")
 	{
 		ledgerGroup.GET("", ledgerController.GetAllLedgers())
+		ledgerGroup.GET("/export", ledgerController.ExportLedgersExcel())
 		ledgerGroup.GET("/:id", ledgerController.GetLedgerById())
 	}
 }

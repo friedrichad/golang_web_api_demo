@@ -12,6 +12,8 @@ type IInventoryAuditController interface {
 	CreateAudit() gin.HandlerFunc
 	UpdateAudit() gin.HandlerFunc
 	DeleteAudit() gin.HandlerFunc
+	ApproveAudit() gin.HandlerFunc
+	ConfirmAudit() gin.HandlerFunc
 }
 
 type InventoryAuditController struct {
@@ -43,4 +45,11 @@ func (c *InventoryAuditController) UpdateAudit() gin.HandlerFunc {
 
 func (c *InventoryAuditController) DeleteAudit() gin.HandlerFunc {
 	return c.ResponseSuccessOnly(c.auditService.DeleteInventoryAudit)
+}
+func (c *InventoryAuditController) ApproveAudit() gin.HandlerFunc {
+	return c.ResponseSuccessOnly(c.auditService.ApprovalAudit)
+}
+
+func (c *InventoryAuditController) ConfirmAudit() gin.HandlerFunc {
+	return c.ResponseSuccessOnly(c.auditService.ConfirmAudit)
 }
