@@ -11,7 +11,7 @@ type IComponentBin interface {
 	IBaseRepository[model.ComponentBin, int]
 	GetByComponentBinId(componentBinId int) (*model.ComponentBin, error)
 	GetByComponentAndBinId(componentID int, binID int) (*model.ComponentBin, error)
-	GetAllByCondition(query dtos.ComponetBinFilter) ([]model.ComponentBin, int, error)
+	GetAllByCondition(query dtos.ComponentBinFilter) ([]model.ComponentBin, int, error)
 	Delete(ids []int) error
 	Save(componentBin *model.ComponentBin) error
 	Update(request *model.ComponentBin) error
@@ -50,7 +50,7 @@ func (r *ComponentBinRepository) GetByComponentAndBinId(componentID int, binID i
 	return componentBin, err
 }
 
-func (r *ComponentBinRepository) GetAllByCondition(query dtos.ComponetBinFilter) ([]model.ComponentBin, int, error) {
+func (r *ComponentBinRepository) GetAllByCondition(query dtos.ComponentBinFilter) ([]model.ComponentBin, int, error) {
 	return r.GetPage("Select cb.* from component_bin as cb "+
 		"where (? is Null or cb.quantity = ?))"+
 		"and (? is Null or cb.component_id = ?)) "+

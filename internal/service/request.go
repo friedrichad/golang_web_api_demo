@@ -255,10 +255,10 @@ func modelToRequestResponse(request *model.Request) dtos.RequestResponse {
 		RequestDate:   request.RequestDate,
 		StatusInt:     request.StatusInt,
 		Note:          request.Note,
+		CreatedBy:     request.CreatedBy,
 		CreatedAt:     request.CreatedAt,
-		CreateBy:      request.CreatedBy,
-		UpdatedAt:     request.UpdatedAt,
 		UpdatedBy:     request.UpdatedBy,
+		UpdatedAt:     request.UpdatedAt,
 	}
 }
 func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
@@ -615,5 +615,9 @@ func modelToRequestDetailResponse(detail *model.RequestDetail) dtos.RequestDetai
 		UnitPrice:       detail.UnitPrice,
 		BinFromID:       detail.BinFromID,
 		BinToID:         detail.BinToID,
+		CreatedBy:       detail.CreatedBy,
+		CreatedAt:       detail.CreatedAt,
+		UpdatedBy:       detail.UpdatedBy,
+		UpdatedAt:       detail.UpdatedAt,
 	}
 }

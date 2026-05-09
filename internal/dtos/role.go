@@ -2,6 +2,7 @@ package dtos
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 )
@@ -50,7 +51,11 @@ func (r *RoleUpdate) Verify() error {
 }
 
 type RoleResponse struct {
-	RoleID      int    `json:"role_id"`
-	RoleName    string `json:"role_name"`
-	Description string `json:"description"`
+	RoleID      int       `json:"role_id"`
+	RoleName    string    `json:"role_name"`
+	Description string    `json:"description"`
+	CreatedBy   int       `json:"created_by"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedBy   int       `json:"updated_by"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }

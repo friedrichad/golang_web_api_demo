@@ -2,6 +2,7 @@ package dtos
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 )
@@ -69,11 +70,15 @@ func (r *RequestDetailUpdate) Verify() error {
 }
 
 type RequestDetailResponse struct {
-	RequestDetailID int     `json:"request_detail_id"`
-	RequestID       int     `json:"request_id"`
-	ComponentID     int     `json:"component_id"`
-	Quantity        int     `json:"quantity"`
-	UnitPrice       float64 `json:"unit_price"`
-	BinFromID       int     `json:"bin_from_id"`
-	BinToID         int     `json:"bin_to_id"`
+	RequestDetailID int       `json:"request_detail_id"`
+	RequestID       int       `json:"request_id"`
+	ComponentID     int       `json:"component_id"`
+	Quantity        int       `json:"quantity"`
+	UnitPrice       float64   `json:"unit_price"`
+	BinFromID       int       `json:"bin_from_id"`
+	BinToID         int       `json:"bin_to_id"`
+	CreatedBy       int       `json:"created_by"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedBy       int       `json:"updated_by"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }

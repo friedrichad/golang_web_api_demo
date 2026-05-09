@@ -28,7 +28,6 @@ type InventoryAdjustmentUpdate struct {
 	AdjustmentID int                               `json:"adjustment_id" binding:"required"`
 	ApprovedID   int                               `json:"approved_id"`
 	Description  string                            `json:"description"`
-	ApprovedTime time.Time                         `json:"approved_time"`
 	StatusInt    int                               `json:"status_int"`
 	Note         string                            `json:"note"`
 	UpdatedBy    int                               `json:"updated_by"`
@@ -40,10 +39,11 @@ type InventoryAdjustmentResponse struct {
 	AuditID      int                                 `json:"audit_id"`
 	ApprovedID   int                                 `json:"approved_id"`
 	Description  string                              `json:"description"`
-	ApprovedTime time.Time                           `json:"approved_time"`
 	StatusInt    int                                 `json:"status_int"`
 	Note         string                              `json:"note"`
 	CreatedBy    int                                 `json:"created_by"`
 	CreatedAt    time.Time                           `json:"created_at"`
+	UpdatedBy    int                                 `json:"updated_by"`
+	UpdatedAt    time.Time                           `json:"updated_at"`
 	Details      []InventoryAdjustmentDetailResponse `json:"details"`
 }

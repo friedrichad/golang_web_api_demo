@@ -18,7 +18,7 @@ type ComponentFilter struct {
 // ComponentCreate - POST request body
 type ComponentCreate struct {
 	ComponentName     string                 `json:"component_name" binding:"required"`
-	MetadataJSON      string                 `json:"metadata_json"`
+	Description       string                 `json:"description"`
 	Unit              string                 `json:"unit" binding:"required"`
 	UnitPrice         float64                `json:"unit_price" binding:"required"`
 	ComponentCategory []ComponentCategoryDTO `json:"component_category"`
@@ -42,7 +42,7 @@ func (c *ComponentCreate) Verify() error {
 type ComponentUpdate struct {
 	ComponentID       int                    `json:"component_id" binding:"required"`
 	ComponentName     string                 `json:"component_name"`
-	MetadataJSON      string                 `json:"metadata_json"`
+	Description       string                 `json:"description"`
 	Unit              string                 `json:"unit"`
 	UnitPrice         float64                `json:"unit_price"`
 	ComponentCategory []ComponentCategoryDTO `json:"component_category"`
@@ -60,7 +60,7 @@ func (c *ComponentUpdate) Verify() error {
 type ComponentResponse struct {
 	ComponentID       int                    `json:"component_id"`
 	ComponentName     string                 `json:"component_name"`
-	MetadataJSON      string                 `json:"metadata_json"`
+	Description       string                 `json:"description"`
 	Unit              string                 `json:"unit"`
 	UnitPrice         float64                `json:"unit_price"`
 	Quantity          float64                `json:"quantity"`

@@ -13,8 +13,9 @@ const TableNameComponent = "component"
 // Component mapped from table <component>
 type Component struct {
 	ComponentID   int       `gorm:"column:component_id;primaryKey;autoIncrement:true" json:"component_id"`
+	FileURLID     int       `gorm:"column:file_url_id" json:"file_url_id"`
 	ComponentName string    `gorm:"column:component_name" json:"component_name"`
-	MetadataJSON  string    `gorm:"column:metadata_json" json:"metadata_json"`
+	Description   string    `gorm:"column:description" json:"description"`
 	Unit          string    `gorm:"column:unit" json:"unit"`
 	UnitPrice     float64   `gorm:"column:unit_price" json:"unit_price"`
 	CreatedBy     int       `gorm:"column:created_by" json:"created_by"`

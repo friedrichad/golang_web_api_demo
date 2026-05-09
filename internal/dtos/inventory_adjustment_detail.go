@@ -1,6 +1,8 @@
 package dtos
 
 import (
+	"time"
+
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 )
 
@@ -37,12 +39,16 @@ type InventoryAdjustmentDetailUpdate struct {
 }
 
 type InventoryAdjustmentDetailResponse struct {
-	AdjustmentDetailID int     `json:"adjustment_detail_id"`
-	AdjustmentID       int     `json:"adjustment_id"`
-	ComponentID        int     `json:"component_id"`
-	BinID              int     `json:"bin_id"`
-	WarehouseID        int     `json:"warehouse_id"`
-	QuantityBefore     float64 `json:"quantity_before"`
-	QuantityAfter      float64 `json:"quantity_after"`
-	AdjustmentQuantity float64 `json:"adjustment_quantity"`
+	AdjustmentDetailID int       `json:"adjustment_detail_id"`
+	AdjustmentID       int       `json:"adjustment_id"`
+	ComponentID        int       `json:"component_id"`
+	BinID              int       `json:"bin_id"`
+	WarehouseID        int       `json:"warehouse_id"`
+	QuantityBefore     float64   `json:"quantity_before"`
+	QuantityAfter      float64   `json:"quantity_after"`
+	AdjustmentQuantity float64   `json:"adjustment_quantity"`
+	CreatedBy          int       `json:"created_by"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedBy          int       `json:"updated_by"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }

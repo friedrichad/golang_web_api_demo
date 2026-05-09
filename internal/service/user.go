@@ -219,7 +219,7 @@ func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Erro
 // Helper function to convert User model to UserResponse DTO
 func modelToUserResponse(user *model.User) dtos.UserResponse {
 	return dtos.UserResponse{
-		UserID:      strconv.FormatInt(int64(user.UserID), 10),
+		UserID:      user.UserID,
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
 		Email:       user.Email,

@@ -45,7 +45,7 @@ func (w *WarehouseRepository) GetAllByCondition(query dtos.WarehouseFilter) ([]m
 		" where (? is null or w.warehouse_name like ?)"+
 		" and (? is null or w.physical_location = ?)"+
 		" and (? is null or w.created_at >= ?)"+
-		" and (? is null or w.created_at <= ?)", query.Page, query.Size, query.WarehouseName, query.WarehouseName, query.PhysciaLocation, query.PhysciaLocation, query.DateFrom, query.DateFrom, query.DateTo, query.DateTo)
+		" and (? is null or w.created_at <= ?)", query.Page, query.Size, query.WarehouseName, query.WarehouseName, query.PhysicalLocation, query.PhysicalLocation, query.DateFrom, query.DateFrom, query.DateTo, query.DateTo)
 }
 
 func (w *WarehouseRepository) Delete(ids []int) error {

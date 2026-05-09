@@ -89,7 +89,7 @@ func (s *ComponentService) CreateComponent(c *gin.Context) (*dtos.ComponentRespo
 
 	comp := &model.Component{
 		ComponentName: req.ComponentName,
-		MetadataJSON:  req.MetadataJSON,
+		Description:   req.Description,
 		Unit:          req.Unit,
 		UnitPrice:     req.UnitPrice,
 		CreatedAt:     time.Now(),
@@ -139,8 +139,8 @@ func (s *ComponentService) UpdateComponent(c *gin.Context) *common.Error {
 	if req.ComponentName != "" {
 		comp.ComponentName = req.ComponentName
 	}
-	if req.MetadataJSON != "" {
-		comp.MetadataJSON = req.MetadataJSON
+	if req.Description != "" {
+		comp.Description = req.Description
 	}
 	if req.Unit != "" {
 		comp.Unit = req.Unit
@@ -218,7 +218,7 @@ func modelToComponentResponse(c *model.Component) dtos.ComponentResponse {
 	return dtos.ComponentResponse{
 		ComponentID:   int(c.ComponentID),
 		ComponentName: c.ComponentName,
-		MetadataJSON:  c.MetadataJSON,
+		Description:   c.Description,
 		Unit:          c.Unit,
 		UnitPrice:     c.UnitPrice,
 		CreatedBy:     int(c.CreatedBy),

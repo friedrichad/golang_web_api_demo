@@ -19,7 +19,7 @@ type ComponentBinUpdate struct {
 	BinID          int     `json:"bin_id"`
 }
 
-type ComponetBinFilter struct {
+type ComponentBinFilter struct {
 	Quantity    *float64 `form:"quantity"`
 	ComponentID *int     `form:"component_id"`
 	BinID       *int     `form:"bin_id"`

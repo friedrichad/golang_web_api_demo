@@ -225,5 +225,9 @@ func modelToRoleResponse(role *model.Role) dtos.RoleResponse {
 		RoleID:      int(role.RoleID),
 		RoleName:    role.RoleName,
 		Description: role.Description,
+		CreatedBy:   role.CreatedBy,
+		CreatedAt:   role.CreatedAt,
+		UpdatedBy:   role.UpdatedBy,
+		UpdatedAt:   role.UpdatedAt,
 	}
 }

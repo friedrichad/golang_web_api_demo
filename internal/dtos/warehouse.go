@@ -11,7 +11,7 @@ import (
 type WarehouseFilter struct {
 	WarehouseID     *int    `form:"warehouse_id"`
 	WarehouseName   *string `form:"warehouse_name"`
-	PhysciaLocation *string `form:"physcial_location"`
+	PhysicalLocation *string `form:"physical_location"`
 	model.PageSize
 	model.DateRequest
 }

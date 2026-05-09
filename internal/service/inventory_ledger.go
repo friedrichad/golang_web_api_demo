@@ -305,8 +305,10 @@ func modelToInventoryLedgerResponse(ledger *model.InventoryLedger) dtos.Inventor
 		QuantityChange:  ledger.QuantityChange,
 		QuantityAfter:   ledger.QuantityAfter,
 		Note:            ledger.Note,
-		CreatedAt:       ledger.CreatedAt,
 		CreatedBy:       int(ledger.CreatedBy),
+		CreatedAt:       ledger.CreatedAt,
+		UpdatedBy:       int(ledger.UpdatedBy),
+		UpdatedAt:       ledger.UpdatedAt,
 	}
 }
 

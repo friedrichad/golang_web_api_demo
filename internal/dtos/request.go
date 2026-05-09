@@ -54,10 +54,10 @@ type RequestResponse struct {
 	RequestDate   time.Time `json:"request_date"`
 	StatusInt     int       `json:"status_int"`
 	Note          string    `json:"note"`
+	CreatedBy     int       `json:"created_by"`
 	CreatedAt     time.Time `json:"created_at"`
-	CreateBy      int       `json:"create_by"`
-	UpdatedAt     time.Time `json:"updated_at"`
 	UpdatedBy     int       `json:"updated_by"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 type ApprovalRequest struct {
     RequestID    int       `json:"request_id"`

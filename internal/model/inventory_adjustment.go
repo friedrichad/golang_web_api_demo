@@ -16,7 +16,6 @@ type InventoryAdjustment struct {
 	AuditID      int       `gorm:"column:audit_id" json:"audit_id"`
 	ApprovedID   int       `gorm:"column:approved_id" json:"approved_id"`
 	Description  string    `gorm:"column:description" json:"description"`
-	ApprovedTime *time.Time `gorm:"column:approved_time" json:"approved_time"`
 	StatusInt    int       `gorm:"column:status_int" json:"status_int"`
 	Note         string    `gorm:"column:note" json:"note"`
 	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
