@@ -150,7 +150,7 @@ func (s *UploadService) UploadBase64(c *gin.Context) (*dtos.UploadResponse, *com
 		log.Println(err)
 		return nil, common.RequestInvalid
 	}
-
+	log.Printf("Received base64 data of length: %d", len(req.Data))
 	data := removeBase64Prefix(req.Data)
 
 	decoded, err := base64.StdEncoding.DecodeString(data)

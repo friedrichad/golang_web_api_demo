@@ -8,8 +8,11 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
+	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
+	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
@@ -18,6 +21,7 @@ import (
 
 type IAuthService interface {
 	Authentication(c *gin.Context) (*model.TokenResponse, *common.Error)
+	Register(c *gin.Context) (*dtos.UserResponse, *common.Error)
 }
 
 type AuthService struct {
@@ -145,4 +149,63 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 		return nil, false
 	}
 	return claims, claims.RefreshTokenExpired()
+}
+
+func (a AuthService) Register(c *gin.Context) (*dtos.UserResponse, *common.Error) {
+	var req dtos.RegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	existingUser, _ := a.repository.GetByUsername(req.Username)
+	if existingUser != nil {
+		return nil, &common.Error{Code: "400", Message: "Username đã tồn tại"}
+	}
+
+	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		return nil, common.SystemError
+	}
+
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, common.SystemError
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	userRepoTx := a.repository.(*repository.UserRepository).WithTx(tx)
+
+	user := &model.User{
+		Username:     req.Username,
+		DisplayName:  req.DisplayName,
+		Email:        req.Email,
+		PasswordHash: hashedPassword,
+		StatusInt:    1,
+		CreatedAt:    time.Now(),
+	}
+
+	err = userRepoTx.Save(user)
+	if err != nil {
+		tx.Rollback()
+		return nil, common.SystemError
+	}
+
+	if req.RoleID > 0 {
+		err = userRepoTx.AddUserRole(user.UserID, req.RoleID)
+		if err != nil {
+			tx.Rollback()
+			return nil, common.SystemError
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, common.SystemError
+	}
+
+	userResponse := modelToUserResponse(user)
+	return &userResponse, nil
 }

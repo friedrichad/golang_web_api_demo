@@ -18,6 +18,17 @@ type IRoleService interface {
 	CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Error)
 	UpdateRole(c *gin.Context) *common.Error
 	DeleteRole(c *gin.Context) *common.Error
+
+	// role_menu
+	AssignRoleMenus(c *gin.Context) *common.Error
+	GetRoleMenus(c *gin.Context) ([]int, *common.Error)
+
+	// permission
+	GetAllPermissions(c *gin.Context) ([]dtos.PermissionDTO, *common.Error)
+	GetPermissionById(c *gin.Context) (*dtos.PermissionDTO, *common.Error)
+	CreatePermission(c *gin.Context) (*dtos.PermissionDTO, *common.Error)
+	UpdatePermission(c *gin.Context) *common.Error
+	DeletePermissions(c *gin.Context) *common.Error
 }
 
 type RoleService struct {
@@ -230,4 +241,172 @@ func modelToRoleResponse(role *model.Role) dtos.RoleResponse {
 		UpdatedBy:   role.UpdatedBy,
 		UpdatedAt:   role.UpdatedAt,
 	}
+}
+
+// role_menu
+func (s *RoleService) AssignRoleMenus(c *gin.Context) *common.Error {
+	var req dtos.RoleMenuAssign
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return common.RequestInvalid
+	}
+
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return common.SystemError
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleRepoTx := s.roleRepo.(*repository.RoleRepository).WithTx(tx)
+
+	if err := roleRepoTx.DeleteRoleMenus(req.RoleID); err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	roleMenus := make([]model.RoleMenu, len(req.MenuIDs))
+	for i, menuId := range req.MenuIDs {
+		roleMenus[i] = model.RoleMenu{
+			RoleID: req.RoleID,
+			MenuID: menuId,
+		}
+	}
+
+	if err := roleRepoTx.CreateRoleMenus(roleMenus); err != nil {
+		tx.Rollback()
+		return common.SystemError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return common.SystemError
+	}
+
+	return nil
+}
+
+func (s *RoleService) GetRoleMenus(c *gin.Context) ([]int, *common.Error) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		return nil, common.RequestInvalid
+	}
+
+	roleId, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	roleMenus, err := s.roleRepo.GetRoleMenus(int(roleId))
+	if err != nil {
+		return nil, common.SystemError
+	}
+
+	menuIds := make([]int, len(roleMenus))
+	for i, rm := range roleMenus {
+		menuIds[i] = rm.MenuID
+	}
+	return menuIds, nil
+}
+
+// permission
+func (s *RoleService) GetAllPermissions(c *gin.Context) ([]dtos.PermissionDTO, *common.Error) {
+	permissions, err := s.roleRepo.GetAllPermissions()
+	if err != nil {
+		return nil, common.SystemError
+	}
+
+	permissionDTOs := make([]dtos.PermissionDTO, len(permissions))
+	for i, p := range permissions {
+		permissionDTOs[i] = dtos.PermissionDTO{
+			PermissionID:   p.PermissionID,
+			PermissionName: p.PermissionName,
+		}
+	}
+	return permissionDTOs, nil
+}
+
+func (s *RoleService) GetPermissionById(c *gin.Context) (*dtos.PermissionDTO, *common.Error) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		return nil, common.RequestInvalid
+	}
+
+	permId, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	permission, err := s.roleRepo.GetPermissionById(int(permId))
+	if err != nil {
+		return nil, common.NotFound
+	}
+
+	return &dtos.PermissionDTO{
+		PermissionID:   permission.PermissionID,
+		PermissionName: permission.PermissionName,
+	}, nil
+}
+
+func (s *RoleService) CreatePermission(c *gin.Context) (*dtos.PermissionDTO, *common.Error) {
+	var req dtos.PermissionCreate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	permission := &model.Permission{
+		PermissionName: req.PermissionName,
+	}
+
+	if err := s.roleRepo.CreatePermission(permission); err != nil {
+		return nil, common.SystemError
+	}
+
+	return &dtos.PermissionDTO{
+		PermissionID:   permission.PermissionID,
+		PermissionName: permission.PermissionName,
+	}, nil
+}
+
+func (s *RoleService) UpdatePermission(c *gin.Context) *common.Error {
+	var req dtos.PermissionUpdate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return common.RequestInvalid
+	}
+
+	permission, err := s.roleRepo.GetPermissionById(req.PermissionID)
+	if err != nil || permission == nil {
+		return common.NotFound
+	}
+
+	permission.PermissionName = req.PermissionName
+
+	if err := s.roleRepo.UpdatePermission(permission); err != nil {
+		return common.SystemError
+	}
+
+	return nil
+}
+
+func (s *RoleService) DeletePermissions(c *gin.Context) *common.Error {
+	var idStrs []string
+	if err := c.ShouldBindJSON(&idStrs); err != nil {
+		return common.RequestInvalid
+	}
+
+	ids := make([]int, len(idStrs))
+	for i, idStr := range idStrs {
+		permId, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return common.RequestInvalid
+		}
+		ids[i] = int(permId)
+	}
+
+	if err := s.roleRepo.DeletePermissions(ids); err != nil {
+		return common.SystemError
+	}
+
+	return nil
 }

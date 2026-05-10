@@ -16,6 +16,18 @@ type IRoleRepository interface {
 	GetRoleById(roleId int) (*model.Role, error)
 	Save(role *model.Role) error
 	Update(role *model.Role) error
+
+	// role_menu
+	GetRoleMenus(roleId int) ([]model.RoleMenu, error)
+	DeleteRoleMenus(roleId int) error
+	CreateRoleMenus(roleMenus []model.RoleMenu) error
+
+	// permissions
+	GetAllPermissions() ([]model.Permission, error)
+	GetPermissionById(id int) (*model.Permission, error)
+	CreatePermission(permission *model.Permission) error
+	UpdatePermission(permission *model.Permission) error
+	DeletePermissions(ids []int) error
 }
 
 type RoleRepository struct {
@@ -89,4 +101,50 @@ func (r *RoleRepository) WithTx(tx *gorm.DB) *RoleRepository {
 		BaseRepository: BaseRepository[model.Role, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+// RoleMenu implementations
+func (r *RoleRepository) GetRoleMenus(roleId int) ([]model.RoleMenu, error) {
+	var roleMenus []model.RoleMenu
+	err := r.DB.Where("role_id = ?", roleId).Find(&roleMenus).Error
+	return roleMenus, err
+}
+
+func (r *RoleRepository) DeleteRoleMenus(roleId int) error {
+	return r.DB.Where("role_id = ?", roleId).Delete(&model.RoleMenu{}).Error
+}
+
+func (r *RoleRepository) CreateRoleMenus(roleMenus []model.RoleMenu) error {
+	if len(roleMenus) == 0 {
+		return nil
+	}
+	return r.DB.Create(&roleMenus).Error
+}
+
+// Permission implementations
+func (r *RoleRepository) GetAllPermissions() ([]model.Permission, error) {
+	var permissions []model.Permission
+	err := r.DB.Find(&permissions).Error
+	return permissions, err
+}
+
+func (r *RoleRepository) GetPermissionById(id int) (*model.Permission, error) {
+	var permission model.Permission
+	err := r.DB.First(&permission, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &permission, nil
+}
+
+func (r *RoleRepository) CreatePermission(permission *model.Permission) error {
+	return r.DB.Create(permission).Error
+}
+
+func (r *RoleRepository) UpdatePermission(permission *model.Permission) error {
+	return r.DB.Model(permission).Updates(permission).Error
+}
+
+func (r *RoleRepository) DeletePermissions(ids []int) error {
+	return r.DB.Where("permission_id IN ?", ids).Delete(&model.Permission{}).Error
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
+	"time"
 )
 
 type IUserRepository interface {
@@ -16,6 +17,7 @@ type IUserRepository interface {
 	GetById(id int) (*model.User, error)
 	Save(user *model.User) error
 	Update(user *model.User) error
+	AddUserRole(userId int, roleId int) error
 }
 
 type UserRepository struct {
@@ -43,41 +45,30 @@ func (u *UserRepository) GetByUsername(username string) (*model.User, error) {
 }
 
 func (u *UserRepository) GetAllByCondition(query dtos.UserFilter) ([]model.User, int, error) {
-	var username interface{}
-	if query.Username != nil {
-		username = *query.Username
-	}
-
-	var statusInt interface{}
-	if query.StatusInt != nil {
-		statusInt = *query.StatusInt
-	}
-
-	dateFrom := query.GetDateFrom()
-	dateTo := query.GetDateTo()
-
-	return u.GetPage(
-		"Select u.* from user u"+
-			" where (? is null or u.username = ?)"+
-			" and (? is null or u.status_int = ?)"+
-			" and (? is null or u.created_at >= ?)"+
-			" and (? is null or u.created_at < ?)",
-		query.Page,
-		query.Size,
-		username, username,
-		statusInt, statusInt,
-		dateFrom, dateFrom,
-		dateTo, dateTo,
-	)
+	return u.GetPage("SELECT * FROM user "+
+		"where (? is null OR username like ?) "+
+		" and (? is null OR display_name like ?) "+
+		" and (? is null OR status_int = ?)"+
+		" and (? is null or created_at >= ?) "+
+		" and (? is null or created_at < ?) ", query.Page, query.Size, query.Username, query.Username, query.DisplayName, query.DisplayName, query.StatusInt, query.StatusInt, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
+
 func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
 	var authorities []string
-	err := u.Instance.Model(&model.Role{}).
-		Select("role.role_name").
-		Joins("INNER JOIN user_role ON role.role_id = user_role.role_id").
-		Where("user_role.user_id = ?", userId).
-		Pluck("role_name", &authorities).Error
-	return authorities, err
+    err := u.DB.Raw(`
+        SELECT CONCAT(m.menu_name, ':', p.permission_name) AS scope
+        FROM user u
+        JOIN user_role ur ON u.user_id = ur.user_id
+        JOIN role r ON ur.role_id = r.role_id
+        JOIN role_menu rm ON r.role_id = rm.role_id
+        JOIN menu m ON rm.menu_id = m.menu_id
+        JOIN role_menu_permission rmp 
+            ON rmp.role_id = r.role_id AND rmp.menu_id = m.menu_id
+        JOIN permissions p ON rmp.permission_id = p.permission_id
+        WHERE u.user_id = ?
+    `, userId).Pluck("scope", &authorities).Error
+
+    return authorities, err
 }
 
 func (u *UserRepository) GetById(id int) (*model.User, error) {
@@ -92,6 +83,15 @@ func (u *UserRepository) Save(user *model.User) error {
 
 func (u *UserRepository) Update(user *model.User) error {
 	return u.BaseRepository.Update(user)
+}
+
+func (u *UserRepository) AddUserRole(userId int, roleId int) error {
+	userRole := model.UserRole{
+		UserID:    userId,
+		RoleID:    roleId,
+		CreatedAt: time.Now(), // Assuming we want to set created_at
+	}
+	return u.DB.Create(&userRole).Error
 }
 
 func (u *UserRepository) Delete(ids []int) error {

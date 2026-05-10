@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/router"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/spf13/viper"
 	"log"
+	"os"
+
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
+	"github.com/friedrichad/golang_web_api_demo/internal/router"
+	"github.com/spf13/viper"
 )
 
 // @title Auth Server API
@@ -20,6 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 	db.InitMysql()
+	log.SetOutput(os.Stdout)
 
 	router.InitRouter().Run(":" + viper.GetString("port"))
 }

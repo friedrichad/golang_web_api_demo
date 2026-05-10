@@ -59,3 +59,22 @@ type RoleResponse struct {
 	UpdatedBy   int       `json:"updated_by"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+type RoleMenuAssign struct {
+	RoleID  int   `json:"role_id" binding:"required"`
+	MenuIDs []int `json:"menu_ids"`
+}
+
+type PermissionDTO struct {
+	PermissionID   int    `json:"permission_id"`
+	PermissionName string `json:"permission_name"`
+}
+
+type PermissionCreate struct {
+	PermissionName string `json:"permission_name" binding:"required"`
+}
+
+type PermissionUpdate struct {
+	PermissionID   int    `json:"permission_id" binding:"required"`
+	PermissionName string `json:"permission_name" binding:"required"`
+}

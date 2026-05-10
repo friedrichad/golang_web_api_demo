@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+// BasicAuthenticator validates client credentials (client_id and client_secret)
+// Used for OAuth2 authentication endpoints
 func BasicAuthenticator() gin.HandlerFunc {
 	basicAuth := base64.StdEncoding.EncodeToString([]byte(viper.GetString("oauth.client-id") + ":" + viper.GetString("oauth.client-secret")))
 	return func(c *gin.Context) {
@@ -21,10 +23,13 @@ func BasicAuthenticator() gin.HandlerFunc {
 		if len(basic) == 0 || strings.Replace(basic[0], "Basic ", "", 1) != basicAuth {
 			c.JSON(http.StatusUnauthorized, common.Error{Code: "401", Message: "Client không hợp lệ"})
 			c.Abort()
+			return
 		}
 	}
 }
 
+// BearerAuthenticator validates JWT bearer token
+// Extracts user information and sets it in context for downstream handlers
 func BearerAuthenticator() gin.HandlerFunc {
 	hmacSecret := []byte(viper.GetString("oauth.jwt-secret"))
 	return func(c *gin.Context) {
@@ -37,9 +42,12 @@ func BearerAuthenticator() gin.HandlerFunc {
 		c.Set("user_id", jwtClaims.Id)
 		c.Set("username", jwtClaims.Username)
 		c.Set("authorities", jwtClaims.Authorities)
+		c.Next()
 	}
 }
 
+// Authorizator checks if user has required authorities/permissions
+// Can be called with multiple authorities - user needs at least one of them
 func Authorizator(authority ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authorities := c.GetStringSlice("authorities")
@@ -48,7 +56,35 @@ func Authorizator(authority ...string) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		c.Next()
 	}
+}
+
+// GetUserID extracts user ID from context (set by BearerAuthenticator)
+func GetUserID(c *gin.Context) string {
+	userId, exists := c.Get("user_id")
+	if !exists {
+		return ""
+	}
+	return userId.(string)
+}
+
+// GetUsername extracts username from context (set by BearerAuthenticator)
+func GetUsername(c *gin.Context) string {
+	username, exists := c.Get("username")
+	if !exists {
+		return ""
+	}
+	return username.(string)
+}
+
+// GetAuthorities extracts authorities from context (set by BearerAuthenticator)
+func GetAuthorities(c *gin.Context) []string {
+	authorities, exists := c.Get("authorities")
+	if !exists {
+		return []string{}
+	}
+	return authorities.([]string)
 }
 
 func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
@@ -60,6 +96,6 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 	if err == nil {
 		return claims, true
 	}
-	log.Printf("Invalid JWT Token")
+	log.Printf("Invalid JWT Token: %v", err)
 	return nil, false
 }

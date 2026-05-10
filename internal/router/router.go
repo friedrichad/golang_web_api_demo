@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/controller"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -41,159 +42,172 @@ func configCors(router *gin.Engine) {
 func initUserRouter(router *gin.Engine) {
 	userController := controller.NewUserController()
 	userGroup := router.Group("/users")
+	userGroup.Use(middleware.BearerAuthenticator())
 	{
-		userGroup.GET("", userController.GetAllUsers())
-		userGroup.GET("/:id", userController.GetUserById())
-		userGroup.POST("", userController.CreateUser())
-		userGroup.PUT("", userController.UpdateUser())
-		userGroup.DELETE("", userController.DeleteUser())
-		userGroup.GET("/:id/authorities", userController.GetUserAuthorities())
+		userGroup.GET("", middleware.Authorizator("user:view"), userController.GetAllUsers())
+		userGroup.GET("/:id", middleware.Authorizator("user:view"), userController.GetUserById())
+		userGroup.POST("", middleware.Authorizator("user:create"), userController.CreateUser())
+		userGroup.PUT("", middleware.Authorizator("user:edit"), userController.UpdateUser())
+		userGroup.DELETE("", middleware.Authorizator("user:delete"), userController.DeleteUser())
+		userGroup.GET("/:id/authorities", middleware.Authorizator("user:view"), userController.GetUserAuthorities())
 	}
 }
 
 func initBinRouter(router *gin.Engine) {
 	binController := controller.NewBinController()
 	binGroup := router.Group("/bins")
+	binGroup.Use(middleware.BearerAuthenticator())
 	{
-		binGroup.GET("", binController.GetAllBins())
-		binGroup.GET("/:id", binController.GetBinById())
-		binGroup.POST("", binController.CreateBin())
-		binGroup.PUT("", binController.UpdateBin())
-		binGroup.DELETE("", binController.DeleteBin())
+		binGroup.GET("", middleware.Authorizator("bin:view"), binController.GetAllBins())
+		binGroup.GET("/:id", middleware.Authorizator("bin:view"), binController.GetBinById())
+		binGroup.POST("", middleware.Authorizator("bin:create"), binController.CreateBin())
+		binGroup.PUT("", middleware.Authorizator("bin:edit"), binController.UpdateBin())
+		binGroup.DELETE("", middleware.Authorizator("bin:delete"), binController.DeleteBin())
 	}
 }
 
 func initWarehouseRouter(router *gin.Engine) {
 	warehouseController := controller.NewWarehouseController()
 	warehouseGroup := router.Group("/warehouses")
+	warehouseGroup.Use(middleware.BearerAuthenticator())
 	{
-		warehouseGroup.GET("", warehouseController.GetAllWarehouses())
-		warehouseGroup.GET("/:id", warehouseController.GetWarehouseById())
-		warehouseGroup.POST("", warehouseController.CreateWarehouse())
-		warehouseGroup.PUT("", warehouseController.UpdateWarehouse())
-		warehouseGroup.DELETE("", warehouseController.DeleteWarehouse())
+		warehouseGroup.GET("", middleware.Authorizator("warehouse:view"), warehouseController.GetAllWarehouses())
+		warehouseGroup.GET("/:id", middleware.Authorizator("warehouse:view"), warehouseController.GetWarehouseById())
+		warehouseGroup.POST("", middleware.Authorizator("warehouse:create"), warehouseController.CreateWarehouse())
+		warehouseGroup.PUT("", middleware.Authorizator("warehouse:edit"), warehouseController.UpdateWarehouse())
+		warehouseGroup.DELETE("", middleware.Authorizator("warehouse:delete"), warehouseController.DeleteWarehouse())
 	}
 }
 
 func initComponentRouter(router *gin.Engine) {
 	componentController := controller.NewComponentController()
 	componentGroup := router.Group("/components")
+	componentGroup.Use(middleware.BearerAuthenticator())
 	{
-		componentGroup.GET("", componentController.GetAllComponents())
-		componentGroup.GET("/:id", componentController.GetComponentById())
-		componentGroup.POST("", componentController.CreateComponent())
-		componentGroup.PUT("", componentController.UpdateComponent())
-		componentGroup.DELETE("", componentController.DeleteComponent())
+		componentGroup.GET("", middleware.Authorizator("component:view"), componentController.GetAllComponents())
+		componentGroup.GET("/:id", middleware.Authorizator("component:view"), componentController.GetComponentById())
+		componentGroup.POST("", middleware.Authorizator("component:create"), componentController.CreateComponent())
+		componentGroup.PUT("", middleware.Authorizator("component:edit"), componentController.UpdateComponent())
+		componentGroup.DELETE("", middleware.Authorizator("component:delete"), componentController.DeleteComponent())
 	}
 }
 
 func initCustomerRouter(router *gin.Engine) {
 	customerController := controller.NewCustomerController()
 	customerGroup := router.Group("/customers")
+	customerGroup.Use(middleware.BearerAuthenticator())
 	{
-		customerGroup.GET("", customerController.GetAllCustomers())
-		customerGroup.GET("/:id", customerController.GetCustomerById())
-		customerGroup.POST("", customerController.CreateCustomer())
-		customerGroup.PUT("", customerController.UpdateCustomer())
-		customerGroup.DELETE("", customerController.DeleteCustomer())
+		customerGroup.GET("", middleware.Authorizator("customer:view"), customerController.GetAllCustomers())
+		customerGroup.GET("/:id", middleware.Authorizator("customer:view"), customerController.GetCustomerById())
+		customerGroup.POST("", middleware.Authorizator("customer:create"), customerController.CreateCustomer())
+		customerGroup.PUT("", middleware.Authorizator("customer:edit"), customerController.UpdateCustomer())
+		customerGroup.DELETE("", middleware.Authorizator("customer:delete"), customerController.DeleteCustomer())
 	}
 }
 
 func initRoleRouter(router *gin.Engine) {
 	roleController := controller.NewRoleController()
 	roleGroup := router.Group("/roles")
+	roleGroup.Use(middleware.BearerAuthenticator())
 	{
-		roleGroup.GET("", roleController.GetAllRoles())
-		roleGroup.GET("/:id", roleController.GetRoleById())
-		roleGroup.POST("", roleController.CreateRole())
-		roleGroup.PUT("", roleController.UpdateRole())
-		roleGroup.DELETE("", roleController.DeleteRole())
+		roleGroup.GET("", middleware.Authorizator("role:view"), roleController.GetAllRoles())
+		roleGroup.GET("/:id", middleware.Authorizator("role:view"), roleController.GetRoleById())
+		roleGroup.POST("", middleware.Authorizator("role:create"), roleController.CreateRole())
+		roleGroup.PUT("", middleware.Authorizator("role:edit"), roleController.UpdateRole())
+		roleGroup.DELETE("", middleware.Authorizator("role:delete"), roleController.DeleteRole())
 	}
 }
 
 func initRequestRouter(router *gin.Engine) {
 	requestController := controller.NewRequestController()
 	requestGroup := router.Group("/requests")
+	requestGroup.Use(middleware.BearerAuthenticator())
 	{
-		requestGroup.GET("", requestController.GetAllRequests())
-		requestGroup.GET("/:id", requestController.GetRequestById())
-		requestGroup.POST("", requestController.CreateRequest())
-		requestGroup.PUT("", requestController.UpdateRequest())
-		requestGroup.DELETE("", requestController.DeleteRequest())
-		requestGroup.POST("/approval", requestController.ApprovalRequest())
-		requestGroup.POST("/confirm", requestController.ConfirmRequest())
+		requestGroup.GET("", middleware.Authorizator("request:view"), requestController.GetAllRequests())
+		requestGroup.GET("/:id", middleware.Authorizator("request:view"), requestController.GetRequestById())
+		requestGroup.POST("", middleware.Authorizator("request:create"), requestController.CreateRequest())
+		requestGroup.PUT("", middleware.Authorizator("request:edit"), requestController.UpdateRequest())
+		requestGroup.DELETE("", middleware.Authorizator("request:delete"), requestController.DeleteRequest())
+		requestGroup.POST("/approval", middleware.Authorizator("request:approve"), requestController.ApprovalRequest())
+		requestGroup.POST("/confirm", middleware.Authorizator("request:confirm"), requestController.ConfirmRequest())
 	}
 }
 
 func initRequestDetailRouter(router *gin.Engine) {
 	requestDetailController := controller.NewRequestDetailController()
 	requestDetailGroup := router.Group("/request-details")
+	requestDetailGroup.Use(middleware.BearerAuthenticator())
 	{
-		requestDetailGroup.GET("", requestDetailController.GetAllRequestDetails())
-		requestDetailGroup.GET("/:id", requestDetailController.GetRequestDetailById())
-		requestDetailGroup.POST("", requestDetailController.CreateRequestDetail())
-		requestDetailGroup.PUT("", requestDetailController.UpdateRequestDetail())
-		requestDetailGroup.DELETE("", requestDetailController.DeleteRequestDetail())
+		requestDetailGroup.GET("", middleware.Authorizator("request:view"), requestDetailController.GetAllRequestDetails())
+		requestDetailGroup.GET("/:id", middleware.Authorizator("request:view"), requestDetailController.GetRequestDetailById())
+		requestDetailGroup.POST("", middleware.Authorizator("request:create"), requestDetailController.CreateRequestDetail())
+		requestDetailGroup.PUT("", middleware.Authorizator("request:edit"), requestDetailController.UpdateRequestDetail())
+		requestDetailGroup.DELETE("", middleware.Authorizator("request:delete"), requestDetailController.DeleteRequestDetail())
 	}
 }
 
 func initInventoryAdjustmentRouter(router *gin.Engine) {
 	adjustmentController := controller.NewInventoryAdjustmentController()
 	adjustmentGroup := router.Group("/adjustments")
+	adjustmentGroup.Use(middleware.BearerAuthenticator())
 	{
-		adjustmentGroup.GET("", adjustmentController.GetAllAdjustments())
-		adjustmentGroup.GET("/:id", adjustmentController.GetAdjustmentById())
-		adjustmentGroup.POST("", adjustmentController.CreateAdjustment())
-		adjustmentGroup.PUT("", adjustmentController.UpdateAdjustment())
-		adjustmentGroup.DELETE("", adjustmentController.DeleteAdjustment())
-		adjustmentGroup.POST("/approval", adjustmentController.ApproveAdjustment())
+		adjustmentGroup.GET("", middleware.Authorizator("adjustment:view"), adjustmentController.GetAllAdjustments())
+		adjustmentGroup.GET("/:id", middleware.Authorizator("adjustment:view"), adjustmentController.GetAdjustmentById())
+		adjustmentGroup.POST("", middleware.Authorizator("adjustment:create"), adjustmentController.CreateAdjustment())
+		adjustmentGroup.PUT("", middleware.Authorizator("adjustment:edit"), adjustmentController.UpdateAdjustment())
+		adjustmentGroup.DELETE("", middleware.Authorizator("adjustment:delete"), adjustmentController.DeleteAdjustment())
+		adjustmentGroup.POST("/approval", middleware.Authorizator("adjustment:approve"), adjustmentController.ApproveAdjustment())
 	}
 }
 
 func initInventoryAuditRouter(router *gin.Engine) {
 	auditController := controller.NewInventoryAuditController()
 	auditGroup := router.Group("/audits")
+	auditGroup.Use(middleware.BearerAuthenticator())
 	{
-		auditGroup.GET("", auditController.GetAllAudits())
-		auditGroup.GET("/:id", auditController.GetAuditById())
-		auditGroup.POST("", auditController.CreateAudit())
-		auditGroup.PUT("", auditController.UpdateAudit())
-		auditGroup.DELETE("", auditController.DeleteAudit())
-		auditGroup.POST("/approval", auditController.ApproveAudit())
-		auditGroup.POST("/confirm", auditController.ConfirmAudit())
+		auditGroup.GET("", middleware.Authorizator("audit:view"), auditController.GetAllAudits())
+		auditGroup.GET("/:id", middleware.Authorizator("audit:view"), auditController.GetAuditById())
+		auditGroup.POST("", middleware.Authorizator("audit:create"), auditController.CreateAudit())
+		auditGroup.PUT("", middleware.Authorizator("audit:edit"), auditController.UpdateAudit())
+		auditGroup.DELETE("", middleware.Authorizator("audit:delete"), auditController.DeleteAudit())
+		auditGroup.POST("/approval", middleware.Authorizator("audit:approve"), auditController.ApproveAudit())
+		auditGroup.POST("/confirm", middleware.Authorizator("audit:confirm"), auditController.ConfirmAudit())
 	}
 }
 func initInventoryAuditDetailRouter(router *gin.Engine) {
 	auditDetailController := controller.NewInventoryAuditDetailController()
 	auditDetailGroup := router.Group("/audit-details")
+	auditDetailGroup.Use(middleware.BearerAuthenticator())
 	{
-		auditDetailGroup.GET("", auditDetailController.GetAllInventoryAuditDetails())
+		auditDetailGroup.GET("", middleware.Authorizator("audit:view"), auditDetailController.GetAllInventoryAuditDetails())
 		// auditDetailGroup.GET("/:id", auditDetailController.GetInventoryAuditDetailById())
-		auditDetailGroup.POST("", auditDetailController.CreateInventoryAuditDetail())
-		auditDetailGroup.PUT("", auditDetailController.UpdateInventoryAuditDetail())
-		auditDetailGroup.DELETE("", auditDetailController.DeleteInventoryAuditDetail())
+		auditDetailGroup.POST("", middleware.Authorizator("audit:create"), auditDetailController.CreateInventoryAuditDetail())
+		auditDetailGroup.PUT("", middleware.Authorizator("audit:edit"), auditDetailController.UpdateInventoryAuditDetail())
+		auditDetailGroup.DELETE("", middleware.Authorizator("audit:delete"), auditDetailController.DeleteInventoryAuditDetail())
 	}
 }
 
 func initInventoryLedgerRouter(router *gin.Engine) {
 	ledgerController := controller.NewInventoryLedgerController()
 	ledgerGroup := router.Group("/ledgers")
+	ledgerGroup.Use(middleware.BearerAuthenticator())
 	{
-		ledgerGroup.GET("", ledgerController.GetAllLedgers())
-		ledgerGroup.GET("/export", ledgerController.ExportLedgersExcel())
-		ledgerGroup.GET("/:id", ledgerController.GetLedgerById())
+		ledgerGroup.GET("", middleware.Authorizator("ledgers:view"), ledgerController.GetAllLedgers())
+		ledgerGroup.GET("/export", middleware.Authorizator("ledgers:view"), ledgerController.ExportLedgersExcel())
+		ledgerGroup.GET("/:id", middleware.Authorizator("ledgers:view"), ledgerController.GetLedgerById())
 	}
 }
 
 func initComponentCategoryRouter(router *gin.Engine) {
 	categoryController := controller.NewComponentCategoryController()
 	categoryGroup := router.Group("/categories")
+	categoryGroup.Use(middleware.BearerAuthenticator())
 	{
-		categoryGroup.GET("", categoryController.GetAllCategories())
-		categoryGroup.GET("/:id", categoryController.GetCategoryById())
-		categoryGroup.POST("", categoryController.CreateCategory())
-		categoryGroup.PUT("", categoryController.UpdateCategory())
-		categoryGroup.DELETE("", categoryController.DeleteCategory())
+		categoryGroup.GET("", middleware.Authorizator("categories:view"), categoryController.GetAllCategories())
+		categoryGroup.GET("/:id", middleware.Authorizator("categories:view"), categoryController.GetCategoryById())
+		categoryGroup.POST("", middleware.Authorizator("categories:create"), categoryController.CreateCategory())
+		categoryGroup.PUT("", middleware.Authorizator("categories:edit"), categoryController.UpdateCategory())
+		categoryGroup.DELETE("", middleware.Authorizator("categories:delete"), categoryController.DeleteCategory())
 	}
 }
 
@@ -201,17 +215,19 @@ func initAuthRouter(router *gin.Engine) {
 	authController := controller.NewAuthController()
 	authGroup := router.Group("/auth")
 	{
-		authGroup.POST("/login", authController.GetToken())
 		authGroup.POST("/refresh", authController.GetToken())
+		authGroup.POST("/login", authController.GetToken())
+		authGroup.POST("/register", authController.Register())
 	}
 }
 
 func initUploadRouter(router *gin.Engine) {
 	uploadController := controller.NewUploadController()
 	uploadGroup := router.Group("/uploads")
+	uploadGroup.Use(middleware.BearerAuthenticator())
 	{
-		uploadGroup.POST("/base64", uploadController.UploadBase64())
-		uploadGroup.POST("/multipart", uploadController.UploadMultipart())
-		uploadGroup.POST("/multiple", uploadController.UploadMultiple())
+		uploadGroup.POST("/base64", middleware.Authorizator("upload:create"), uploadController.UploadBase64())
+		uploadGroup.POST("/multipart", middleware.Authorizator("upload:create"), uploadController.UploadMultipart())
+		uploadGroup.POST("/multiple", middleware.Authorizator("upload:create"), uploadController.UploadMultiple())
 	}
 }
