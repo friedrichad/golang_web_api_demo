@@ -8,6 +8,7 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -119,15 +120,17 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 	requestRepoTx := s.requestRepo.(*repository.RequestRepository).WithTx(tx)
 	requestDetailRepoTx := s.requestDetailRepo.(*repository.RequestDetailRepository).WithTx(tx)
 
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	request := &model.Request{
 		RequestType:   req.RequestType,
 		Description:   req.Description,
 		WarehouseID:   int(req.WarehouseID),
-		PerformedByID: int(req.PerformedByID),
+		PerformedByID: userID,
 		PartnerID:     int(req.PartnerID),
 		RequestDate:   time.Now(),
 		Note:          req.Note,
 		StatusInt:     1,
+		CreatedBy:     userID,
 		CreatedAt:     time.Now(),
 	}
 
@@ -147,6 +150,8 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 			ComponentID: *detailDto.ComponentID,
 			Quantity:    *detailDto.Quantity,
 			UnitPrice:   *detailDto.UnitPrice,
+			CreatedBy:   userID,
+			CreatedAt:   time.Now(),
 		}
 		if detailDto.BinFromID != nil {
 			detail.BinFromID = *detailDto.BinFromID
@@ -194,12 +199,9 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 	if req.WarehouseID != 0 {
 		request.WarehouseID = int(req.WarehouseID)
 	}
-	if req.PerformedByID != 0 {
-		request.PerformedByID = int(req.PerformedByID)
-	}
-	if req.ApproverID != 0 {
-		request.ApproverID = int(req.ApproverID)
-	}
+	
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+	
 	if req.PartnerID != 0 {
 		request.PartnerID = int(req.PartnerID)
 	}
@@ -209,7 +211,7 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 	if req.Note != "" {
 		request.Note = req.Note
 	}
-	request.UpdatedBy = int(req.UpdatedBy)
+	request.UpdatedBy = userID
 	request.UpdatedAt = time.Now()
 
 	err = s.requestRepo.Update(request)
@@ -273,7 +275,8 @@ func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
 	if request == nil {
 		return common.NotFound
 	}
-	request.ApproverID = int(req.ApproverID)
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+	request.ApproverID = userID
 	if !constants.IsValidRequestStatus(req.StatusInt) {
 		return &common.Error{Code: "400", Message: "Trạng thái yêu cầu không hợp lệ!"}
 	}
@@ -285,6 +288,7 @@ func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
 	}
 	request.StatusInt = int(req.StatusInt)
 	request.Note = req.Note
+	request.UpdatedBy = userID
 	request.UpdatedAt = time.Now()
 	err = s.requestRepo.Update(request)
 	if err != nil {
@@ -324,7 +328,9 @@ func (s *RequestService) ConfirmRequest(c *gin.Context) *common.Error {
 			return &common.Error{Code: "400", Message: err.Error()}
 		}
 	}
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	request.StatusInt = req.StatusInt
+	request.UpdatedBy = userID
 	request.UpdatedAt = time.Now()
 	err = s.requestRepo.Update(request)
 	if err != nil {
@@ -345,11 +351,7 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 	}
 
 	// Get user ID from context for ledger
-	userIDInterface, _ := c.Get("user_id")
-	userID := 0
-	if userIDInterface != nil {
-		userID = userIDInterface.(int)
-	}
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 
 	compBinRepo := repository.NewComponentBinRepository()
 	binRepo := repository.NewBinRepository()
@@ -517,6 +519,7 @@ func (s *RequestService) CreateRequestDetail(c *gin.Context) (*dtos.RequestDetai
 		return nil, &common.Error{Code: "404", Message: "Yêu cầu không tồn tại"}
 	}
 
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	detail := &model.RequestDetail{
 		RequestID:   req.RequestID,
 		ComponentID: req.ComponentID,
@@ -524,6 +527,7 @@ func (s *RequestService) CreateRequestDetail(c *gin.Context) (*dtos.RequestDetai
 		UnitPrice:   req.UnitPrice,
 		BinFromID:   req.BinFromID,
 		BinToID:     req.BinToID,
+		CreatedBy:   userID,
 		CreatedAt:   time.Now(),
 	}
 
@@ -570,9 +574,8 @@ func (s *RequestService) UpdateRequestDetail(c *gin.Context) *common.Error {
 	if req.BinToID != 0 {
 		detail.BinToID = req.BinToID
 	}
-	if req.UpdatedBy != 0 {
-		detail.UpdatedBy = req.UpdatedBy
-	}
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+	detail.UpdatedBy = userID
 	detail.UpdatedAt = time.Now()
 
 	err = s.requestDetailRepo.Update(detail)

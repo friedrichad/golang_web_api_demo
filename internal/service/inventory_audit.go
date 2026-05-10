@@ -12,6 +12,7 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
@@ -120,10 +121,12 @@ func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*dtos.Inve
 	auditRepoTx := s.auditRepo.(*repository.InventoryAuditRepository).WithTx(tx)
 	detailRepoTx := s.auditDetailRepo.(*repository.InventoryAuditDetailRepository).WithTx(tx)
 
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	audit := &model.InventoryAudit{
 		WarehouseID: int(req.WarehouseID),
 		Note:        req.Note,
 		StatusInt:   1,
+		CreatedBy:   userID,
 		CreatedAt:   time.Now(),
 	}
 
@@ -143,6 +146,7 @@ func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*dtos.Inve
 				SystemQuantity:     detail.SystemQuantity,
 				ActualQuantity:     detail.ActualQuantity,
 				DifferenceQuantity: math.Abs(detail.SystemQuantity - detail.ActualQuantity),
+				CreatedBy:          userID,
 			}
 			err := detailRepoTx.Save(auditDetail)
 			if err != nil {
@@ -185,7 +189,8 @@ func (s *InventoryAuditService) UpdateInventoryAudit(c *gin.Context) *common.Err
 	if req.Note != "" {
 		audit.Note = req.Note
 	}
-	audit.UpdatedBy = int(req.UpdatedBy)
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+	audit.UpdatedBy = userID
 	audit.UpdatedAt = time.Now()
 
 	err = s.auditRepo.Update(audit)
@@ -259,8 +264,10 @@ func (s *InventoryAuditService) ApprovalAudit(c *gin.Context) *common.Error {
 		return &common.Error{Code: "400", Message: "Kiểm kê chỉ có thể được phê duyệt hoặc từ chối!"}
 	}
 
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	audit.StatusInt = int(req.StatusInt)
 	audit.Note = req.Note
+	audit.UpdatedBy = userID
 	audit.UpdatedAt = time.Now()
 
 	err = s.auditRepo.Update(audit)
@@ -322,6 +329,7 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 		}
 
 		binRepo := repository.NewBinRepository()
+		userID, _ := strconv.Atoi(middleware.GetUserID(c))
 
 		// Update component bins and create ledger entries
 		for _, detail := range details {
@@ -338,12 +346,13 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 					BinID:       detail.BinID,
 					Quantity:    detail.ActualQuantity,
 					CreatedAt:   time.Now(),
-					CreatedBy:   int(audit.CreatedBy),
+					CreatedBy:   userID,
 				}
 				err = compBinRepoTx.Save(compBin)
 			} else {
 				compBin.Quantity = detail.ActualQuantity
 				compBin.UpdatedAt = time.Now()
+				compBin.UpdatedBy = userID
 				err = compBinRepoTx.Update(compBin)
 			}
 
@@ -370,7 +379,7 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 					QuantityChange:  detail.DifferenceQuantity,
 					QuantityAfter:   detail.ActualQuantity,
 					Note:            detail.Note,
-					CreatedBy:       int(audit.CreatedBy),
+					CreatedBy:       userID,
 				}
 				if err := s.ledgerService.CreateInventoryLedgerEntry(ledgerReq); err != nil {
 					tx.Rollback()
@@ -381,6 +390,7 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 
 		// Update audit status
 		audit.StatusInt = req.StatusInt
+		audit.UpdatedBy = userID
 		audit.UpdatedAt = time.Now()
 		err = s.auditRepo.Update(audit)
 		if err != nil {
@@ -393,7 +403,9 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 		}
 	} else {
 		// For other status changes, just update the audit without ledger entries
+		userID, _ := strconv.Atoi(middleware.GetUserID(c))
 		audit.StatusInt = req.StatusInt
+		audit.UpdatedBy = userID
 		audit.UpdatedAt = time.Now()
 
 		err = s.auditRepo.Update(audit)
@@ -437,6 +449,7 @@ func (s *InventoryAuditService) CreateInventoryAuditDetail(c *gin.Context) *comm
 		return common.NotFound
 	}
 
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	for _, r := range req {
 
 		auditDetail := &model.InventoryAuditDetail{
@@ -446,6 +459,7 @@ func (s *InventoryAuditService) CreateInventoryAuditDetail(c *gin.Context) *comm
 			SystemQuantity:     r.SystemQuantity,
 			ActualQuantity:     r.ActualQuantity,
 			DifferenceQuantity: math.Abs(r.SystemQuantity - r.ActualQuantity),
+			CreatedBy:          userID,
 		}
 
 		if err := detailRepoTx.Save(auditDetail); err != nil {
@@ -539,6 +553,8 @@ func (s *InventoryAuditService) UpdateInventoryAuditDetail(c *gin.Context) *comm
 		if r.UpdatedBy != 0 {
 			auditDetail.UpdatedBy = r.UpdatedBy
 		}
+		userID, _ := strconv.Atoi(middleware.GetUserID(c))
+		auditDetail.UpdatedBy = userID
 		auditDetail.UpdatedAt = time.Now()
 
 		err = detailRepoTx.Update(auditDetail)

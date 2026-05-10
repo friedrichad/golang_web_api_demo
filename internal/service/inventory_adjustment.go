@@ -10,6 +10,7 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
@@ -126,11 +127,13 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (
 	adjustmentRepoTx := s.adjustmentRepo.(*repository.InventoryAdjustmentRepository).WithTx(tx)
 	detailRepoTx := s.detailRepo.(*repository.InventoryAdjustmentDetailRepository).WithTx(tx)
 
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	adjustment := &model.InventoryAdjustment{
 		AuditID:     int(req.AuditID),
 		Description: req.Description,
 		Note:        req.Note,
 		StatusInt:   constants.InventoryAdjustmentStatusPending,
+		CreatedBy:   userID,
 		CreatedAt:   time.Now(),
 	}
 
@@ -150,6 +153,7 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (
 				QuantityBefore:     detailReq.QuantityBefore,
 				QuantityAfter:      detailReq.QuantityAfter,
 				AdjustmentQuantity: detailReq.AdjustmentQuantity,
+				CreatedBy:          userID,
 				CreatedAt:          time.Now(),
 			}
 			err := detailRepoTx.Save(detail)
@@ -204,7 +208,8 @@ func (s *InventoryAdjustmentService) UpdateInventoryAdjustment(c *gin.Context) *
 	if req.Note != "" {
 		adjustment.Note = req.Note
 	}
-	adjustment.UpdatedBy = int(req.UpdatedBy)
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+	adjustment.UpdatedBy = userID
 	adjustment.UpdatedAt = time.Now()
 
 	err = adjustmentRepoTx.Update(adjustment)
@@ -305,10 +310,11 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 	}
 
 	// Update adjustment status
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	adjustment.StatusInt = constants.InventoryAdjustmentStatusApproved
-	adjustment.ApprovedID = int(req.UpdatedBy)
+	adjustment.ApprovedID = userID
 	adjustment.UpdatedAt = time.Now()
-	adjustment.UpdatedBy = int(req.UpdatedBy)
+	adjustment.UpdatedBy = userID
 
 	err = adjustmentRepoTx.Update(adjustment)
 	if err != nil {
@@ -339,13 +345,13 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 				BinID:       detail.BinID,
 				Quantity:    detail.QuantityAfter,
 				CreatedAt:   time.Now(),
-				CreatedBy:   int(req.UpdatedBy),
+				CreatedBy:   userID,
 			}
 			err = componentBinRepoTx.Save(compBin)
 		} else {
 			compBin.Quantity = detail.QuantityAfter
 			compBin.UpdatedAt = time.Now()
-			compBin.UpdatedBy = int(req.UpdatedBy)
+			compBin.UpdatedBy = userID
 			err = componentBinRepoTx.Update(compBin)
 		}
 
@@ -372,7 +378,7 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 			QuantityChange:  quantityChange,
 			QuantityAfter:   detail.QuantityAfter,
 			Note:            adjustment.Note,
-			CreatedBy:       int(req.UpdatedBy),
+			CreatedBy:       userID,
 		}
 		if err := s.ledgerService.CreateInventoryLedgerEntry(ledgerReq); err != nil {
 			tx.Rollback()
@@ -483,6 +489,8 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustmentDetail(c *gin.Cont
 		return nil, &common.Error{Code: "403", Message: "Chỉ được phép thêm chi tiết cho đơn ở trạng thái chờ duyệt"}
 	}
 
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+
 	detail := &model.InventoryAdjustmentDetail{
 		AdjustmentID:       req.AdjustmentID,
 		ComponentID:        req.ComponentID,
@@ -491,6 +499,7 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustmentDetail(c *gin.Cont
 		QuantityBefore:     req.QuantityBefore,
 		QuantityAfter:      req.QuantityAfter,
 		AdjustmentQuantity: req.AdjustmentQuantity,
+		CreatedBy:          userID,
 		CreatedAt:          time.Now(),
 	}
 
@@ -538,7 +547,8 @@ func (s *InventoryAdjustmentService) UpdateInventoryAdjustmentDetail(c *gin.Cont
 	detail.QuantityBefore = req.QuantityBefore
 	detail.QuantityAfter = req.QuantityAfter
 	detail.AdjustmentQuantity = req.AdjustmentQuantity
-	detail.UpdatedBy = req.UpdatedBy
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+	detail.UpdatedBy = userID
 	detail.UpdatedAt = time.Now()
 
 	err = s.detailRepo.Update(detail)
