@@ -21,7 +21,10 @@ func BasicAuthenticator() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		basic := c.Request.Header["Authorization"]
 		if len(basic) == 0 || strings.Replace(basic[0], "Basic ", "", 1) != basicAuth {
-			c.JSON(http.StatusUnauthorized, common.Error{Code: "401", Message: "Client không hợp lệ"})
+			c.JSON(http.StatusUnauthorized, model.ResponseWrapper{
+				Code:    "401",
+				Message: "Client không hợp lệ",
+			})
 			c.Abort()
 			return
 		}
@@ -35,7 +38,10 @@ func BearerAuthenticator() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		jwtClaims, valid := extractClaims(c.GetHeader("Authorization"), hmacSecret)
 		if !valid {
-			c.JSON(http.StatusUnauthorized, common.Error{Code: "401", Message: "Token không hợp lệ hoặc đã hết hạn"})
+			c.JSON(http.StatusUnauthorized, model.ResponseWrapper{
+				Code:    common.TokenInvalid.Code,
+				Message: common.TokenInvalid.Message,
+			})
 			c.Abort()
 			return
 		}
@@ -52,7 +58,10 @@ func Authorizator(authority ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authorities := c.GetStringSlice("authorities")
 		if len(authorities) == 0 || !utils.AnyContains(authorities, authority) {
-			c.JSON(http.StatusForbidden, common.Error{Code: "403", Message: "Không có quyền truy cập"})
+			c.JSON(http.StatusForbidden, model.ResponseWrapper{
+				Code:    "403",
+				Message: "Không có quyền truy cập",
+			})
 			c.Abort()
 			return
 		}

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -30,7 +31,11 @@ func (controller *BaseController[T]) Success(c *gin.Context, v any) {
 * Returns a error response
  */
 func (controller *BaseController[T]) Error(c *gin.Context, err *common.Error, v any) {
-	c.JSON(http.StatusOK, model.ResponseWrapper{
+	statusCode, _ := strconv.Atoi(err.Code)
+	if statusCode < 100 || statusCode > 599 {
+		statusCode = http.StatusInternalServerError
+	}
+	c.JSON(statusCode, model.ResponseWrapper{
 		Code:    err.Code,
 		Message: err.Message,
 		Data:    v,
