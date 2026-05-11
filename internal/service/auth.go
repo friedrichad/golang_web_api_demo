@@ -9,6 +9,7 @@ import (
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -91,6 +92,13 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 		return nil, common.SystemError
 	}
 	response.AccessToken = accessToken
+	ttl := time.Until(time.Unix(response.Exp, 0))
+	err = redis.Save(redis.Rdb, "auth:token:"+response.Id, response.AccessToken, ttl)
+	if err != nil {
+    	log.Printf("Không lưu được token vào Redis: %v", err)
+    	return nil, common.SystemError
+	}
+
 	return response, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/router"
 	"github.com/spf13/viper"
@@ -23,6 +24,7 @@ func main() {
 	}
 	db.InitMysql()
 	log.SetOutput(os.Stdout)
+	redis.InitRedis() 
 
 	router.InitRouter().Run(":" + viper.GetString("port"))
 }

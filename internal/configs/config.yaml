@@ -20,3 +20,10 @@ oauth:
 upload:
   base_path: 'C:\Users\Hiro\Documents\golang_web_api_demo\internal\upload'
   return_url: 'http://localhost:8080/uploads'
+
+
+redis:
+  address: "redis-18842.c274.us-east-1-3.ec2.cloud.redislabs.com:18842"
+  username: "default"
+  password: "8hDMrecw8GsOtV6hb7YRQa8fw04oa6za"
+  db: 0

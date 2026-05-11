@@ -56,7 +56,7 @@ func (u *UserRepository) GetAllByCondition(query dtos.UserFilter) ([]model.User,
 func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
 	var authorities []string
     err := u.DB.Raw(`
-        SELECT CONCAT(m.menu_name, ':', p.permission_name) AS scope
+        SELECT DISTINCT CONCAT(m.menu_name, ':', p.permission_name) AS scope
         FROM user u
         JOIN user_role ur ON u.user_id = ur.user_id
         JOIN role r ON ur.role_id = r.role_id
