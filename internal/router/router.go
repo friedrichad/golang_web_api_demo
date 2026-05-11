@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/middleware"
+	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/controller"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
