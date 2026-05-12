@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 type IAuthController interface {
 	GetToken() gin.HandlerFunc
 	Register() gin.HandlerFunc
+	Logout() gin.HandlerFunc
 }
 
 type AuthController struct {
@@ -30,4 +30,8 @@ func (a AuthController) GetToken() gin.HandlerFunc {
 func (a AuthController) Register() gin.HandlerFunc {
 	base := BaseController[dtos.UserResponse]{}
 	return base.ResponsePointer(a.AuthService.Register)
+}
+
+func (a AuthController) Logout() gin.HandlerFunc {
+	return a.ResponseSuccessOnly(a.AuthService.Logout)
 }

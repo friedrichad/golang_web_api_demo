@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"time"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
@@ -28,34 +29,46 @@ func InitRedis() {
 	log.Printf("Kết nối thành công với Redis")
 }
 
-
 // Create hoặc Update (Set)
 func Save(rdb *redis.Client, key string, value string, expiration time.Duration) error {
-    return rdb.Set(Ctx, key, value, expiration).Err()
+	return rdb.Set(Ctx, key, value, expiration).Err()
 }
 
 // Read (Get)
 func Get(rdb *redis.Client, key string) (string, error) {
-    return rdb.Get(Ctx, key).Result()
+	return rdb.Get(Ctx, key).Result()
 }
 
 // Delete (Del)
 func Delete(rdb *redis.Client, key string) error {
-    return rdb.Del(Ctx, key).Err()
+	return rdb.Del(Ctx, key).Err()
 }
 
 // Exists kiểm tra key có tồn tại không
 func Exists(rdb *redis.Client, key string) (bool, error) {
-    n, err := rdb.Exists(Ctx, key).Result()
-    return n > 0, err
+	n, err := rdb.Exists(Ctx, key).Result()
+	return n > 0, err
 }
 
 // UpdateTTL cập nhật lại thời gian sống của key
 func UpdateTTL(rdb *redis.Client, key string, expiration time.Duration) error {
-    return rdb.Expire(Ctx, key, expiration).Err()
+	return rdb.Expire(Ctx, key, expiration).Err()
 }
 
 // GetTTL lấy thời gian sống còn lại của key
 func GetTTL(rdb *redis.Client, key string) (time.Duration, error) {
 	return rdb.TTL(Ctx, key).Result()
+}
+
+// AddToBlacklist thêm token vào blacklist với TTL
+func AddToBlacklist(token string, ttl time.Duration) error {
+	key := "blacklist:" + token
+	return Rdb.Set(Ctx, key, "1", ttl).Err()
+}
+
+// IsBlacklisted kiểm tra nếu token có trong blacklist
+func IsBlacklisted(token string) (bool, error) {
+	key := "blacklist:" + token
+	n, err := Rdb.Exists(Ctx, key).Result()
+	return n > 0, err
 }

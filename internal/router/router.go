@@ -1,8 +1,8 @@
 package router
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/controller"
+	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -218,6 +218,7 @@ func initAuthRouter(router *gin.Engine) {
 		authGroup.POST("/refresh", authController.GetToken())
 		authGroup.POST("/login", authController.GetToken())
 		authGroup.POST("/register", authController.Register())
+		authGroup.POST("/logout", middleware.BearerAuthenticator(), authController.Logout())
 	}
 }
 

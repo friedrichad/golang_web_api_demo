@@ -37,7 +37,26 @@ func BasicAuthenticator() gin.HandlerFunc {
 func BearerAuthenticator() gin.HandlerFunc {
 	hmacSecret := []byte(viper.GetString("oauth.jwt-secret"))
 	return func(c *gin.Context) {
-		jwtClaims, valid := extractClaims(c.GetHeader("Authorization"), hmacSecret)
+		authHeader := c.GetHeader("Authorization")
+
+		// Extract raw token without "Bearer " prefix for blacklist check
+		rawToken := strings.Replace(authHeader, "Bearer ", "", 1)
+
+		// Check if token is blacklisted (logout)
+		isBlacklisted, err := redis.IsBlacklisted(rawToken)
+		if err != nil {
+			log.Printf("Error checking blacklist: %v", err)
+		}
+		if isBlacklisted {
+			c.JSON(http.StatusUnauthorized, model.ResponseWrapper{
+				Code:    common.TokenInvalid.Code,
+				Message: "Token đã bị đăng xuất",
+			})
+			c.Abort()
+			return
+		}
+
+		jwtClaims, valid := extractClaims(authHeader, hmacSecret)
 		if !valid {
 			c.JSON(http.StatusUnauthorized, model.ResponseWrapper{
 				Code:    common.TokenInvalid.Code,

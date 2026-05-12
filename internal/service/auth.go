@@ -23,6 +23,7 @@ import (
 type IAuthService interface {
 	Authentication(c *gin.Context) (*model.TokenResponse, *common.Error)
 	Register(c *gin.Context) (*dtos.UserResponse, *common.Error)
+	Logout(c *gin.Context) *common.Error
 }
 
 type AuthService struct {
@@ -238,4 +239,41 @@ func (a AuthService) Register(c *gin.Context) (*dtos.UserResponse, *common.Error
 
 	userResponse := modelToUserResponse(user)
 	return &userResponse, nil
+}
+
+func (a AuthService) Logout(c *gin.Context) *common.Error {
+	// Extract token from Authorization header
+	token := c.GetHeader("Authorization")
+	if token == "" {
+		return common.TokenInvalid
+	}
+
+	// Remove "Bearer " prefix if present
+	token = strings.Replace(token, "Bearer ", "", 1)
+
+	// Parse token to get expiration time
+	claims := &model.Claims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
+		return []byte(a.jwtSecret), nil
+	})
+
+	if err != nil && err.Error() != "Token is expired" {
+		log.Printf("Failed to parse token: %v", err)
+		return common.TokenInvalid
+	}
+	
+	// Calculate TTL from token expiration time
+	ttl := time.Until(time.Unix(claims.RefreshExp, 0))
+	if ttl <= 0 {
+		ttl = 1 * time.Second // Minimum TTL
+	}
+
+	// Add token to blacklist with TTL
+	err = redis.AddToBlacklist(token, ttl)
+	if err != nil {
+		log.Printf("Failed to add token to blacklist: %v", err)
+		return common.SystemError
+	}
+
+	return nil
 }
