@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -102,9 +103,19 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 	_, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 		return hmacSecret, nil
 	})
-	if err == nil {
-		return claims, true
+	if err != nil {
+		log.Printf("Invalid JWT Token: %v", err)
+		return nil, false
 	}
-	log.Printf("Invalid JWT Token: %v", err)
-	return nil, false
+	// Check if token matches the latest token stored in Redis (ensure it's the current valid token)
+	storedToken, err := redis.Get(redis.Rdb, "auth:token:"+claims.Id)
+	if err != nil {
+		log.Printf("Error getting token from Redis: %v", err)
+		return nil, false
+	}
+	if storedToken == "" || storedToken != tokenStr {
+		log.Printf("Token does not match the latest token in Redis or has been invalidated")
+		return nil, false
+	}
+	return claims, true
 }

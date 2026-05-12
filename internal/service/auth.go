@@ -168,16 +168,17 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 		log.Printf("Refresh token has expired")
 		return nil, false
 	}
-	stored, err := redis.Exists(redis.Rdb, "auth:token:" +claims.Id)
+	// Check if token matches the latest token stored in Redis (not just existence)
+	storedToken, err := redis.Get(redis.Rdb, "auth:token:"+claims.Id)
 	if err != nil {
-    	log.Printf("Lỗi khi check Redis: %v", err)
-    	return nil, false
+		log.Printf("Error getting token from Redis: %v", err)
+		return nil, false
 	}
-	if !stored {
-    	log.Printf("Refresh token không tồn tại trong Redis (có thể đã bị revoke)")
-    	return nil, false
+	if storedToken == "" || storedToken != tokenStr {
+		log.Printf("Token does not match the latest token in Redis or token has been revoked")
+		return nil, false
 	}
-    return claims, true
+	return claims, true
 }
 
 func (a AuthService) Register(c *gin.Context) (*dtos.UserResponse, *common.Error) {
