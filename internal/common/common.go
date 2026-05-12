@@ -18,6 +18,7 @@ var UploadFileFailed = &Error{Code: "500", Message: "Upload file không thành c
 var RequestInvalid = &Error{Code: "400", Message: "Request không hợp lệ"}
 var WrongPassword = &Error{Code: "500", Message: "Mật khẩu không đúng"}
 var NotFound = &Error{Code: "404", Message: "Không tìm thấy dữ liệu"}
+var AlreadyLoggedIn = &Error{Code: "400", Message: "Trình duyệt đã có người đăng nhập, vui lòng đăng xuất trước khi đăng nhập bằng tài khoản khác"}
 
 func ParamRequired(name string) *Error {
 	return &Error{Code: "400", Message: fmt.Sprintf("%s không được để trống", name)}

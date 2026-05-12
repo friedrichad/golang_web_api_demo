@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
@@ -60,6 +59,11 @@ func (a AuthService) Authentication(c *gin.Context) (*model.TokenResponse, *comm
 }
 
 func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.Error) {
+	sessionId := utils.GetOrCreateSessionID(c, time.Until(time.Unix(getExpiredTime(a.accessTokenExpired), 0)))
+	if existedUserId, err := utils.BrowserHasSession(sessionId); err == nil && existedUserId != "" {
+		log.Printf("Trình duyệt đã có session_id %s với user_id %s", sessionId, existedUserId)
+		return nil, common.AlreadyLoggedIn
+	}
 	username := c.Request.FormValue("username")
 	password := c.Request.FormValue("password")
 	if len(password) == 0 {
@@ -94,12 +98,16 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	}
 	response.AccessToken = accessToken
 	ttl := time.Until(time.Unix(response.Exp, 0))
+	err = utils.SaveBrowserSession(sessionId, response.Id, ttl)
+	if err != nil {
+		log.Printf("Không lưu được session trình duyệt vào Cookie: %v", err)
+		return nil, common.SystemError
+	}
 	err = redis.Save(redis.Rdb, "auth:token:"+response.Id, response.AccessToken, ttl)
 	if err != nil {
 		log.Printf("Không lưu được token vào Redis: %v", err)
 		return nil, common.SystemError
 	}
-
 	return response, nil
 }
 
@@ -125,10 +133,22 @@ func createJwtToken(jwtSecret string, token model.TokenResponse) (string, error)
 }
 
 func refreshToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.Error) {
+	sessionID, err := c.Cookie("session_id")
+	if err != nil || sessionID == "" {
+		return nil, common.TokenInvalid
+	}
+	userID, err := utils.BrowserHasSession(sessionID)
+	if err != nil || userID == "" {
+		return nil, common.TokenInvalid
+	}
 	claims, ok := extractClaims(c.Request.FormValue("refresh_token"), []byte(a.jwtSecret))
 	if !ok {
 		return nil, common.TokenInvalid
 	}
+	if claims.Id != userID {
+    	log.Printf("Session userID %s không khớp với token userID %s", userID, claims.Id)
+    return nil, common.TokenInvalid
+	}	
 	response := &model.TokenResponse{
 		AccessToken: "",
 		TokenType:   "bearer",
@@ -198,17 +218,7 @@ func (a AuthService) Register(c *gin.Context) (*dtos.UserResponse, *common.Error
 		return nil, common.SystemError
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return nil, common.SystemError
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	userRepoTx := a.repository.(*repository.UserRepository).WithTx(tx)
+	userRepo := a.repository.(*repository.UserRepository)
 
 	user := &model.User{
 		Username:     req.Username,
@@ -219,22 +229,16 @@ func (a AuthService) Register(c *gin.Context) (*dtos.UserResponse, *common.Error
 		CreatedAt:    time.Now(),
 	}
 
-	err = userRepoTx.Save(user)
+	err = userRepo.Save(user)
 	if err != nil {
-		tx.Rollback()
 		return nil, common.SystemError
 	}
 
 	if req.RoleID > 0 {
-		err = userRepoTx.AddUserRole(user.UserID, req.RoleID)
+		err = userRepo.AddUserRole(user.UserID, req.RoleID)
 		if err != nil {
-			tx.Rollback()
 			return nil, common.SystemError
 		}
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return nil, common.SystemError
 	}
 
 	userResponse := modelToUserResponse(user)
@@ -247,7 +251,6 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 	if token == "" {
 		return common.TokenInvalid
 	}
-
 	// Remove "Bearer " prefix if present
 	token = strings.Replace(token, "Bearer ", "", 1)
 
@@ -274,6 +277,11 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 		log.Printf("Failed to add token to blacklist: %v", err)
 		return common.SystemError
 	}
-
+		sessionID, _ := c.Cookie("session_id")
+	if sessionID != "" {
+		redis.Delete(redis.Rdb, "auth:browser:"+sessionID)
+	}
+	// delete cookie
+	utils.ClearSessionCookie(c)
 	return nil
 }
