@@ -95,8 +95,8 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	ttl := time.Until(time.Unix(response.Exp, 0))
 	err = redis.Save(redis.Rdb, "auth:token:"+response.Id, response.AccessToken, ttl)
 	if err != nil {
-    	log.Printf("Không lưu được token vào Redis: %v", err)
-    	return nil, common.SystemError
+		log.Printf("Không lưu được token vào Redis: %v", err)
+		return nil, common.SystemError
 	}
 
 	return response, nil
@@ -143,6 +143,13 @@ func refreshToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.
 		return nil, common.SystemError
 	}
 	response.AccessToken = accessToken
+	// Save new token to Redis with TTL
+	ttl := time.Until(time.Unix(response.RefreshExp, 0))
+	err = redis.Save(redis.Rdb, "auth:token:"+response.Id, response.AccessToken, ttl)
+	if err != nil {
+		log.Printf("Không lưu được token vào Redis: %v", err)
+		return nil, common.SystemError
+	}
 	return response, nil
 }
 
@@ -153,10 +160,24 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 		return hmacSecret, nil
 	})
 	if err != nil && err.Error() != "Token is expired" {
-		log.Printf("Invalid JWT Token")
+		log.Printf("Invalid JWT Token: %v", err)
 		return nil, false
 	}
-	return claims, claims.RefreshTokenExpired()
+	// For refresh token: Allow expired access token, but check if refresh_exp is still valid
+	if !claims.IsRefreshTokenValid() {
+		log.Printf("Refresh token has expired")
+		return nil, false
+	}
+	stored, err := redis.Exists(redis.Rdb, "auth:token:" +claims.Id)
+	if err != nil {
+    	log.Printf("Lỗi khi check Redis: %v", err)
+    	return nil, false
+	}
+	if !stored {
+    	log.Printf("Refresh token không tồn tại trong Redis (có thể đã bị revoke)")
+    	return nil, false
+	}
+    return claims, true
 }
 
 func (a AuthService) Register(c *gin.Context) (*dtos.UserResponse, *common.Error) {
