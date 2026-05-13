@@ -14,6 +14,9 @@ type IBinRepository interface {
 	GetById(id int) (*model.Bin, error)
 	Save(bin *model.Bin) error
 	Update(bin *model.Bin) error
+	CreateBinTx(bin *model.Bin) (*model.Bin, error)
+	UpdateBinTx(bin *model.Bin) error
+	DeleteBinTx(ids []int) error
 }
 
 type BinRepository struct {
@@ -59,4 +62,85 @@ func (b *BinRepository) WithTx(tx *gorm.DB) *BinRepository {
 		BaseRepository: BaseRepository[model.Bin, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+// CreateBinTx handles transaction for bin creation
+func (b *BinRepository) CreateBinTx(bin *model.Bin) (*model.Bin, error) {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	binRepoTx := b.WithTx(tx)
+	err := binRepoTx.Save(bin)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return bin, nil
+}
+
+// UpdateBinTx handles transaction for bin update
+func (b *BinRepository) UpdateBinTx(bin *model.Bin) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	binRepoTx := b.WithTx(tx)
+	err := binRepoTx.Update(bin)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteBinTx handles transaction for bin deletion
+func (b *BinRepository) DeleteBinTx(ids []int) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	binRepoTx := b.WithTx(tx)
+	err := binRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

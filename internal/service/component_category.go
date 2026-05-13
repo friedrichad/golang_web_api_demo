@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -87,35 +86,17 @@ func (s *ComponentCategoryService) CreateComponentCategory(c *gin.Context) (*dto
 		return nil, common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return nil, common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	categoryRepoTx := s.categoryRepo.(*repository.ComponentCategoryRepository).WithTx(tx)
-
 	category := &model.ComponentCategory{
 		CategoryName: req.CategoryName,
 		CreatedAt:    time.Now(),
 	}
 
-	err := categoryRepoTx.Save(category)
+	result, err := s.categoryRepo.CreateComponentCategoryTx(category)
 	if err != nil {
-		tx.Rollback()
 		return nil, common.SystemError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		return nil, common.SystemError
-	}
-
-	categoryResponse := modelToComponentCategoryResponse(category)
+	categoryResponse := modelToComponentCategoryResponse(result)
 	return &categoryResponse, nil
 }
 
@@ -125,27 +106,12 @@ func (s *ComponentCategoryService) UpdateComponentCategory(c *gin.Context) *comm
 		return common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	categoryRepoTx := s.categoryRepo.(*repository.ComponentCategoryRepository).WithTx(tx)
-
-	category, err := categoryRepoTx.GetById(int(req.CategoryID))
+	category, err := s.categoryRepo.GetById(int(req.CategoryID))
 	if err != nil {
-		tx.Rollback()
 		return common.NotFound
 	}
 
 	if category == nil {
-		tx.Rollback()
 		return &common.Error{Code: "404", Message: "Danh mục thành phần không tồn tại"}
 	}
 
@@ -155,13 +121,7 @@ func (s *ComponentCategoryService) UpdateComponentCategory(c *gin.Context) *comm
 	category.UpdatedBy = int(req.UpdatedBy)
 	category.UpdatedAt = time.Now()
 
-	err = categoryRepoTx.Update(category)
-	if err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.categoryRepo.UpdateComponentCategoryTx(category); err != nil {
 		return common.SystemError
 	}
 
@@ -183,26 +143,7 @@ func (s *ComponentCategoryService) DeleteComponentCategory(c *gin.Context) *comm
 		ids[i] = int(categoryId)
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	categoryRepoTx := s.categoryRepo.(*repository.ComponentCategoryRepository).WithTx(tx)
-
-	err := categoryRepoTx.Delete(ids)
-	if err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.categoryRepo.DeleteComponentCategoryTx(ids); err != nil {
 		return common.SystemError
 	}
 

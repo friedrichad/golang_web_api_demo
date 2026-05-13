@@ -14,6 +14,9 @@ type IComponentRepository interface {
 	Delete(ids []int) error
 	Save(component *model.Component) error
 	Update(component *model.Component) error
+	CreateComponentTx(component *model.Component, categories []model.ComponentCategoryMap) (*model.Component, error)
+	UpdateComponentTx(component *model.Component, categories []model.ComponentCategoryMap) error
+	DeleteComponentTx(ids []int) error
 }
 
 type ComponentRepository struct {
@@ -61,4 +64,115 @@ func (c *ComponentRepository) WithTx(tx *gorm.DB) *ComponentRepository {
 		BaseRepository: BaseRepository[model.Component, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+// CreateComponentTx handles transaction for component creation with category mappings
+func (c *ComponentRepository) CreateComponentTx(component *model.Component, categories []model.ComponentCategoryMap) (*model.Component, error) {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	componentRepoTx := c.WithTx(tx)
+	err := componentRepoTx.Save(component)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	for _, cat := range categories {
+		cat.ComponentID = component.ComponentID
+		if err := tx.Create(&cat).Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return component, nil
+}
+
+// UpdateComponentTx handles transaction for component update with category mappings
+func (c *ComponentRepository) UpdateComponentTx(component *model.Component, categories []model.ComponentCategoryMap) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	componentRepoTx := c.WithTx(tx)
+	err := componentRepoTx.Update(component)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Delete existing category mappings
+	if err := tx.Where("component_id = ?", component.ComponentID).Delete(&model.ComponentCategoryMap{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Create new category mappings
+	for _, cat := range categories {
+		cat.ComponentID = component.ComponentID
+		if err := tx.Create(&cat).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteComponentTx handles transaction for component deletion with category mappings
+func (c *ComponentRepository) DeleteComponentTx(ids []int) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Delete category mappings first
+	if err := tx.Where("component_id IN ?", ids).Delete(&model.ComponentCategoryMap{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Delete components
+	componentRepoTx := c.WithTx(tx)
+	err := componentRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

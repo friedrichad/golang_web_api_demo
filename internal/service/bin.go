@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -79,19 +78,6 @@ func (s *BinService) CreateBin(c *gin.Context) (*dtos.BinResponse, *common.Error
 		return nil, common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return nil, common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	binRepoTx := s.binRepo.(*repository.BinRepository).WithTx(tx)
-
 	bin := &model.Bin{
 		LocationInWarehouse: req.LocationInWarehouse,
 		WarehouseID:         int(req.WarehouseID),
@@ -99,17 +85,12 @@ func (s *BinService) CreateBin(c *gin.Context) (*dtos.BinResponse, *common.Error
 		CreatedAt:           time.Now(),
 	}
 
-	err := binRepoTx.Save(bin)
+	result, err := s.binRepo.CreateBinTx(bin)
 	if err != nil {
-		tx.Rollback()
 		return nil, common.SystemError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		return nil, common.SystemError
-	}
-
-	res := modelToBinResponse(bin)
+	res := modelToBinResponse(result)
 	return &res, nil
 }
 
@@ -119,22 +100,8 @@ func (s *BinService) UpdateBin(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	binRepoTx := s.binRepo.(*repository.BinRepository).WithTx(tx)
-
-	bin, err := binRepoTx.GetById(req.BinID)
+	bin, err := s.binRepo.GetById(req.BinID)
 	if err != nil || bin == nil {
-		tx.Rollback()
 		return common.NotFound
 	}
 
@@ -152,13 +119,7 @@ func (s *BinService) UpdateBin(c *gin.Context) *common.Error {
 	}
 	bin.UpdatedAt = time.Now()
 
-	err = binRepoTx.Update(bin)
-	if err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.binRepo.UpdateBinTx(bin); err != nil {
 		return common.SystemError
 	}
 
@@ -171,41 +132,22 @@ func (s *BinService) DeleteBin(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	binRepoTx := s.binRepo.(*repository.BinRepository).WithTx(tx)
-
-	err := binRepoTx.Delete(ids)
-	if err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.binRepo.DeleteBinTx(ids); err != nil {
 		return common.SystemError
 	}
 
 	return nil
 }
 
-func modelToBinResponse(bin *model.Bin) dtos.BinResponse {
+func modelToBinResponse(b *model.Bin) dtos.BinResponse {
 	return dtos.BinResponse{
-		BinID:               int(bin.BinID),
-		LocationInWarehouse: bin.LocationInWarehouse,
-		StatusInt:           int(bin.StatusInt),
-		WarehouseID:         int(bin.WarehouseID),
-		CreatedBy:           int(bin.CreatedBy),
-		CreatedAt:           bin.CreatedAt,
-		UpdatedBy:           int(bin.UpdatedBy),
-		UpdatedAt:           bin.UpdatedAt,
+		BinID:               int(b.BinID),
+		LocationInWarehouse: b.LocationInWarehouse,
+		WarehouseID:         int(b.WarehouseID),
+		StatusInt:           int(b.StatusInt),
+		CreatedAt:           b.CreatedAt,
+		UpdatedAt:           b.UpdatedAt,
+		CreatedBy:           int(b.CreatedBy),
+		UpdatedBy:           int(b.UpdatedBy),
 	}
 }

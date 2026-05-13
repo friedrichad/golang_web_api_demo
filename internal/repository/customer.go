@@ -14,6 +14,9 @@ type ICustomer interface {
 	Delete(ids []int) error
 	Save(request *model.Customer) error
 	Update(request *model.Customer) error
+	CreateCustomerTx(request *model.Customer) (*model.Customer, error)
+	UpdateCustomerTx(request *model.Customer) error
+	DeleteCustomerTx(ids []int) error
 }
 type CustomerRepository struct {
 	BaseRepository[model.Customer, int]
@@ -59,4 +62,85 @@ func (r *CustomerRepository) WithTx(tx *gorm.DB) *CustomerRepository {
 		BaseRepository: BaseRepository[model.Customer, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+// CreateCustomerTx handles transaction for customer creation
+func (r *CustomerRepository) CreateCustomerTx(request *model.Customer) (*model.Customer, error) {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	customerRepoTx := r.WithTx(tx)
+	err := customerRepoTx.Save(request)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return request, nil
+}
+
+// UpdateCustomerTx handles transaction for customer update
+func (r *CustomerRepository) UpdateCustomerTx(request *model.Customer) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	customerRepoTx := r.WithTx(tx)
+	err := customerRepoTx.Update(request)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteCustomerTx handles transaction for customer deletion
+func (r *CustomerRepository) DeleteCustomerTx(ids []int) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	customerRepoTx := r.WithTx(tx)
+	err := customerRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

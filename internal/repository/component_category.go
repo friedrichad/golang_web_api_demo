@@ -14,6 +14,9 @@ type IComponentCategoryRepository interface {
 	GetById(id int) (*model.ComponentCategory, error)
 	Save(category *model.ComponentCategory) error
 	Update(category *model.ComponentCategory) error
+	CreateComponentCategoryTx(category *model.ComponentCategory) (*model.ComponentCategory, error)
+	UpdateComponentCategoryTx(category *model.ComponentCategory) error
+	DeleteComponentCategoryTx(ids []int) error
 }
 
 type ComponentCategoryRepository struct {
@@ -61,4 +64,85 @@ func (r *ComponentCategoryRepository) WithTx(tx *gorm.DB) *ComponentCategoryRepo
 		BaseRepository: BaseRepository[model.ComponentCategory, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+// CreateComponentCategoryTx handles transaction for component category creation
+func (r *ComponentCategoryRepository) CreateComponentCategoryTx(category *model.ComponentCategory) (*model.ComponentCategory, error) {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	categoryRepoTx := r.WithTx(tx)
+	err := categoryRepoTx.Save(category)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return category, nil
+}
+
+// UpdateComponentCategoryTx handles transaction for component category update
+func (r *ComponentCategoryRepository) UpdateComponentCategoryTx(category *model.ComponentCategory) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	categoryRepoTx := r.WithTx(tx)
+	err := categoryRepoTx.Update(category)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteComponentCategoryTx handles transaction for component category deletion
+func (r *ComponentCategoryRepository) DeleteComponentCategoryTx(ids []int) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	categoryRepoTx := r.WithTx(tx)
+	err := categoryRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

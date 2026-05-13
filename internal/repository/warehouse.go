@@ -14,6 +14,9 @@ type IWarehouseRepository interface {
 	Delete(ids []int) error
 	Save(warehouse *model.Warehouse) error
 	Update(warehouse *model.Warehouse) error
+	CreateWarehouseTx(warehouse *model.Warehouse) (*model.Warehouse, error)
+	UpdateWarehouseTx(warehouse *model.Warehouse) error
+	DeleteWarehouseTx(ids []int) error
 }
 
 type WarehouseRepository struct {
@@ -65,4 +68,85 @@ func (w *WarehouseRepository) WithTx(tx *gorm.DB) *WarehouseRepository {
 		BaseRepository: BaseRepository[model.Warehouse, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+// CreateWarehouseTx handles transaction for warehouse creation
+func (w *WarehouseRepository) CreateWarehouseTx(warehouse *model.Warehouse) (*model.Warehouse, error) {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	warehouseRepoTx := w.WithTx(tx)
+	err := warehouseRepoTx.Save(warehouse)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return warehouse, nil
+}
+
+// UpdateWarehouseTx handles transaction for warehouse update
+func (w *WarehouseRepository) UpdateWarehouseTx(warehouse *model.Warehouse) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	warehouseRepoTx := w.WithTx(tx)
+	err := warehouseRepoTx.Update(warehouse)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteWarehouseTx handles transaction for warehouse deletion
+func (w *WarehouseRepository) DeleteWarehouseTx(ids []int) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	warehouseRepoTx := w.WithTx(tx)
+	err := warehouseRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

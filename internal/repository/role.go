@@ -28,6 +28,12 @@ type IRoleRepository interface {
 	CreatePermission(permission *model.Permission) error
 	UpdatePermission(permission *model.Permission) error
 	DeletePermissions(ids []int) error
+
+	// transaction methods
+	CreateRoleTx(role *model.Role) (*model.Role, error)
+	UpdateRoleTx(role *model.Role) error
+	DeleteRoleTx(ids []int) error
+	AssignRoleMenusTx(roleId int, menus []model.RoleMenu) error
 }
 
 type RoleRepository struct {
@@ -147,4 +153,119 @@ func (r *RoleRepository) UpdatePermission(permission *model.Permission) error {
 
 func (r *RoleRepository) DeletePermissions(ids []int) error {
 	return r.DB.Where("permission_id IN ?", ids).Delete(&model.Permission{}).Error
+}
+
+// CreateRoleTx handles transaction for role creation
+func (r *RoleRepository) CreateRoleTx(role *model.Role) (*model.Role, error) {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleRepoTx := r.WithTx(tx)
+	err := roleRepoTx.Save(role)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+// UpdateRoleTx handles transaction for role update
+func (r *RoleRepository) UpdateRoleTx(role *model.Role) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleRepoTx := r.WithTx(tx)
+	err := roleRepoTx.Update(role)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteRoleTx handles transaction for role deletion
+func (r *RoleRepository) DeleteRoleTx(ids []int) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleRepoTx := r.WithTx(tx)
+	err := roleRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// AssignRoleMenusTx handles transaction for assigning menus to role
+func (r *RoleRepository) AssignRoleMenusTx(roleId int, menus []model.RoleMenu) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleRepoTx := r.WithTx(tx)
+
+	// Delete existing role menus
+	if err := roleRepoTx.DeleteRoleMenus(roleId); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Create new role menus
+	if err := roleRepoTx.CreateRoleMenus(menus); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -95,29 +95,21 @@ func (s *ComponentService) CreateComponent(c *gin.Context) (*dtos.ComponentRespo
 		CreatedAt:     time.Now(),
 	}
 
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(comp).Error; err != nil {
-			return err
+	categories := make([]model.ComponentCategoryMap, 0)
+	for _, cat := range req.ComponentCategory {
+		mapEntry := model.ComponentCategoryMap{
+			CategoryID: int(cat.CategoryID),
 		}
+		categories = append(categories, mapEntry)
+	}
 
-		for _, cat := range req.ComponentCategory {
-			mapEntry := &model.ComponentCategoryMap{
-				ComponentID: comp.ComponentID,
-				CategoryID:  int(cat.CategoryID),
-			}
-			if err := tx.Create(mapEntry).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-
+	result, err := s.componentRepo.CreateComponentTx(comp, categories)
 	if err != nil {
 		return nil, common.SystemError
 	}
 
-	res := modelToComponentResponse(comp)
-	res.ComponentCategory = s.getComponentCategories(int(comp.ComponentID))
+	res := modelToComponentResponse(result)
+	res.ComponentCategory = s.getComponentCategories(int(result.ComponentID))
 	return &res, nil
 }
 
@@ -153,28 +145,15 @@ func (s *ComponentService) UpdateComponent(c *gin.Context) *common.Error {
 	}
 	comp.UpdatedAt = time.Now()
 
-	err = s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(comp).Error; err != nil {
-			return err
+	categories := make([]model.ComponentCategoryMap, 0)
+	for _, cat := range req.ComponentCategory {
+		mapEntry := model.ComponentCategoryMap{
+			CategoryID: int(cat.CategoryID),
 		}
+		categories = append(categories, mapEntry)
+	}
 
-		if err := tx.Where("component_id = ?", comp.ComponentID).Delete(&model.ComponentCategoryMap{}).Error; err != nil {
-			return err
-		}
-
-		for _, cat := range req.ComponentCategory {
-			mapEntry := &model.ComponentCategoryMap{
-				ComponentID: comp.ComponentID,
-				CategoryID:  int(cat.CategoryID),
-			}
-			if err := tx.Create(mapEntry).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-
-	if err != nil {
+	if err := s.componentRepo.UpdateComponentTx(comp, categories); err != nil {
 		return common.SystemError
 	}
 
@@ -187,17 +166,7 @@ func (s *ComponentService) DeleteComponent(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("component_id IN ?", ids).Delete(&model.ComponentCategoryMap{}).Error; err != nil {
-			return err
-		}
-		if err := tx.Where("component_id IN ?", ids).Delete(&model.Component{}).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err != nil {
+	if err := s.componentRepo.DeleteComponentTx(ids); err != nil {
 		return common.SystemError
 	}
 

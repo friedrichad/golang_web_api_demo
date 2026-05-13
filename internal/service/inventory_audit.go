@@ -10,9 +10,9 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
-	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
@@ -107,20 +107,6 @@ func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*dtos.Inve
 		return nil, &common.Error{Code: "400", Message: err.Error()}
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return nil, common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	auditRepoTx := s.auditRepo.(*repository.InventoryAuditRepository).WithTx(tx)
-	detailRepoTx := s.auditDetailRepo.(*repository.InventoryAuditDetailRepository).WithTx(tx)
-
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	audit := &model.InventoryAudit{
 		WarehouseID: int(req.WarehouseID),
@@ -130,37 +116,25 @@ func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*dtos.Inve
 		CreatedAt:   time.Now(),
 	}
 
-	err := auditRepoTx.Save(audit)
-	if err != nil {
-		tx.Rollback()
-		return nil, common.SystemError
-	}
-
-	// Add audit details if provided in request
-	if len(req.AuditDetail) > 0 {
-		for _, detail := range req.AuditDetail {
-			auditDetail := &model.InventoryAuditDetail{
-				AuditID:            audit.AuditID,
-				ComponentID:        detail.ComponentID,
-				BinID:              detail.BinID,
-				SystemQuantity:     detail.SystemQuantity,
-				ActualQuantity:     detail.ActualQuantity,
-				DifferenceQuantity: math.Abs(detail.SystemQuantity - detail.ActualQuantity),
-				CreatedBy:          userID,
-			}
-			err := detailRepoTx.Save(auditDetail)
-			if err != nil {
-				tx.Rollback()
-				return nil, common.SystemError
-			}
+	details := make([]model.InventoryAuditDetail, 0)
+	for _, detail := range req.AuditDetail {
+		auditDetail := model.InventoryAuditDetail{
+			ComponentID:        detail.ComponentID,
+			BinID:              detail.BinID,
+			SystemQuantity:     detail.SystemQuantity,
+			ActualQuantity:     detail.ActualQuantity,
+			DifferenceQuantity: math.Abs(detail.SystemQuantity - detail.ActualQuantity),
+			CreatedBy:          userID,
 		}
+		details = append(details, auditDetail)
 	}
 
-	if err := tx.Commit().Error; err != nil {
+	result, err := s.auditRepo.CreateInventoryAuditTx(audit, details)
+	if err != nil {
 		return nil, common.SystemError
 	}
 
-	auditResponse := modelToInventoryAuditResponse(audit)
+	auditResponse := modelToInventoryAuditResponse(result)
 	return &auditResponse, nil
 }
 
@@ -418,7 +392,6 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 }
 
 func (s *InventoryAuditService) CreateInventoryAuditDetail(c *gin.Context) *common.Error {
-
 	var req []dtos.InventoryAuditDetailCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
@@ -428,31 +401,16 @@ func (s *InventoryAuditService) CreateInventoryAuditDetail(c *gin.Context) *comm
 		return common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	auditRepoTx := s.auditRepo.(*repository.InventoryAuditRepository).WithTx(tx)
-	detailRepoTx := s.auditDetailRepo.(*repository.InventoryAuditDetailRepository).WithTx(tx)
-
-	// check audit tồn tại 1 lần
-	_, err := auditRepoTx.GetByRequestId(req[0].AuditID)
+	// Check audit exists
+	_, err := s.auditRepo.GetByRequestId(req[0].AuditID)
 	if err != nil {
-		tx.Rollback()
 		return common.NotFound
 	}
 
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+	details := make([]model.InventoryAuditDetail, 0)
 	for _, r := range req {
-
-		auditDetail := &model.InventoryAuditDetail{
+		auditDetail := model.InventoryAuditDetail{
 			AuditID:            r.AuditID,
 			ComponentID:        r.ComponentID,
 			BinID:              r.BinID,
@@ -461,14 +419,10 @@ func (s *InventoryAuditService) CreateInventoryAuditDetail(c *gin.Context) *comm
 			DifferenceQuantity: math.Abs(r.SystemQuantity - r.ActualQuantity),
 			CreatedBy:          userID,
 		}
-
-		if err := detailRepoTx.Save(auditDetail); err != nil {
-			tx.Rollback()
-			return common.SystemError
-		}
+		details = append(details, auditDetail)
 	}
 
-	if err := tx.Commit().Error; err != nil {
+	if err := s.auditRepo.CreateInventoryAuditDetailsTx(details); err != nil {
 		return common.SystemError
 	}
 

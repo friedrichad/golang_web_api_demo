@@ -14,6 +14,10 @@ type IInventoryAudit interface {
 	Delete(ids []int) error
 	Save(request *model.InventoryAudit) error
 	Update(request *model.InventoryAudit) error
+	CreateInventoryAuditTx(audit *model.InventoryAudit, details []model.InventoryAuditDetail) (*model.InventoryAudit, error)
+	CreateInventoryAuditDetailsTx(details []model.InventoryAuditDetail) error
+	UpdateInventoryAuditTx(audit *model.InventoryAudit) error
+	DeleteInventoryAuditTx(ids []int) error
 }
 
 type InventoryAuditRepository struct {
@@ -61,4 +65,126 @@ func (r *InventoryAuditRepository) WithTx(tx *gorm.DB) *InventoryAuditRepository
 		BaseRepository: BaseRepository[model.InventoryAudit, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+// CreateInventoryAuditTx handles transaction for inventory audit creation with details
+func (r *InventoryAuditRepository) CreateInventoryAuditTx(audit *model.InventoryAudit, details []model.InventoryAuditDetail) (*model.InventoryAudit, error) {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	auditRepoTx := r.WithTx(tx)
+	detailRepoTx := NewInventoryAuditDetailRepository().(*InventoryAuditDetailRepository).WithTx(tx)
+
+	err := auditRepoTx.Save(audit)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	for _, detail := range details {
+		detail.AuditID = audit.AuditID
+		err := detailRepoTx.Save(&detail)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return audit, nil
+}
+
+// CreateInventoryAuditDetailsTx handles transaction for creating multiple audit details
+func (r *InventoryAuditRepository) CreateInventoryAuditDetailsTx(details []model.InventoryAuditDetail) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	detailRepoTx := NewInventoryAuditDetailRepository().(*InventoryAuditDetailRepository).WithTx(tx)
+
+	for _, detail := range details {
+		err := detailRepoTx.Save(&detail)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateInventoryAuditTx handles transaction for inventory audit update
+func (r *InventoryAuditRepository) UpdateInventoryAuditTx(audit *model.InventoryAudit) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	auditRepoTx := r.WithTx(tx)
+	err := auditRepoTx.Update(audit)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteInventoryAuditTx handles transaction for inventory audit deletion
+func (r *InventoryAuditRepository) DeleteInventoryAuditTx(ids []int) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	auditRepoTx := r.WithTx(tx)
+	err := auditRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

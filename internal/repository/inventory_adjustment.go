@@ -15,6 +15,9 @@ type IInventoryAdjustment interface {
 	Delete(ids []int) error
 	Save(request *model.InventoryAdjustment) error
 	Update(request *model.InventoryAdjustment) error
+	CreateInventoryAdjustmentTx(adjustment *model.InventoryAdjustment, details []model.InventoryAdjustmentDetail) (*model.InventoryAdjustment, error)
+	UpdateInventoryAdjustmentTx(adjustment *model.InventoryAdjustment) error
+	DeleteInventoryAdjustmentTx(ids []int) error
 }
 
 type InventoryAdjustmentRepository struct {
@@ -70,4 +73,96 @@ func (r *InventoryAdjustmentRepository) WithTx(tx *gorm.DB) *InventoryAdjustment
 		BaseRepository: BaseRepository[model.InventoryAdjustment, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+// CreateInventoryAdjustmentTx handles transaction for inventory adjustment creation with details
+func (r *InventoryAdjustmentRepository) CreateInventoryAdjustmentTx(adjustment *model.InventoryAdjustment, details []model.InventoryAdjustmentDetail) (*model.InventoryAdjustment, error) {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	adjustmentRepoTx := r.WithTx(tx)
+	detailRepoTx := NewInventoryAdjustmentDetailRepository().(*InventoryAdjustmentDetailRepository).WithTx(tx)
+
+	err := adjustmentRepoTx.Save(adjustment)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	for _, detail := range details {
+		detail.AdjustmentID = adjustment.AdjustmentID
+		err := detailRepoTx.Save(&detail)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return adjustment, nil
+}
+
+// UpdateInventoryAdjustmentTx handles transaction for inventory adjustment update
+func (r *InventoryAdjustmentRepository) UpdateInventoryAdjustmentTx(adjustment *model.InventoryAdjustment) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	adjustmentRepoTx := r.WithTx(tx)
+	err := adjustmentRepoTx.Update(adjustment)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteInventoryAdjustmentTx handles transaction for inventory adjustment deletion
+func (r *InventoryAdjustmentRepository) DeleteInventoryAdjustmentTx(ids []int) error {
+	tx := db.Instance.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			tx.Rollback()
+		}
+	}()
+
+	adjustmentRepoTx := r.WithTx(tx)
+	err := adjustmentRepoTx.Delete(ids)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

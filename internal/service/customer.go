@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -76,19 +75,6 @@ func (s *CustomerService) CreateCustomer(c *gin.Context) (*dtos.CustomerResponse
 		return nil, common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return nil, common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	customerRepoTx := s.customerRepo.(*repository.CustomerRepository).WithTx(tx)
-
 	cust := &model.Customer{
 		CustomerName: req.CustomerName,
 		Phone:        req.Phone,
@@ -98,17 +84,12 @@ func (s *CustomerService) CreateCustomer(c *gin.Context) (*dtos.CustomerResponse
 		CreatedAt:    time.Now(),
 	}
 
-	err := customerRepoTx.Save(cust)
+	result, err := s.customerRepo.CreateCustomerTx(cust)
 	if err != nil {
-		tx.Rollback()
 		return nil, common.SystemError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		return nil, common.SystemError
-	}
-
-	res := modelToCustomerResponse(cust)
+	res := modelToCustomerResponse(result)
 	return &res, nil
 }
 
@@ -118,22 +99,8 @@ func (s *CustomerService) UpdateCustomer(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	customerRepoTx := s.customerRepo.(*repository.CustomerRepository).WithTx(tx)
-
-	cust, err := customerRepoTx.GetByCustomerId(req.CustomerID)
+	cust, err := s.customerRepo.GetByCustomerId(req.CustomerID)
 	if err != nil || cust == nil {
-		tx.Rollback()
 		return common.NotFound
 	}
 
@@ -157,13 +124,7 @@ func (s *CustomerService) UpdateCustomer(c *gin.Context) *common.Error {
 	}
 	cust.UpdatedAt = time.Now()
 
-	err = customerRepoTx.Update(cust)
-	if err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.customerRepo.UpdateCustomerTx(cust); err != nil {
 		return common.SystemError
 	}
 
@@ -176,26 +137,7 @@ func (s *CustomerService) DeleteCustomer(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	customerRepoTx := s.customerRepo.(*repository.CustomerRepository).WithTx(tx)
-
-	err := customerRepoTx.Delete(ids)
-	if err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.customerRepo.DeleteCustomerTx(ids); err != nil {
 		return common.SystemError
 	}
 

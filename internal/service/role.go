@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -18,12 +17,8 @@ type IRoleService interface {
 	CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Error)
 	UpdateRole(c *gin.Context) *common.Error
 	DeleteRole(c *gin.Context) *common.Error
-
-	// role_menu
 	AssignRoleMenus(c *gin.Context) *common.Error
 	GetRoleMenus(c *gin.Context) ([]int, *common.Error)
-
-	// permission
 	GetAllPermissions(c *gin.Context) ([]dtos.PermissionDTO, *common.Error)
 	GetPermissionById(c *gin.Context) (*dtos.PermissionDTO, *common.Error)
 	CreatePermission(c *gin.Context) (*dtos.PermissionDTO, *common.Error)
@@ -102,36 +97,18 @@ func (s *RoleService) CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Er
 		return nil, &common.Error{Code: "400", Message: err.Error()}
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return nil, common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	roleRepoTx := s.roleRepo.(*repository.RoleRepository).WithTx(tx)
-
 	role := &model.Role{
 		RoleName:    req.RoleName,
 		Description: req.Description,
 		CreatedAt:   time.Now(),
 	}
 
-	err := roleRepoTx.Save(role)
+	result, err := s.roleRepo.CreateRoleTx(role)
 	if err != nil {
-		tx.Rollback()
 		return nil, common.SystemError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		return nil, common.SystemError
-	}
-
-	roleResponse := modelToRoleResponse(role)
+	roleResponse := modelToRoleResponse(result)
 	return &roleResponse, nil
 }
 
@@ -145,26 +122,11 @@ func (s *RoleService) UpdateRole(c *gin.Context) *common.Error {
 		return &common.Error{Code: "400", Message: err.Error()}
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	roleRepoTx := s.roleRepo.(*repository.RoleRepository).WithTx(tx)
-
-	role, err := roleRepoTx.GetRoleById(int(req.RoleID))
+	role, err := s.roleRepo.GetRoleById(int(req.RoleID))
 	if err != nil {
-		tx.Rollback()
 		return common.NotFound
 	}
 	if role == nil {
-		tx.Rollback()
 		return &common.Error{Code: "404", Message: "Quyền không tồn tại"}
 	}
 
@@ -177,13 +139,7 @@ func (s *RoleService) UpdateRole(c *gin.Context) *common.Error {
 	role.UpdatedBy = int(req.UpdatedBy)
 	role.UpdatedAt = time.Now()
 
-	err = roleRepoTx.Update(role)
-	if err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.roleRepo.UpdateRoleTx(role); err != nil {
 		return common.SystemError
 	}
 
@@ -205,26 +161,7 @@ func (s *RoleService) DeleteRole(c *gin.Context) *common.Error {
 		ids[i] = int(roleId)
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	roleRepoTx := s.roleRepo.(*repository.RoleRepository).WithTx(tx)
-
-	err := roleRepoTx.Delete(ids)
-	if err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.roleRepo.DeleteRoleTx(ids); err != nil {
 		return common.SystemError
 	}
 
@@ -250,23 +187,6 @@ func (s *RoleService) AssignRoleMenus(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	tx := db.Instance.Begin()
-	if tx.Error != nil {
-		return common.SystemError
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	roleRepoTx := s.roleRepo.(*repository.RoleRepository).WithTx(tx)
-
-	if err := roleRepoTx.DeleteRoleMenus(req.RoleID); err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
 	roleMenus := make([]model.RoleMenu, len(req.MenuIDs))
 	for i, menuId := range req.MenuIDs {
 		roleMenus[i] = model.RoleMenu{
@@ -275,12 +195,7 @@ func (s *RoleService) AssignRoleMenus(c *gin.Context) *common.Error {
 		}
 	}
 
-	if err := roleRepoTx.CreateRoleMenus(roleMenus); err != nil {
-		tx.Rollback()
-		return common.SystemError
-	}
-
-	if err := tx.Commit().Error; err != nil {
+	if err := s.roleRepo.AssignRoleMenusTx(req.RoleID, roleMenus); err != nil {
 		return common.SystemError
 	}
 
