@@ -74,10 +74,22 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 		log.Printf("Error when get user by username: %s", err.Error())
 		return nil, common.AuthenticationFail
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
-	if err != nil {
+	if user == nil {
 		return nil, common.AuthenticationFail
 	}
+	if IsLockedAccount(user.UserID, 5) {
+		log.Printf("Tài khoản user_id %d đang bị khóa do đăng nhập sai quá nhiều lần", user.UserID)
+		return nil, &common.Error{Code: "403", Message: "Tài khoản đang bị khóa do đăng nhập sai quá nhiều lần, vui lòng thử lại sau"}
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
+		    locked, count := LockAccount(user.UserID, 5);
+			if locked {
+				log.Printf("Tài khoản user_id %d bị khóa do đăng nhập sai quá nhiều lần (%d lần)", user.UserID, count)
+				return nil, &common.Error{Code: "403",Message: "Tài khoản bị khóa do đăng nhập sai quá nhiều lần, vui lòng thử lại sau"}
+			}
+			return nil, common.AuthenticationFail
+		}
 	response := &model.TokenResponse{
 		AccessToken: "",
 		TokenType:   "bearer",
@@ -284,4 +296,47 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 	// delete cookie
 	utils.ClearSessionCookie(c)
 	return nil
+}
+
+func LockAccount(userID int, attempt int) (bool, int) {
+	key := "auth:lock:" + strconv.Itoa(userID)
+
+	value, err := redis.Get(redis.Rdb, key)
+	if err != nil {
+		log.Printf("Redis error: %v", err)
+	}
+
+	count := 0
+	if value != "" {
+		count, _ = strconv.Atoi(value)
+	}
+
+	count++
+
+	err = redis.Save(redis.Rdb, key, strconv.Itoa(count), 15*time.Minute)
+	if err != nil {
+		log.Printf("Redis save error: %v", err)
+	}
+
+	if count >= attempt {
+		return true, count
+	}
+	return false, count
+}
+
+func IsLockedAccount(userID int, attempt int) bool {
+	key := "auth:lock:" + strconv.Itoa(userID)
+	value, err := redis.Get(redis.Rdb, key)
+	if err != nil {
+		log.Printf("Redis error: %v", err)
+		return false
+	}
+	if value == "" {
+		return false
+	}
+	count, _ := strconv.Atoi(value)
+	if count >= attempt {
+		return true
+	}
+	return false
 }
