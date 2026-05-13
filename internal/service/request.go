@@ -135,6 +135,10 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
+	if err := req.Verify(); err != nil {
+		return &common.Error{Code: "400", Message: err.Error()}
+	}
+
 	request, err := s.requestRepo.GetByRequestId(int(req.RequestID))
 	if err != nil {
 		return common.NotFound
@@ -153,9 +157,9 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 	if req.WarehouseID != 0 {
 		request.WarehouseID = int(req.WarehouseID)
 	}
-	
+
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
-	
+
 	if req.PartnerID != 0 {
 		request.PartnerID = int(req.PartnerID)
 	}

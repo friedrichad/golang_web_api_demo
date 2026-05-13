@@ -22,6 +22,8 @@ type User struct {
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy    int       `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
+	DepartmentID int       `gorm:"column:department_id" json:"department_id"`
+	PositionID   int       `gorm:"column:position_id" json:"position_id"`
 }
 
 // TableName User's table name

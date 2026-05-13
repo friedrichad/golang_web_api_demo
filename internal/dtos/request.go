@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 )
 
 // RequestFilter - GET request with query parameters
@@ -60,20 +61,23 @@ type RequestResponse struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 type ApprovalRequest struct {
-    RequestID    int       `json:"request_id"`
-    ApproverID   int       `json:"approver_id"`
-    StatusInt    int       `json:"status_int"`
-    Note         string    `json:"note"`
+	RequestID  int    `json:"request_id"`
+	ApproverID int    `json:"approver_id"`
+	StatusInt  int    `json:"status_int"`
+	Note       string `json:"note"`
 }
 type ConfirmRequest struct {
-	RequestID    int       `json:"request_id"`
-	StatusInt    int       `json:"status_int"`
+	RequestID int `json:"request_id"`
+	StatusInt int `json:"status_int"`
 }
 
 // Verify validates the RequestCreate struct.
 func (r *RequestCreate) Verify() error {
 	if r.RequestType == "" {
 		return fmt.Errorf("RequestType is required")
+	}
+	if !constants.IsValidRequestType(r.RequestType) {
+		return fmt.Errorf("Invalid RequestType. Valid types: %v", constants.GetAllRequestTypeNames())
 	}
 	if r.WarehouseID == 0 {
 		return fmt.Errorf("WarehouseID is required")
@@ -89,6 +93,8 @@ func (r *RequestUpdate) Verify() error {
 	if r.RequestID == 0 {
 		return fmt.Errorf("RequestID is required")
 	}
+	if r.RequestType != "" && !constants.IsValidRequestType(r.RequestType) {
+		return fmt.Errorf("Invalid RequestType. Valid types: %v", constants.GetAllRequestTypeNames())
+	}
 	return nil
 }
-
