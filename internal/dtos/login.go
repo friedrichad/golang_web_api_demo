@@ -15,7 +15,5 @@ type RegisterRequest struct {
 	Password    string `json:"password" binding:"required,min=6"`
 	Email       string `json:"email" binding:"required,email"`
 	DisplayName string `json:"display_name" binding:"required,min=1,max=100"`
-	RoleID      int    `json:"role_id"`
+	PositionID  int    `json:"position_id"`
 }
-
-

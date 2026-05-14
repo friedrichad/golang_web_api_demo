@@ -83,13 +83,13 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		    locked, count := LockAccount(user.UserID, 5);
-			if locked {
-				log.Printf("Tài khoản user_id %d bị khóa do đăng nhập sai quá nhiều lần (%d lần)", user.UserID, count)
-				return nil, common.AccountLocked
-			}
-			return nil, common.AuthenticationFail
+		locked, count := LockAccount(user.UserID, 5)
+		if locked {
+			log.Printf("Tài khoản user_id %d bị khóa do đăng nhập sai quá nhiều lần (%d lần)", user.UserID, count)
+			return nil, common.AccountLocked
 		}
+		return nil, common.AuthenticationFail
+	}
 	response := &model.TokenResponse{
 		AccessToken: "",
 		TokenType:   "bearer",
@@ -158,9 +158,9 @@ func refreshToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.
 		return nil, common.TokenInvalid
 	}
 	if claims.Id != userID {
-    	log.Printf("Session userID %s không khớp với token userID %s", userID, claims.Id)
-    return nil, common.TokenInvalid
-	}	
+		log.Printf("Session userID %s không khớp với token userID %s", userID, claims.Id)
+		return nil, common.TokenInvalid
+	}
 	response := &model.TokenResponse{
 		AccessToken: "",
 		TokenType:   "bearer",
@@ -239,18 +239,12 @@ func (a AuthService) Register(c *gin.Context) (*dtos.UserResponse, *common.Error
 		PasswordHash: hashedPassword,
 		StatusInt:    1,
 		CreatedAt:    time.Now(),
+		PositionID:   req.PositionID,
 	}
 
 	err = userRepo.Save(user)
 	if err != nil {
 		return nil, common.SystemError
-	}
-
-	if req.RoleID > 0 {
-		err = userRepo.AddUserRole(user.UserID, req.RoleID)
-		if err != nil {
-			return nil, common.SystemError
-		}
 	}
 
 	userResponse := modelToUserResponse(user)
@@ -276,7 +270,7 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 		log.Printf("Failed to parse token: %v", err)
 		return common.TokenInvalid
 	}
-	
+
 	// Calculate TTL from token expiration time
 	ttl := time.Until(time.Unix(claims.RefreshExp, 0))
 	if ttl <= 0 {
@@ -289,7 +283,7 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 		log.Printf("Failed to add token to blacklist: %v", err)
 		return common.SystemError
 	}
-		sessionID, _ := c.Cookie("session_id")
+	sessionID, _ := c.Cookie("session_id")
 	if sessionID != "" {
 		redis.Delete(redis.Rdb, "auth:browser:"+sessionID)
 	}

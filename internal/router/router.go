@@ -19,6 +19,7 @@ func InitRouter() *gin.Engine {
 	initComponentRouter(router)
 	initCustomerRouter(router)
 	initRoleRouter(router)
+	initPositionRouter(router)
 	initRequestRouter(router)
 	initRequestDetailRouter(router)
 	initRequestPermissionRouter(router)
@@ -116,6 +117,19 @@ func initRoleRouter(router *gin.Engine) {
 		roleGroup.POST("", middleware.Authorizator("role:create"), roleController.CreateRole())
 		roleGroup.PUT("", middleware.Authorizator("role:edit"), roleController.UpdateRole())
 		roleGroup.DELETE("", middleware.Authorizator("role:delete"), roleController.DeleteRole())
+	}
+}
+
+func initPositionRouter(router *gin.Engine) {
+	positionController := controller.NewPositionController()
+	positionGroup := router.Group("/positions")
+	positionGroup.Use(middleware.BearerAuthenticator())
+	{
+		positionGroup.GET("", middleware.Authorizator("position:view"), positionController.GetAllPositions())
+		positionGroup.GET("/:id", middleware.Authorizator("position:view"), positionController.GetPositionById())
+		positionGroup.POST("", middleware.Authorizator("position:create"), positionController.CreatePosition())
+		positionGroup.PUT("", middleware.Authorizator("position:edit"), positionController.UpdatePosition())
+		positionGroup.DELETE("", middleware.Authorizator("position:delete"), positionController.DeletePosition())
 	}
 }
 
