@@ -2,9 +2,9 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"time"
-	"log"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
@@ -116,7 +116,7 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 		WarehouseID:   int(req.WarehouseID),
 		PerformedByID: userID,
 		PartnerID:     int(req.PartnerID),
-		RequestDate:   time.Now(),
+		ExpiredDate:   req.ExpiredDate,
 		Note:          req.Note,
 		StatusInt:     constants.RequestStatusPending, // Status = PENDING initially
 		CreatedBy:     userID,
@@ -605,7 +605,7 @@ func modelToRequestResponse(request *model.Request) dtos.RequestResponse {
 		PerformedByID: request.PerformedByID,
 		ApproverID:    request.ApproverID,
 		PartnerID:     request.PartnerID,
-		RequestDate:   request.RequestDate,
+		ExpiredDate:   request.ExpiredDate,
 		StatusInt:     request.StatusInt,
 		Note:          request.Note,
 		CreatedBy:     request.CreatedBy,

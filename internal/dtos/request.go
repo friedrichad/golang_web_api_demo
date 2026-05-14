@@ -20,11 +20,12 @@ type RequestFilter struct {
 // RequestCreate - POST request body (creates Request header only)
 // RequestDetail must be created separately via CreateRequestDetail
 type RequestCreate struct {
-	RequestType *int   `json:"request_type" binding:"required"`
-	Description string `json:"description"`
-	WarehouseID int    `json:"warehouse_id" binding:"required"`
-	PartnerID   int    `json:"partner_id"`
-	Note        string `json:"note"`
+	RequestType *int      `json:"request_type" binding:"required"`
+	Description string    `json:"description"`
+	WarehouseID int       `json:"warehouse_id" binding:"required"`
+	PartnerID   int       `json:"partner_id"`
+	Note        string    `json:"note"`
+	ExpiredDate time.Time `json:"expired_date"`
 }
 
 // RequestUpdate - PUT request body
@@ -50,7 +51,7 @@ type RequestResponse struct {
 	PerformedByID int       `json:"performed_by_id"`
 	ApproverID    int       `json:"approver_id"`
 	PartnerID     int       `json:"partner_id"`
-	RequestDate   time.Time `json:"request_date"`
+	ExpiredDate   time.Time `json:"expired_date"`
 	StatusInt     int       `json:"status_int"`
 	Note          string    `json:"note"`
 	Reason        string    `json:"reason"`

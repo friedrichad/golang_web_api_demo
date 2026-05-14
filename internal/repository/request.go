@@ -88,6 +88,6 @@ func (r *RequestRepository) CanApprove(approverId int, requesterId int) (bool, e
 
 func (r *RequestRepository) GetExpiredPendingRequests() ([]model.Request, error) {
 	var requests []model.Request
-	err := r.DB.Where("status_int = ? AND created_at < ?", constants.RequestStatusPending, time.Now()).Find(&requests).Error
+	err := r.DB.Where("status_int = ? AND expired_date < ?", constants.RequestStatusPending, time.Now()).Find(&requests).Error
 	return requests, err
 }
