@@ -79,14 +79,14 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	}
 	if IsLockedAccount(user.UserID, 5) {
 		log.Printf("Tài khoản user_id %d đang bị khóa do đăng nhập sai quá nhiều lần", user.UserID)
-		return nil, &common.Error{Code: "403", Message: "Tài khoản đang bị khóa do đăng nhập sai quá nhiều lần, vui lòng thử lại sau"}
+		return nil, common.AccountLocked
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		    locked, count := LockAccount(user.UserID, 5);
 			if locked {
 				log.Printf("Tài khoản user_id %d bị khóa do đăng nhập sai quá nhiều lần (%d lần)", user.UserID, count)
-				return nil, &common.Error{Code: "403",Message: "Tài khoản bị khóa do đăng nhập sai quá nhiều lần, vui lòng thử lại sau"}
+				return nil, common.AccountLocked
 			}
 			return nil, common.AuthenticationFail
 		}

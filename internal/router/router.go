@@ -21,6 +21,7 @@ func InitRouter() *gin.Engine {
 	initRoleRouter(router)
 	initRequestRouter(router)
 	initRequestDetailRouter(router)
+	initRequestPermissionRouter(router)
 	initInventoryAdjustmentRouter(router)
 	initInventoryAuditRouter(router)
 	initInventoryAuditDetailRouter(router)
@@ -143,6 +144,19 @@ func initRequestDetailRouter(router *gin.Engine) {
 		requestDetailGroup.POST("", middleware.Authorizator("request:create"), requestDetailController.CreateRequestDetail())
 		requestDetailGroup.PUT("", middleware.Authorizator("request:edit"), requestDetailController.UpdateRequestDetail())
 		requestDetailGroup.DELETE("", middleware.Authorizator("request:delete"), requestDetailController.DeleteRequestDetail())
+	}
+}
+
+func initRequestPermissionRouter(router *gin.Engine) {
+	permissionController := controller.NewRequestPermissionController()
+	permissionGroup := router.Group("/request-permissions")
+	permissionGroup.Use(middleware.BearerAuthenticator())
+	{
+		permissionGroup.GET("", middleware.Authorizator("request:view"), permissionController.GetAllPermissions())
+		permissionGroup.POST("", middleware.Authorizator("request:create"), permissionController.CreatePermission())
+		permissionGroup.PUT("", middleware.Authorizator("request:edit"), permissionController.UpdatePermission())
+		permissionGroup.DELETE("", middleware.Authorizator("request:delete"), permissionController.DeletePermission())
+		permissionGroup.POST("/approval", middleware.Authorizator("request:approve"), permissionController.ApprovalPermission())
 	}
 }
 

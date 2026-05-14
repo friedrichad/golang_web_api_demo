@@ -13,7 +13,7 @@ const TableNameRequest = "request"
 // Request mapped from table <request>
 type Request struct {
 	RequestID     int       `gorm:"column:request_id;primaryKey;autoIncrement:true" json:"request_id"`
-	RequestType   string    `gorm:"column:request_type" json:"request_type"`
+	RequestType   int    	`gorm:"column:request_type" json:"request_type"`
 	Description   string    `gorm:"column:description" json:"description"`
 	WarehouseID   int       `gorm:"column:warehouse_id" json:"warehouse_id"`
 	PerformedByID int       `gorm:"column:performed_by_id" json:"performed_by_id"`
@@ -22,6 +22,7 @@ type Request struct {
 	RequestDate   time.Time `gorm:"column:request_date" json:"request_date"`
 	StatusInt     int       `gorm:"column:status_int" json:"status_int"`
 	Note          string    `gorm:"column:note" json:"note"`
+	Reason		  string    `gorm:"column:reason" json:"reason"`
 	CreatedBy     int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt     time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy     int       `gorm:"column:updated_by" json:"updated_by"`

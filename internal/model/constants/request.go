@@ -8,6 +8,7 @@ const (
 	RequestStatusRejected  = 3
 	RequestStatusCompleted = 4
 	RequestStatusCancelled = 5
+	RequestStatusExpired = 6
 )
 
 func IsValidRequestStatus(status int) bool {
@@ -19,62 +20,28 @@ func IsValidRequestStatus(status int) bool {
 	}
 }
 
-
-const (
-	WarehouseRequestTypeImport   = "IMPORT"
-	WarehouseRequestTypeExport   = "EXPORT"
-	WarehouseRequestTypeTransfer = "TRANSFER"
-)
-
-func IsValidWarehouseRequestType(requestType string) bool {
-	switch requestType {
-	case WarehouseRequestTypeImport, WarehouseRequestTypeExport, WarehouseRequestTypeTransfer:
+func IsValidApprovalStatus(status int) bool {
+	switch status {
+	case RequestStatusApproved, RequestStatusRejected:
 		return true
 	default:
 		return false
 	}
 }
 
-func GetWarehouseRequestTypeNames() []string {
-	return []string{
-		WarehouseRequestTypeImport,
-		WarehouseRequestTypeExport,
-		WarehouseRequestTypeTransfer,
-	}
-}
 
 const (
-	OtherRequestTypeAccessPermission = "ACCESS_PERMISSION"
-	OtherRequestTypeLeaveRequest     = "LEAVE_REQUEST"
-	OtherRequestTypeChangeInfo       = "CHANGE_INFO"
-	OtherRequestTypeOther            = "OTHER"
+	RequestTypeImport   = 1
+	RequestTypeExport   = 2
+	RequestTypeTransfer = 3
+	RequestTypeAccessPermission = 4
 )
 
-func IsValidOtherRequestType(requestType string) bool {
+func IsValidWarehouseRequestType(requestType int) bool {
 	switch requestType {
-	case OtherRequestTypeAccessPermission, OtherRequestTypeLeaveRequest, OtherRequestTypeChangeInfo, OtherRequestTypeOther:
+	case RequestTypeImport, RequestTypeExport, RequestTypeTransfer,RequestTypeAccessPermission:
 		return true
 	default:
 		return false
 	}
-}
-
-func GetOtherRequestTypeNames() []string {
-	return []string{
-		OtherRequestTypeAccessPermission,
-		OtherRequestTypeLeaveRequest,
-		OtherRequestTypeChangeInfo,
-		OtherRequestTypeOther,
-	}
-}
-
-func IsValidRequestType(requestType string) bool {
-	return IsValidWarehouseRequestType(requestType) || IsValidOtherRequestType(requestType)
-}
-
-func GetAllRequestTypeNames() []string {
-	all := []string{}
-	all = append(all, GetWarehouseRequestTypeNames()...)
-	all = append(all, GetOtherRequestTypeNames()...)
-	return all
 }

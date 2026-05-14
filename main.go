@@ -8,6 +8,8 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/router"
 	"github.com/spf13/viper"
+	"github.com/friedrichad/golang_web_api_demo/internal/cron"
+	"github.com/friedrichad/golang_web_api_demo/internal/service"
 )
 
 // @title Auth Server API
@@ -25,6 +27,12 @@ func main() {
 	db.InitMysql()
 	log.SetOutput(os.Stdout)
 	redis.InitRedis() 
+
+	requestService := service.NewRequestService()
+
+	// start cron
+	requestCron := cron.NewRequestCron(requestService)
+	requestCron.Start()
 
 	router.InitRouter().Run(":" + viper.GetString("port"))
 }

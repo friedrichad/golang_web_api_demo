@@ -74,3 +74,14 @@ func (r *BaseRepository[E, T]) GetPage(sql string, page int, size int, values ..
 	}
 	return slice, total, err
 }
+
+func (r *BaseRepository[E, T]) Exists(query string, values ...interface{}) (bool, error) {
+	var exists bool
+
+	err := r.Instance.Raw(
+		"SELECT EXISTS(" + query + ")",
+		values...,
+	).Scan(&exists).Error
+
+	return exists, err
+}

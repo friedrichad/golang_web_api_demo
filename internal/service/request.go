@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"log"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
@@ -28,6 +29,7 @@ type IRequestService interface {
 	CreateRequestDetail(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error)
 	UpdateRequestDetail(c *gin.Context) *common.Error
 	DeleteRequestDetail(c *gin.Context) *common.Error
+	ExpireRequests() error
 }
 
 type RequestService struct {
@@ -109,14 +111,14 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 
 	request := &model.Request{
-		RequestType:   req.RequestType,
+		RequestType:   *req.RequestType,
 		Description:   req.Description,
 		WarehouseID:   int(req.WarehouseID),
 		PerformedByID: userID,
 		PartnerID:     int(req.PartnerID),
 		RequestDate:   time.Now(),
 		Note:          req.Note,
-		StatusInt:     1,
+		StatusInt:     constants.RequestStatusPending, // Status = PENDING initially
 		CreatedBy:     userID,
 		CreatedAt:     time.Now(),
 	}
@@ -148,8 +150,8 @@ func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
 		return common.NotFound
 	}
 
-	if req.RequestType != "" {
-		request.RequestType = req.RequestType
+	if req.RequestType != nil {
+		request.RequestType = *req.RequestType
 	}
 	if req.Description != "" {
 		request.Description = req.Description
@@ -208,6 +210,7 @@ func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
+
 	request, err := s.requestRepo.GetByRequestId(int(req.RequestID))
 	if err != nil {
 		return common.SystemError
@@ -215,21 +218,23 @@ func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
 	if request == nil {
 		return common.NotFound
 	}
-	userID, _ := strconv.Atoi(middleware.GetUserID(c))
-	request.ApproverID = userID
-	if !constants.IsValidRequestStatus(req.StatusInt) {
-		return &common.Error{Code: "400", Message: "Trạng thái yêu cầu không hợp lệ!"}
+
+	if request.StatusInt != constants.RequestStatusPending {
+		return &common.Error{Code: "400", Message: "Chỉ yêu cầu PENDING mới được phê duyệt!"}
 	}
-	if request.StatusInt == constants.RequestStatusApproved || request.StatusInt == constants.RequestStatusRejected {
-		return &common.Error{Code: "400", Message: "Không thể phê duyệt lại yêu cầu đã được phê duyệt!"}
-	}
+
 	if req.StatusInt != constants.RequestStatusApproved && req.StatusInt != constants.RequestStatusRejected {
-		return &common.Error{Code: "400", Message: "Yêu cầu chỉ có thể được phê duyệt hoặc từ chối!"}
+		return &common.Error{Code: "400", Message: "Yêu cầu chỉ có thể được phê duyệt (APPROVED) hoặc từ chối (REJECTED)!"}
 	}
-	request.StatusInt = int(req.StatusInt)
-	request.Note = req.Note
+
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+
+	request.ApproverID = userID
+	request.StatusInt = req.StatusInt
+	request.Reason = req.Reason // Use Reason field from ApprovalRequest DTO
 	request.UpdatedBy = userID
 	request.UpdatedAt = time.Now()
+
 	err = s.requestRepo.Update(request)
 	if err != nil {
 		return common.SystemError
@@ -242,42 +247,43 @@ func (s *RequestService) ConfirmRequest(c *gin.Context) *common.Error {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
-	var request *model.Request
+
 	if req.RequestID == 0 {
 		return common.RequestInvalid
 	}
-	request, err := s.requestRepo.GetByRequestId(int(req.RequestID))
+
+	request, err := s.requestRepo.GetByRequestId(req.RequestID)
 	if err != nil {
 		return common.SystemError
 	}
 	if request == nil {
 		return common.NotFound
 	}
-	if request.StatusInt != constants.RequestStatusCompleted && request.StatusInt != constants.RequestStatusCancelled {
-		return &common.Error{Code: "400", Message: "Đơn đã hoàn thành/hủy, không thể chỉnh sửa!"}
-	}
-	if !constants.IsValidRequestStatus(req.StatusInt) {
-		return &common.Error{Code: "400", Message: "Trạng thái yêu cầu không hợp lệ!"}
+
+	// Validate: Only APPROVED requests can be confirmed
+	if request.StatusInt != constants.RequestStatusApproved {
+		return &common.Error{Code: "400", Message: "Chỉ yêu cầu APPROVED mới được xác nhận!"}
 	}
 
-	if request.StatusInt != constants.RequestStatusApproved {
-		return &common.Error{Code: "400", Message: "Chỉ có thể xác nhận yêu cầu đã được phê duyệt!"}
-	}
+	// If changing to COMPLETED status, apply inventory changes
 	if req.StatusInt == constants.RequestStatusCompleted {
-		if err := s.ApplyRequestDetails(c, int(req.RequestID)); err != nil {
+		if err := s.ApplyRequestDetails(c, req.RequestID); err != nil {
 			return &common.Error{Code: "400", Message: err.Error()}
 		}
 	}
+
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	request.StatusInt = req.StatusInt
 	request.UpdatedBy = userID
 	request.UpdatedAt = time.Now()
+
 	err = s.requestRepo.Update(request)
 	if err != nil {
 		return common.SystemError
 	}
 	return nil
 }
+
 func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) error {
 	details, err := s.requestDetailRepo.GetByRequestId(requestID)
 	if err != nil {
@@ -542,6 +548,33 @@ func (s *RequestService) DeleteRequestDetail(c *gin.Context) *common.Error {
 	err := s.requestDetailRepo.Delete(ids)
 	if err != nil {
 		return common.SystemError
+	}
+
+	return nil
+}
+
+func (s *RequestService) ExpireRequests() error {
+	requests, err := s.requestRepo.GetExpiredPendingRequests()
+	if err != nil {
+		log.Print("Lỗi khi lấy request hết hạn: ", err)
+		return err
+	}
+
+	if len(requests) == 0 {
+		return nil
+	}
+
+	for _, r := range requests {
+		r.StatusInt = constants.RequestStatusExpired
+		r.UpdatedAt = time.Now()
+
+		err := s.requestRepo.Update(&r)
+		if err != nil {
+			log.Print("Lỗi update request expired ID:", r.RequestID, err)
+			continue
+		}
+
+		log.Print("Expired request ID:", r.RequestID)
 	}
 
 	return nil

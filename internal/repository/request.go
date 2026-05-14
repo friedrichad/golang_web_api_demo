@@ -1,9 +1,12 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"gorm.io/gorm"
 )
 
@@ -14,6 +17,8 @@ type IRequestRepository interface {
 	Delete(ids []int) error
 	Save(request *model.Request) error
 	Update(request *model.Request) error
+	CanApprove(approverId int, requesterId int) (bool, error)
+	GetExpiredPendingRequests() ([]model.Request, error)
 }
 
 type RequestRepository struct {
@@ -62,4 +67,27 @@ func (r *RequestRepository) WithTx(tx *gorm.DB) *RequestRepository {
 		BaseRepository: BaseRepository[model.Request, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+func (r *RequestRepository) CanApprove(approverId int, requesterId int) (bool, error) {
+	var result int
+	err := r.DB.Raw("SELECT 1"+
+		" from user u_approver"+
+		" join user u_requester on u_requester.user_id = ?"+
+		" join position_hierarchy ph"+
+		" on ph.ancestor_id = u_approver.position_id"+
+		" and ph.descendant_id = u_requester.position_id"+
+		" where u_approver.user_id = ?"+
+		" and ph.depth > 0"+
+		" limit 1", requesterId, approverId).Scan(&result).Error
+	if err != nil {
+		return false, err
+	}
+	return result == 1, nil
+}
+
+func (r *RequestRepository) GetExpiredPendingRequests() ([]model.Request, error) {
+	var requests []model.Request
+	err := r.DB.Where("status_int = ? AND created_at < ?", constants.RequestStatusPending, time.Now()).Find(&requests).Error
+	return requests, err
 }

@@ -1,0 +1,42 @@
+package repository
+
+import (
+	"log"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"gorm.io/gorm"
+)
+type IUserPermissionRepository interface {
+	Save(userPermission *model.UserPermission) error
+	Delete(userID int, menuID int, permissionID int) error
+}
+
+type UserPermissionRepository struct {
+	BaseRepository[model.UserPermission, int]
+	DB *gorm.DB
+}
+
+var userPermissionRepository IUserPermissionRepository
+
+func NewUserPermissionRepository() IUserPermissionRepository {	
+	if userPermissionRepository == nil {
+		userPermissionRepository = &UserPermissionRepository{DB: db.Instance}
+	}
+	return userPermissionRepository
+}
+func (r *UserPermissionRepository) Save(userPermission *model.UserPermission) error {
+	err := r.DB.Create(userPermission).Error
+	if err != nil {
+		log.Print("Lỗi khi lưu user permission: ", err)
+		return err
+	}
+	return nil
+}
+func (r *UserPermissionRepository) Delete(userID int, menuID int, permissionID int) error {
+	err := r.DB.Where("user_id = ? AND menu_id = ? AND permission_id = ?", userID, menuID, permissionID).Delete(&model.UserPermission{}).Error
+	if err != nil {
+		log.Print("Lỗi khi xóa user permission: ", err)
+		return err
+	}
+	return nil
+}

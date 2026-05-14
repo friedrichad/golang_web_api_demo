@@ -9,6 +9,7 @@ import (
 
 type IRequestPermissionRepository interface {
 	IBaseRepository[model.RequestPermission, int]
+	GetRequestPermissionByRequestId(requestId int) ([]model.RequestPermission, error)
 	GetByRequestPermissionId(requestPermissionId int) (*model.RequestPermission, error)
 	GetAllByCondition(query dtos.RequestPermissionFilter) ([]model.RequestPermission, int, error)
 	Delete(ids []int) error
@@ -39,6 +40,13 @@ func (r * RequestPermissionRepository) GetByRequestPermissionId(requestPermissio
 	}
 	return requestPermission, err
 }
+
+func (r *RequestPermissionRepository) GetRequestPermissionByRequestId(requestId int) ([]model.RequestPermission, error) {
+	var requestPermissions []model.RequestPermission
+	err := r.DB.Where("request_id = ?", requestId).Find(&requestPermissions).Error
+	return requestPermissions, err
+}
+
 func (r *RequestPermissionRepository) GetAllByCondition(query dtos.RequestPermissionFilter) ([]model.RequestPermission, int, error){
 	return r.GetPage("Select * from RequestPermission" +
 		" where (? is null or request_permission_id = ?)"+
