@@ -277,10 +277,16 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 		ttl = 1 * time.Second // Minimum TTL
 	}
 
+
 	// Add token to blacklist with TTL
 	err = redis.AddToBlacklist(token, ttl)
 	if err != nil {
 		log.Printf("Failed to add token to blacklist: %v", err)
+		return common.SystemError
+	}
+	err = redis.Delete(redis.Rdb, "auth:token:"+claims.Id)
+	if err != nil {
+		log.Printf("Failed to delete token from Redis: %v", err)
 		return common.SystemError
 	}
 	sessionID, _ := c.Cookie("session_id")

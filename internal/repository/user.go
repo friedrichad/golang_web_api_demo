@@ -69,9 +69,7 @@ func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
             JOIN permissions p 
                 ON rmp.permission_id = p.permission_id
             WHERE u.user_id = ?
-
             UNION
-
             SELECT CONCAT(m.menu_name, ':', p.permission_name) AS scope
             FROM user_permission up
             JOIN menu m 
