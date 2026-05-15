@@ -5,6 +5,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -31,4 +32,54 @@ type InventoryLedger struct {
 // TableName InventoryLedger's table name
 func (*InventoryLedger) TableName() string {
 	return TableNameInventoryLedger
+}
+
+// InventoryLedgerFilter - GET request with query parameters
+type InventoryLedgerFilter struct {
+	LedgerID        *int `form:"ledger_id"`
+	ComponentID     *int `form:"component_id"`
+	WarehouseID     *int `form:"warehouse_id"`
+	BinID           *int `form:"bin_id"`
+	ReferenceTypeID *int `form:"reference_type_id"`
+	PageSize
+	DateRequest
+}
+
+// Verify validates the InventoryLedgerFilter struct.
+func (i *InventoryLedgerFilter) Verify() error {
+	if i.LedgerID == nil && i.ComponentID == nil {
+		return fmt.Errorf("At least one of LedgerID or ComponentID is required")
+	}
+	return nil
+}
+
+// InventoryLedgerCreate - for internal use when creating ledger entries
+type InventoryLedgerCreate struct {
+	ComponentID     int     `json:"component_id" binding:"required"`
+	WarehouseID     int     `json:"warehouse_id" binding:"required"`
+	BinID           int     `json:"bin_id" binding:"required"`
+	ReferenceType   int     `json:"reference_type" binding:"required"`
+	ReferenceTypeID int     `json:"reference_type_id" binding:"required"`
+	Description     string  `json:"description"`
+	QuantityChange  float64 `json:"quantity_change" binding:"required"`
+	QuantityAfter   float64 `json:"quantity_after" binding:"required"`
+	Note            string  `json:"note"`
+	CreatedBy       int     `json:"created_by" binding:"required"`
+}
+
+type InventoryLedgerResponse struct {
+	LedgerID        int       `json:"ledger_id"`
+	ComponentID     int       `json:"component_id"`
+	WarehouseID     int       `json:"warehouse_id"`
+	BinID           int       `json:"bin_id"`
+	ReferenceType   int       `json:"reference_type"`
+	ReferenceTypeID int       `json:"reference_type_id"`
+	Description     string    `json:"description"`
+	QuantityChange  float64   `json:"quantity_change"`
+	QuantityAfter   float64   `json:"quantity_after"`
+	Note            string    `json:"note"`
+	CreatedBy       int       `json:"created_by"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedBy       int       `json:"updated_by"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }

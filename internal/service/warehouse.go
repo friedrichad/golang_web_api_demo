@@ -5,16 +5,15 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
 type IWarehouseService interface {
-	GetAllWarehouses(c *gin.Context) ([]dtos.WarehouseResponse, int, *common.Error)
-	GetWarehouseById(c *gin.Context) (*dtos.WarehouseResponse, *common.Error)
-	CreateWarehouse(c *gin.Context) (*dtos.WarehouseResponse, *common.Error)
+	GetAllWarehouses(c *gin.Context) ([]model.WarehouseResponse, int, *common.Error)
+	GetWarehouseById(c *gin.Context) (*model.WarehouseResponse, *common.Error)
+	CreateWarehouse(c *gin.Context) (*model.WarehouseResponse, *common.Error)
 	UpdateWarehouse(c *gin.Context) *common.Error
 	DeleteWarehouse(c *gin.Context) *common.Error
 }
@@ -34,8 +33,8 @@ func NewWarehouseService() IWarehouseService {
 	return warehouseService
 }
 
-func (s *WarehouseService) GetAllWarehouses(c *gin.Context) ([]dtos.WarehouseResponse, int, *common.Error) {
-	var query dtos.WarehouseFilter
+func (s *WarehouseService) GetAllWarehouses(c *gin.Context) ([]model.WarehouseResponse, int, *common.Error) {
+	var query model.WarehouseFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -45,7 +44,7 @@ func (s *WarehouseService) GetAllWarehouses(c *gin.Context) ([]dtos.WarehouseRes
 		return nil, 0, common.SystemError
 	}
 
-	res := make([]dtos.WarehouseResponse, len(warehouses))
+	res := make([]model.WarehouseResponse, len(warehouses))
 	for i, w := range warehouses {
 		res[i] = modelToWarehouseResponse(&w)
 	}
@@ -53,7 +52,7 @@ func (s *WarehouseService) GetAllWarehouses(c *gin.Context) ([]dtos.WarehouseRes
 	return res, total, nil
 }
 
-func (s *WarehouseService) GetWarehouseById(c *gin.Context) (*dtos.WarehouseResponse, *common.Error) {
+func (s *WarehouseService) GetWarehouseById(c *gin.Context) (*model.WarehouseResponse, *common.Error) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -69,8 +68,8 @@ func (s *WarehouseService) GetWarehouseById(c *gin.Context) (*dtos.WarehouseResp
 	return &res, nil
 }
 
-func (s *WarehouseService) CreateWarehouse(c *gin.Context) (*dtos.WarehouseResponse, *common.Error) {
-	var req dtos.WarehouseCreate
+func (s *WarehouseService) CreateWarehouse(c *gin.Context) (*model.WarehouseResponse, *common.Error) {
+	var req model.WarehouseCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -97,7 +96,7 @@ func (s *WarehouseService) CreateWarehouse(c *gin.Context) (*dtos.WarehouseRespo
 }
 
 func (s *WarehouseService) UpdateWarehouse(c *gin.Context) *common.Error {
-	var req dtos.WarehouseUpdate
+	var req model.WarehouseUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -148,8 +147,8 @@ func (s *WarehouseService) DeleteWarehouse(c *gin.Context) *common.Error {
 	return nil
 }
 
-func modelToWarehouseResponse(w *model.Warehouse) dtos.WarehouseResponse {
-	return dtos.WarehouseResponse{
+func modelToWarehouseResponse(w *model.Warehouse) model.WarehouseResponse {
+	return model.WarehouseResponse{
 		WarehouseID:      int(w.WarehouseID),
 		WarehouseName:    w.WarehouseName,
 		Description:      w.Description,

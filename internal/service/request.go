@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
@@ -16,17 +15,17 @@ import (
 )
 
 type IRequestService interface {
-	GetAllRequests(c *gin.Context) ([]dtos.RequestResponse, int, *common.Error)
-	GetRequestById(c *gin.Context) (*dtos.RequestResponse, *common.Error)
-	CreateRequest(c *gin.Context) (*dtos.RequestResponse, *common.Error)
+	GetAllRequests(c *gin.Context) ([]model.RequestResponse, int, *common.Error)
+	GetRequestById(c *gin.Context) (*model.RequestResponse, *common.Error)
+	CreateRequest(c *gin.Context) (*model.RequestResponse, *common.Error)
 	UpdateRequest(c *gin.Context) *common.Error
 	DeleteRequest(c *gin.Context) *common.Error
 	ApprovalRequest(c *gin.Context) *common.Error
 	ConfirmRequest(c *gin.Context) *common.Error
 	// RequestDetail CRUD operations
-	GetAllRequestDetails(c *gin.Context) ([]dtos.RequestDetailResponse, int, *common.Error)
-	GetRequestDetailById(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error)
-	CreateRequestDetail(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error)
+	GetAllRequestDetails(c *gin.Context) ([]model.RequestDetailResponse, int, *common.Error)
+	GetRequestDetailById(c *gin.Context) (*model.RequestDetailResponse, *common.Error)
+	CreateRequestDetail(c *gin.Context) (*model.RequestDetailResponse, *common.Error)
 	UpdateRequestDetail(c *gin.Context) *common.Error
 	DeleteRequestDetail(c *gin.Context) *common.Error
 	ExpireRequests() error
@@ -51,8 +50,8 @@ func NewRequestService() IRequestService {
 	return requestService
 }
 
-func (s *RequestService) GetAllRequests(c *gin.Context) ([]dtos.RequestResponse, int, *common.Error) {
-	var query dtos.RequestFilter
+func (s *RequestService) GetAllRequests(c *gin.Context) ([]model.RequestResponse, int, *common.Error) {
+	var query model.RequestFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -65,7 +64,7 @@ func (s *RequestService) GetAllRequests(c *gin.Context) ([]dtos.RequestResponse,
 		return nil, 0, common.NotFound
 	}
 
-	requestResponses := make([]dtos.RequestResponse, len(requests))
+	requestResponses := make([]model.RequestResponse, len(requests))
 	for i, req := range requests {
 		requestResponses[i] = modelToRequestResponse(&req)
 	}
@@ -73,7 +72,7 @@ func (s *RequestService) GetAllRequests(c *gin.Context) ([]dtos.RequestResponse,
 	return requestResponses, total, nil
 }
 
-func (s *RequestService) GetRequestById(c *gin.Context) (*dtos.RequestResponse, *common.Error) {
+func (s *RequestService) GetRequestById(c *gin.Context) (*model.RequestResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -97,9 +96,9 @@ func (s *RequestService) GetRequestById(c *gin.Context) (*dtos.RequestResponse, 
 	return &requestResponse, nil
 }
 
-func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *common.Error) {
+func (s *RequestService) CreateRequest(c *gin.Context) (*model.RequestResponse, *common.Error) {
 
-	var req dtos.RequestCreate
+	var req model.RequestCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -132,7 +131,7 @@ func (s *RequestService) CreateRequest(c *gin.Context) (*dtos.RequestResponse, *
 }
 
 func (s *RequestService) UpdateRequest(c *gin.Context) *common.Error {
-	var req dtos.RequestUpdate
+	var req model.RequestUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -206,7 +205,7 @@ func (s *RequestService) DeleteRequest(c *gin.Context) *common.Error {
 }
 
 func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
-	var req dtos.ApprovalRequest
+	var req model.ApprovalRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -243,7 +242,7 @@ func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
 }
 
 func (s *RequestService) ConfirmRequest(c *gin.Context) *common.Error {
-	var req dtos.ConfirmRequest
+	var req model.ConfirmRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -330,7 +329,7 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 				warehouseID = binInfo.WarehouseID
 			}
 
-			ledgerReq := &dtos.InventoryLedgerCreate{
+			ledgerReq := &model.InventoryLedgerCreate{
 				ComponentID:     detail.ComponentID,
 				WarehouseID:     warehouseID,
 				BinID:           detail.BinFromID,
@@ -380,7 +379,7 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 				warehouseID = binInfo.WarehouseID
 			}
 
-			ledgerReq := &dtos.InventoryLedgerCreate{
+			ledgerReq := &model.InventoryLedgerCreate{
 				ComponentID:     detail.ComponentID,
 				WarehouseID:     warehouseID,
 				BinID:           detail.BinToID,
@@ -401,8 +400,8 @@ func (s *RequestService) ApplyRequestDetails(c *gin.Context, requestID int) erro
 	return nil
 }
 
-func (s *RequestService) GetAllRequestDetails(c *gin.Context) ([]dtos.RequestDetailResponse, int, *common.Error) {
-	var query dtos.RequestDetailFilter
+func (s *RequestService) GetAllRequestDetails(c *gin.Context) ([]model.RequestDetailResponse, int, *common.Error) {
+	var query model.RequestDetailFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -415,7 +414,7 @@ func (s *RequestService) GetAllRequestDetails(c *gin.Context) ([]dtos.RequestDet
 		return nil, 0, common.NotFound
 	}
 
-	detailResponses := make([]dtos.RequestDetailResponse, len(details))
+	detailResponses := make([]model.RequestDetailResponse, len(details))
 	for i, detail := range details {
 		detailResponses[i] = modelToRequestDetailResponse(&detail)
 	}
@@ -423,7 +422,7 @@ func (s *RequestService) GetAllRequestDetails(c *gin.Context) ([]dtos.RequestDet
 	return detailResponses, total, nil
 }
 
-func (s *RequestService) GetRequestDetailById(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error) {
+func (s *RequestService) GetRequestDetailById(c *gin.Context) (*model.RequestDetailResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -447,8 +446,8 @@ func (s *RequestService) GetRequestDetailById(c *gin.Context) (*dtos.RequestDeta
 	return &detailResponse, nil
 }
 
-func (s *RequestService) CreateRequestDetail(c *gin.Context) (*dtos.RequestDetailResponse, *common.Error) {
-	var req dtos.RequestDetailCreate
+func (s *RequestService) CreateRequestDetail(c *gin.Context) (*model.RequestDetailResponse, *common.Error) {
+	var req model.RequestDetailCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -485,7 +484,7 @@ func (s *RequestService) CreateRequestDetail(c *gin.Context) (*dtos.RequestDetai
 }
 
 func (s *RequestService) UpdateRequestDetail(c *gin.Context) *common.Error {
-	var req dtos.RequestDetailUpdate
+	var req model.RequestDetailUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -580,8 +579,8 @@ func (s *RequestService) ExpireRequests() error {
 	return nil
 }
 
-func modelToRequestDetailResponse(detail *model.RequestDetail) dtos.RequestDetailResponse {
-	return dtos.RequestDetailResponse{
+func modelToRequestDetailResponse(detail *model.RequestDetail) model.RequestDetailResponse {
+	return model.RequestDetailResponse{
 		RequestDetailID: detail.RequestDetailID,
 		RequestID:       detail.RequestID,
 		ComponentID:     detail.ComponentID,
@@ -596,8 +595,8 @@ func modelToRequestDetailResponse(detail *model.RequestDetail) dtos.RequestDetai
 	}
 }
 
-func modelToRequestResponse(request *model.Request) dtos.RequestResponse {
-	return dtos.RequestResponse{
+func modelToRequestResponse(request *model.Request) model.RequestResponse {
+	return model.RequestResponse{
 		RequestID:     request.RequestID,
 		RequestType:   request.RequestType,
 		Description:   request.Description,

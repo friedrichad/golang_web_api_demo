@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -11,7 +10,7 @@ type IPositionRepository interface {
 	IBaseRepository[model.Position, int]
 	GetByPositionName(positionName string) (*model.Position, error)
 	GetAll() ([]model.Position, error)
-	GetAllByCondition(query dtos.PositionFilter) ([]model.Position, int, error)
+	GetAllByCondition(query model.PositionFilter) ([]model.Position, int, error)
 	Delete(ids []int) error
 	GetPositionById(positionId int) (*model.Position, error)
 	Save(position *model.Position) error
@@ -48,7 +47,7 @@ func (r *PositionRepository) GetAll() ([]model.Position, error) {
 	return positions, err
 }
 
-func (r *PositionRepository) GetAllByCondition(query dtos.PositionFilter) ([]model.Position, int, error) {
+func (r *PositionRepository) GetAllByCondition(query model.PositionFilter) ([]model.Position, int, error) {
 	return r.GetPage(
 		`select p.* 
 	 from position p 

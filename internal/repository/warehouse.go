@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -10,7 +9,7 @@ import (
 type IWarehouseRepository interface {
 	IBaseRepository[model.Warehouse, int]
 	GetByWarehouseId(warehouseId int) (*model.Warehouse, error)
-	GetAllByCondition(query dtos.WarehouseFilter) ([]model.Warehouse, int, error)
+	GetAllByCondition(query model.WarehouseFilter) ([]model.Warehouse, int, error)
 	Delete(ids []int) error
 	Save(warehouse *model.Warehouse) error
 	Update(warehouse *model.Warehouse) error
@@ -43,7 +42,7 @@ func (w *WarehouseRepository) GetByWarehouseId(warehouseId int) (*model.Warehous
 	return warehouse, err
 }
 
-func (w *WarehouseRepository) GetAllByCondition(query dtos.WarehouseFilter) ([]model.Warehouse, int, error) {
+func (w *WarehouseRepository) GetAllByCondition(query model.WarehouseFilter) ([]model.Warehouse, int, error) {
 	return w.GetPage("select w.* from warehouse w"+
 		" where (? is null or w.warehouse_name like ?)"+
 		" and (? is null or w.physical_location = ?)"+

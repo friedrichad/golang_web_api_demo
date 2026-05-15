@@ -6,7 +6,6 @@ import (
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
@@ -14,9 +13,9 @@ import (
 )
 
 type IComponentService interface {
-	GetAllComponents(c *gin.Context) ([]dtos.ComponentResponse, int, *common.Error)
-	GetComponentById(c *gin.Context) (*dtos.ComponentResponse, *common.Error)
-	CreateComponent(c *gin.Context) (*dtos.ComponentResponse, *common.Error)
+	GetAllComponents(c *gin.Context) ([]model.ComponentResponse, int, *common.Error)
+	GetComponentById(c *gin.Context) (*model.ComponentResponse, *common.Error)
+	CreateComponent(c *gin.Context) (*model.ComponentResponse, *common.Error)
 	UpdateComponent(c *gin.Context) *common.Error
 	DeleteComponent(c *gin.Context) *common.Error
 }
@@ -38,8 +37,8 @@ func NewComponentService() IComponentService {
 	return componentService
 }
 
-func (s *ComponentService) GetAllComponents(c *gin.Context) ([]dtos.ComponentResponse, int, *common.Error) {
-	var query dtos.ComponentFilter
+func (s *ComponentService) GetAllComponents(c *gin.Context) ([]model.ComponentResponse, int, *common.Error) {
+	var query model.ComponentFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -49,7 +48,7 @@ func (s *ComponentService) GetAllComponents(c *gin.Context) ([]dtos.ComponentRes
 		return nil, 0, common.SystemError
 	}
 
-	res := make([]dtos.ComponentResponse, len(components))
+	res := make([]model.ComponentResponse, len(components))
 	for i, comp := range components {
 		resp := modelToComponentResponse(&comp)
 		resp.ComponentCategory = s.getComponentCategories(int(comp.ComponentID))
@@ -60,7 +59,7 @@ func (s *ComponentService) GetAllComponents(c *gin.Context) ([]dtos.ComponentRes
 	return res, total, nil
 }
 
-func (s *ComponentService) GetComponentById(c *gin.Context) (*dtos.ComponentResponse, *common.Error) {
+func (s *ComponentService) GetComponentById(c *gin.Context) (*model.ComponentResponse, *common.Error) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -77,8 +76,8 @@ func (s *ComponentService) GetComponentById(c *gin.Context) (*dtos.ComponentResp
 	return &res, nil
 }
 
-func (s *ComponentService) CreateComponent(c *gin.Context) (*dtos.ComponentResponse, *common.Error) {
-	var req dtos.ComponentCreate
+func (s *ComponentService) CreateComponent(c *gin.Context) (*model.ComponentResponse, *common.Error) {
+	var req model.ComponentCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -114,7 +113,7 @@ func (s *ComponentService) CreateComponent(c *gin.Context) (*dtos.ComponentRespo
 }
 
 func (s *ComponentService) UpdateComponent(c *gin.Context) *common.Error {
-	var req dtos.ComponentUpdate
+	var req model.ComponentUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -173,8 +172,8 @@ func (s *ComponentService) DeleteComponent(c *gin.Context) *common.Error {
 	return nil
 }
 
-func (s *ComponentService) getComponentCategories(componentId int) []dtos.ComponentCategoryDTO {
-	var categories []dtos.ComponentCategoryDTO
+func (s *ComponentService) getComponentCategories(componentId int) []model.ComponentCategoryDTO {
+	var categories []model.ComponentCategoryDTO
 	s.db.Model(&model.ComponentCategory{}).
 		Select("component_category.category_id, component_category.category_name").
 		Joins("INNER JOIN component_category_map ON component_category.category_id = component_category_map.category_id").
@@ -183,8 +182,8 @@ func (s *ComponentService) getComponentCategories(componentId int) []dtos.Compon
 	return categories
 }
 
-func modelToComponentResponse(c *model.Component) dtos.ComponentResponse {
-	return dtos.ComponentResponse{
+func modelToComponentResponse(c *model.Component) model.ComponentResponse {
+	return model.ComponentResponse{
 		ComponentID:   int(c.ComponentID),
 		ComponentName: c.ComponentName,
 		Description:   c.Description,

@@ -9,7 +9,6 @@ import (
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
@@ -21,7 +20,7 @@ import (
 
 type IAuthService interface {
 	Authentication(c *gin.Context) (*model.TokenResponse, *common.Error)
-	Register(c *gin.Context) (*dtos.UserResponse, *common.Error)
+	Register(c *gin.Context) (*model.UserResponse, *common.Error)
 	Logout(c *gin.Context) *common.Error
 }
 
@@ -214,8 +213,8 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 	return claims, true
 }
 
-func (a AuthService) Register(c *gin.Context) (*dtos.UserResponse, *common.Error) {
-	var req dtos.RegisterRequest
+func (a AuthService) Register(c *gin.Context) (*model.UserResponse, *common.Error) {
+	var req model.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -276,7 +275,6 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 	if ttl <= 0 {
 		ttl = 1 * time.Second // Minimum TTL
 	}
-
 
 	// Add token to blacklist with TTL
 	err = redis.AddToBlacklist(token, ttl)

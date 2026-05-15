@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -11,7 +10,7 @@ type IInventoryAdjustment interface {
 	IBaseRepository[model.InventoryAdjustment, int]
 	GetByAuditId(auditId int) (*model.InventoryAdjustment, error)
 	GetByAdjustmentId(adjustmentId int) (*model.InventoryAdjustment, error)
-	GetAllByCondition(query dtos.InventoryAdjustmentFilter) ([]model.InventoryAdjustment, int, error)
+	GetAllByCondition(query model.InventoryAdjustmentFilter) ([]model.InventoryAdjustment, int, error)
 	Delete(ids []int) error
 	Save(request *model.InventoryAdjustment) error
 	Update(request *model.InventoryAdjustment) error
@@ -52,7 +51,7 @@ func (r *InventoryAdjustmentRepository) GetByAdjustmentId(adjustmentId int) (*mo
 	return inventoryAdjustment, err
 }
 
-func (r *InventoryAdjustmentRepository) GetAllByCondition(query dtos.InventoryAdjustmentFilter) ([]model.InventoryAdjustment, int, error) {
+func (r *InventoryAdjustmentRepository) GetAllByCondition(query model.InventoryAdjustmentFilter) ([]model.InventoryAdjustment, int, error) {
 	return r.GetPage("Select ia.* from inventory_adjustment as ia "+
 		" where (? is Null or ia.adjustment_id = ?)"+
 		" and (? is null or ia.created_at >= ?) "+

@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +15,7 @@ type IPositionController interface {
 }
 
 type PositionController struct {
-	BaseController[dtos.PositionResponse]
+	BaseController[model.PositionResponse]
 	positionService service.IPositionService
 }
 

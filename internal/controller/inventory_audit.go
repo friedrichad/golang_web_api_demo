@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +17,7 @@ type IInventoryAuditController interface {
 }
 
 type InventoryAuditController struct {
-	BaseController[dtos.InventoryAuditResponse]
+	BaseController[model.InventoryAuditResponse]
 	auditService service.IInventoryAuditService
 }
 

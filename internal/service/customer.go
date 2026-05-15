@@ -5,16 +5,15 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
 type ICustomerService interface {
-	GetAllCustomers(c *gin.Context) ([]dtos.CustomerResponse, int, *common.Error)
-	GetCustomerById(c *gin.Context) (*dtos.CustomerResponse, *common.Error)
-	CreateCustomer(c *gin.Context) (*dtos.CustomerResponse, *common.Error)
+	GetAllCustomers(c *gin.Context) ([]model.CustomerResponse, int, *common.Error)
+	GetCustomerById(c *gin.Context) (*model.CustomerResponse, *common.Error)
+	CreateCustomer(c *gin.Context) (*model.CustomerResponse, *common.Error)
 	UpdateCustomer(c *gin.Context) *common.Error
 	DeleteCustomer(c *gin.Context) *common.Error
 }
@@ -34,8 +33,8 @@ func NewCustomerService() ICustomerService {
 	return customerService
 }
 
-func (s *CustomerService) GetAllCustomers(c *gin.Context) ([]dtos.CustomerResponse, int, *common.Error) {
-	var query dtos.CustomerFilter
+func (s *CustomerService) GetAllCustomers(c *gin.Context) ([]model.CustomerResponse, int, *common.Error) {
+	var query model.CustomerFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -45,7 +44,7 @@ func (s *CustomerService) GetAllCustomers(c *gin.Context) ([]dtos.CustomerRespon
 		return nil, 0, common.SystemError
 	}
 
-	res := make([]dtos.CustomerResponse, len(customers))
+	res := make([]model.CustomerResponse, len(customers))
 	for i, cust := range customers {
 		res[i] = modelToCustomerResponse(&cust)
 	}
@@ -53,7 +52,7 @@ func (s *CustomerService) GetAllCustomers(c *gin.Context) ([]dtos.CustomerRespon
 	return res, total, nil
 }
 
-func (s *CustomerService) GetCustomerById(c *gin.Context) (*dtos.CustomerResponse, *common.Error) {
+func (s *CustomerService) GetCustomerById(c *gin.Context) (*model.CustomerResponse, *common.Error) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -69,8 +68,8 @@ func (s *CustomerService) GetCustomerById(c *gin.Context) (*dtos.CustomerRespons
 	return &res, nil
 }
 
-func (s *CustomerService) CreateCustomer(c *gin.Context) (*dtos.CustomerResponse, *common.Error) {
-	var req dtos.CustomerCreate
+func (s *CustomerService) CreateCustomer(c *gin.Context) (*model.CustomerResponse, *common.Error) {
+	var req model.CustomerCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -94,7 +93,7 @@ func (s *CustomerService) CreateCustomer(c *gin.Context) (*dtos.CustomerResponse
 }
 
 func (s *CustomerService) UpdateCustomer(c *gin.Context) *common.Error {
-	var req dtos.CustomerUpdate
+	var req model.CustomerUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -144,8 +143,8 @@ func (s *CustomerService) DeleteCustomer(c *gin.Context) *common.Error {
 	return nil
 }
 
-func modelToCustomerResponse(c *model.Customer) dtos.CustomerResponse {
-	return dtos.CustomerResponse{
+func modelToCustomerResponse(c *model.Customer) model.CustomerResponse {
+	return model.CustomerResponse{
 		CustomerID:   int(c.CustomerID),
 		CustomerName: c.CustomerName,
 		Phone:        c.Phone,

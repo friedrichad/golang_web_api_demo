@@ -2,14 +2,13 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
 
 type IComponentCategoryRepository interface {
 	IBaseRepository[model.ComponentCategory, int]
-	GetAllByCondition(query dtos.ComponentCategoryFilter) ([]model.ComponentCategory, int, error)
+	GetAllByCondition(query model.ComponentCategoryFilter) ([]model.ComponentCategory, int, error)
 	Delete(ids []int) error
 	GetById(id int) (*model.ComponentCategory, error)
 	Save(category *model.ComponentCategory) error
@@ -34,7 +33,7 @@ func NewComponentCategoryRepository() IComponentCategoryRepository {
 	return componentCategoryRepository
 }
 
-func (r *ComponentCategoryRepository) GetAllByCondition(query dtos.ComponentCategoryFilter) ([]model.ComponentCategory, int, error) {
+func (r *ComponentCategoryRepository) GetAllByCondition(query model.ComponentCategoryFilter) ([]model.ComponentCategory, int, error) {
 	return r.GetPage("select cc.* from ComponentCategory cc"+
 		" where (? is null or cc.category_name like ?)"+
 		" and (? is null or cc.created_at >= ?)"+

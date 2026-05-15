@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -11,7 +10,7 @@ type IRoleRepository interface {
 	IBaseRepository[model.Role, int]
 	GetByRolename(roleName string) (*model.Role, error)
 	GetAll() ([]model.Role, error)
-	GetAllByCondition(query dtos.RoleFilter) ([]model.Role, int, error)
+	GetAllByCondition(query model.RoleFilter) ([]model.Role, int, error)
 	Delete(ids []int) error
 	GetRoleById(roleId int) (*model.Role, error)
 	Save(role *model.Role) error
@@ -65,7 +64,7 @@ func (r *RoleRepository) GetAll() ([]model.Role, error) {
 	return roles, err
 }
 
-func (r *RoleRepository) GetAllByCondition(query dtos.RoleFilter) ([]model.Role, int, error) {
+func (r *RoleRepository) GetAllByCondition(query model.RoleFilter) ([]model.Role, int, error) {
 	return r.GetPage(
 		`select r.* 
 	 from role r 

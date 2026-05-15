@@ -25,3 +25,28 @@ type Department struct {
 func (*Department) TableName() string {
 	return TableNameDepartment
 }
+
+type DepartmentFilter struct {
+	DepartmentID   int    `json:"department_id"`
+	DepartmentName string `json:"department_name"`
+	Description    string `json:"description"`
+	PageSize
+	DateRequest
+}
+
+type DepartmentCreate struct {
+	DepartmentName string `json:"department_name" binding:"required"`
+	Description    string `json:"description"`
+}
+
+type DepartmentUpdate struct {
+	DepartmentID   int    `json:"department_id" binding:"required"`
+	DepartmentName string `json:"department_name"`
+	Description    string `json:"description"`
+}
+
+type DepartmentResponse struct {
+	DepartmentID   int    `json:"department_id"`
+	DepartmentName string `json:"department_name"`
+	Description    string `json:"description"`
+}

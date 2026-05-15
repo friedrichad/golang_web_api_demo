@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 	"time"
@@ -12,7 +11,7 @@ type IUserRepository interface {
 	IBaseRepository[model.User, int]
 	GetByUsername(username string) (*model.User, error)
 	GetAuthorities(userId int) ([]string, error)
-	GetAllByCondition(query dtos.UserFilter) ([]model.User, int, error)
+	GetAllByCondition(query model.UserFilter) ([]model.User, int, error)
 	Delete(ids []int) error
 	GetById(id int) (*model.User, error)
 	Save(user *model.User) error
@@ -44,7 +43,7 @@ func (u *UserRepository) GetByUsername(username string) (*model.User, error) {
 	return user, err
 }
 
-func (u *UserRepository) GetAllByCondition(query dtos.UserFilter) ([]model.User, int, error) {
+func (u *UserRepository) GetAllByCondition(query model.UserFilter) ([]model.User, int, error) {
 	return u.GetPage("SELECT * FROM user "+
 		"where (? is null OR username like ?) "+
 		" and (? is null OR display_name like ?) "+

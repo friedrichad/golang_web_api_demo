@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -10,7 +9,7 @@ import (
 type IInventoryAudit interface {
 	IBaseRepository[model.InventoryAudit, int]
 	GetByRequestId(auditId int) (*model.InventoryAudit, error)
-	GetAllByCondition(query dtos.InventoryAuditFilter) ([]model.InventoryAudit, int, error)
+	GetAllByCondition(query model.InventoryAuditFilter) ([]model.InventoryAudit, int, error)
 	Delete(ids []int) error
 	Save(request *model.InventoryAudit) error
 	Update(request *model.InventoryAudit) error
@@ -43,7 +42,7 @@ func (r *InventoryAuditRepository) GetByRequestId(auditId int) (*model.Inventory
 	}
 	return inventoryAudit, err
 }
-func (r *InventoryAuditRepository) GetAllByCondition(query dtos.InventoryAuditFilter) ([]model.InventoryAudit, int, error) {
+func (r *InventoryAuditRepository) GetAllByCondition(query model.InventoryAuditFilter) ([]model.InventoryAudit, int, error) {
 	return r.GetPage("Select ia.* from inventory_audit as ia "+
 		" where (? is Null or ia.audit_id = ?)"+
 		" and (? is null or ia.warehouse_id = ?) "+

@@ -5,16 +5,15 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
 type IComponentCategoryService interface {
-	GetAllComponentCategories(c *gin.Context) ([]dtos.ComponentCategoryResponse, int, *common.Error)
-	GetComponentCategoryById(c *gin.Context) (*dtos.ComponentCategoryResponse, *common.Error)
-	CreateComponentCategory(c *gin.Context) (*dtos.ComponentCategoryResponse, *common.Error)
+	GetAllComponentCategories(c *gin.Context) ([]model.ComponentCategoryResponse, int, *common.Error)
+	GetComponentCategoryById(c *gin.Context) (*model.ComponentCategoryResponse, *common.Error)
+	CreateComponentCategory(c *gin.Context) (*model.ComponentCategoryResponse, *common.Error)
 	UpdateComponentCategory(c *gin.Context) *common.Error
 	DeleteComponentCategory(c *gin.Context) *common.Error
 }
@@ -34,8 +33,8 @@ func NewComponentCategoryService() IComponentCategoryService {
 	return componentCategoryService
 }
 
-func (s *ComponentCategoryService) GetAllComponentCategories(c *gin.Context) ([]dtos.ComponentCategoryResponse, int, *common.Error) {
-	var query dtos.ComponentCategoryFilter
+func (s *ComponentCategoryService) GetAllComponentCategories(c *gin.Context) ([]model.ComponentCategoryResponse, int, *common.Error) {
+	var query model.ComponentCategoryFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -48,7 +47,7 @@ func (s *ComponentCategoryService) GetAllComponentCategories(c *gin.Context) ([]
 		return nil, 0, common.NotFound
 	}
 
-	categoryResponses := make([]dtos.ComponentCategoryResponse, len(categories))
+	categoryResponses := make([]model.ComponentCategoryResponse, len(categories))
 	for i, category := range categories {
 		categoryResponses[i] = modelToComponentCategoryResponse(&category)
 	}
@@ -56,7 +55,7 @@ func (s *ComponentCategoryService) GetAllComponentCategories(c *gin.Context) ([]
 	return categoryResponses, total, nil
 }
 
-func (s *ComponentCategoryService) GetComponentCategoryById(c *gin.Context) (*dtos.ComponentCategoryResponse, *common.Error) {
+func (s *ComponentCategoryService) GetComponentCategoryById(c *gin.Context) (*model.ComponentCategoryResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -80,8 +79,8 @@ func (s *ComponentCategoryService) GetComponentCategoryById(c *gin.Context) (*dt
 	return &categoryResponse, nil
 }
 
-func (s *ComponentCategoryService) CreateComponentCategory(c *gin.Context) (*dtos.ComponentCategoryResponse, *common.Error) {
-	var req dtos.ComponentCategoryCreate
+func (s *ComponentCategoryService) CreateComponentCategory(c *gin.Context) (*model.ComponentCategoryResponse, *common.Error) {
+	var req model.ComponentCategoryCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -101,7 +100,7 @@ func (s *ComponentCategoryService) CreateComponentCategory(c *gin.Context) (*dto
 }
 
 func (s *ComponentCategoryService) UpdateComponentCategory(c *gin.Context) *common.Error {
-	var req dtos.ComponentCategoryUpdate
+	var req model.ComponentCategoryUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -150,8 +149,8 @@ func (s *ComponentCategoryService) DeleteComponentCategory(c *gin.Context) *comm
 	return nil
 }
 
-func modelToComponentCategoryResponse(category *model.ComponentCategory) dtos.ComponentCategoryResponse {
-	return dtos.ComponentCategoryResponse{
+func modelToComponentCategoryResponse(category *model.ComponentCategory) model.ComponentCategoryResponse {
+	return model.ComponentCategoryResponse{
 		CategoryID:   int(category.CategoryID),
 		CategoryName: category.CategoryName,
 		CreatedBy:    int(category.CreatedBy),

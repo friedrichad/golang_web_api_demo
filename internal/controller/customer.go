@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +15,7 @@ type ICustomerController interface {
 }
 
 type CustomerController struct {
-	BaseController[dtos.CustomerResponse]
+	BaseController[model.CustomerResponse]
 	customerService service.ICustomerService
 }
 

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
@@ -15,15 +14,15 @@ import (
 )
 
 type IInventoryAdjustmentService interface {
-	GetAllInventoryAdjustments(c *gin.Context) ([]dtos.InventoryAdjustmentResponse, int, *common.Error)
-	GetInventoryAdjustmentById(c *gin.Context) (*dtos.InventoryAdjustmentResponse, *common.Error)
-	CreateInventoryAdjustment(c *gin.Context) (*dtos.InventoryAdjustmentResponse, *common.Error)
+	GetAllInventoryAdjustments(c *gin.Context) ([]model.InventoryAdjustmentResponse, int, *common.Error)
+	GetInventoryAdjustmentById(c *gin.Context) (*model.InventoryAdjustmentResponse, *common.Error)
+	CreateInventoryAdjustment(c *gin.Context) (*model.InventoryAdjustmentResponse, *common.Error)
 	UpdateInventoryAdjustment(c *gin.Context) *common.Error
 	DeleteInventoryAdjustment(c *gin.Context) *common.Error
 	ApproveInventoryAdjustment(c *gin.Context) *common.Error
-	GetAllInventoryAdjustmentDetails(c *gin.Context) ([]dtos.InventoryAdjustmentDetailResponse, int, *common.Error)
-	GetInventoryAdjustmentDetailById(c *gin.Context) (*dtos.InventoryAdjustmentDetailResponse, *common.Error)
-	CreateInventoryAdjustmentDetail(c *gin.Context) (*dtos.InventoryAdjustmentDetailResponse, *common.Error)
+	GetAllInventoryAdjustmentDetails(c *gin.Context) ([]model.InventoryAdjustmentDetailResponse, int, *common.Error)
+	GetInventoryAdjustmentDetailById(c *gin.Context) (*model.InventoryAdjustmentDetailResponse, *common.Error)
+	CreateInventoryAdjustmentDetail(c *gin.Context) (*model.InventoryAdjustmentDetailResponse, *common.Error)
 	UpdateInventoryAdjustmentDetail(c *gin.Context) *common.Error
 	DeleteInventoryAdjustmentDetail(c *gin.Context) *common.Error
 }
@@ -49,8 +48,8 @@ func NewInventoryAdjustmentService() IInventoryAdjustmentService {
 	return inventoryAdjustmentService
 }
 
-func (s *InventoryAdjustmentService) GetAllInventoryAdjustments(c *gin.Context) ([]dtos.InventoryAdjustmentResponse, int, *common.Error) {
-	var query dtos.InventoryAdjustmentFilter
+func (s *InventoryAdjustmentService) GetAllInventoryAdjustments(c *gin.Context) ([]model.InventoryAdjustmentResponse, int, *common.Error) {
+	var query model.InventoryAdjustmentFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -63,7 +62,7 @@ func (s *InventoryAdjustmentService) GetAllInventoryAdjustments(c *gin.Context) 
 		return nil, 0, common.NotFound
 	}
 
-	adjustmentResponses := make([]dtos.InventoryAdjustmentResponse, len(adjustments))
+	adjustmentResponses := make([]model.InventoryAdjustmentResponse, len(adjustments))
 	for i, adjustment := range adjustments {
 		adjustmentResponses[i] = modelToInventoryAdjustmentResponse(&adjustment)
 	}
@@ -71,7 +70,7 @@ func (s *InventoryAdjustmentService) GetAllInventoryAdjustments(c *gin.Context) 
 	return adjustmentResponses, total, nil
 }
 
-func (s *InventoryAdjustmentService) GetInventoryAdjustmentById(c *gin.Context) (*dtos.InventoryAdjustmentResponse, *common.Error) {
+func (s *InventoryAdjustmentService) GetInventoryAdjustmentById(c *gin.Context) (*model.InventoryAdjustmentResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -95,7 +94,7 @@ func (s *InventoryAdjustmentService) GetInventoryAdjustmentById(c *gin.Context) 
 
 	details, err := s.detailRepo.GetByAdjustmentId(adjustment.AdjustmentID)
 	if err == nil && len(details) > 0 {
-		adjustmentResponse.Details = make([]dtos.InventoryAdjustmentDetailResponse, len(details))
+		adjustmentResponse.Details = make([]model.InventoryAdjustmentDetailResponse, len(details))
 		for i, detail := range details {
 			adjustmentResponse.Details[i] = modelToInventoryAdjustmentDetailResponse(&detail)
 		}
@@ -104,8 +103,8 @@ func (s *InventoryAdjustmentService) GetInventoryAdjustmentById(c *gin.Context) 
 	return &adjustmentResponse, nil
 }
 
-func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (*dtos.InventoryAdjustmentResponse, *common.Error) {
-	var req dtos.InventoryAdjustmentCreate
+func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (*model.InventoryAdjustmentResponse, *common.Error) {
+	var req model.InventoryAdjustmentCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -145,7 +144,7 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustment(c *gin.Context) (
 }
 
 func (s *InventoryAdjustmentService) UpdateInventoryAdjustment(c *gin.Context) *common.Error {
-	var req dtos.InventoryAdjustmentUpdate
+	var req model.InventoryAdjustmentUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -276,7 +275,7 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 		}
 
 		quantityChange := detail.QuantityAfter - detail.QuantityBefore
-		ledgerReq := &dtos.InventoryLedgerCreate{
+		ledgerReq := &model.InventoryLedgerCreate{
 			ComponentID:     detail.ComponentID,
 			WarehouseID:     warehouseID,
 			BinID:           detail.BinID,
@@ -301,8 +300,8 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 	return nil
 }
 
-func modelToInventoryAdjustmentResponse(adjustment *model.InventoryAdjustment) dtos.InventoryAdjustmentResponse {
-	return dtos.InventoryAdjustmentResponse{
+func modelToInventoryAdjustmentResponse(adjustment *model.InventoryAdjustment) model.InventoryAdjustmentResponse {
+	return model.InventoryAdjustmentResponse{
 		AdjustmentID: int(adjustment.AdjustmentID),
 		AuditID:      int(adjustment.AuditID),
 		ApprovedID:   int(adjustment.ApprovedID),
@@ -316,8 +315,8 @@ func modelToInventoryAdjustmentResponse(adjustment *model.InventoryAdjustment) d
 	}
 }
 
-func modelToInventoryAdjustmentDetailResponse(detail *model.InventoryAdjustmentDetail) dtos.InventoryAdjustmentDetailResponse {
-	return dtos.InventoryAdjustmentDetailResponse{
+func modelToInventoryAdjustmentDetailResponse(detail *model.InventoryAdjustmentDetail) model.InventoryAdjustmentDetailResponse {
+	return model.InventoryAdjustmentDetailResponse{
 		AdjustmentDetailID: int(detail.AdjustmentDetailID),
 		AdjustmentID:       int(detail.AdjustmentID),
 		ComponentID:        int(detail.ComponentID),
@@ -335,8 +334,8 @@ func modelToInventoryAdjustmentDetailResponse(detail *model.InventoryAdjustmentD
 
 // InventoryAdjustmentDetail CRUD operations
 
-func (s *InventoryAdjustmentService) GetAllInventoryAdjustmentDetails(c *gin.Context) ([]dtos.InventoryAdjustmentDetailResponse, int, *common.Error) {
-	var query dtos.InventoryAdjustmentDetailFilter
+func (s *InventoryAdjustmentService) GetAllInventoryAdjustmentDetails(c *gin.Context) ([]model.InventoryAdjustmentDetailResponse, int, *common.Error) {
+	var query model.InventoryAdjustmentDetailFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -349,7 +348,7 @@ func (s *InventoryAdjustmentService) GetAllInventoryAdjustmentDetails(c *gin.Con
 		return nil, 0, common.NotFound
 	}
 
-	detailResponses := make([]dtos.InventoryAdjustmentDetailResponse, len(details))
+	detailResponses := make([]model.InventoryAdjustmentDetailResponse, len(details))
 	for i, detail := range details {
 		detailResponses[i] = modelToInventoryAdjustmentDetailResponse(&detail)
 	}
@@ -357,7 +356,7 @@ func (s *InventoryAdjustmentService) GetAllInventoryAdjustmentDetails(c *gin.Con
 	return detailResponses, total, nil
 }
 
-func (s *InventoryAdjustmentService) GetInventoryAdjustmentDetailById(c *gin.Context) (*dtos.InventoryAdjustmentDetailResponse, *common.Error) {
+func (s *InventoryAdjustmentService) GetInventoryAdjustmentDetailById(c *gin.Context) (*model.InventoryAdjustmentDetailResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -381,8 +380,8 @@ func (s *InventoryAdjustmentService) GetInventoryAdjustmentDetailById(c *gin.Con
 	return &detailResponse, nil
 }
 
-func (s *InventoryAdjustmentService) CreateInventoryAdjustmentDetail(c *gin.Context) (*dtos.InventoryAdjustmentDetailResponse, *common.Error) {
-	var req dtos.InventoryAdjustmentDetailCreate
+func (s *InventoryAdjustmentService) CreateInventoryAdjustmentDetail(c *gin.Context) (*model.InventoryAdjustmentDetailResponse, *common.Error) {
+	var req model.InventoryAdjustmentDetailCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -420,7 +419,7 @@ func (s *InventoryAdjustmentService) CreateInventoryAdjustmentDetail(c *gin.Cont
 }
 
 func (s *InventoryAdjustmentService) UpdateInventoryAdjustmentDetail(c *gin.Context) *common.Error {
-	var req dtos.InventoryAdjustmentDetailUpdate
+	var req model.InventoryAdjustmentDetailUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}

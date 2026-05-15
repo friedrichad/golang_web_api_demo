@@ -9,7 +9,6 @@ import (
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
@@ -18,16 +17,16 @@ import (
 )
 
 type IInventoryAuditService interface {
-	GetAllInventoryAudits(c *gin.Context) ([]dtos.InventoryAuditResponse, int, *common.Error)
-	GetInventoryAuditById(c *gin.Context) (*dtos.InventoryAuditResponse, *common.Error)
-	CreateInventoryAudit(c *gin.Context) (*dtos.InventoryAuditResponse, *common.Error)
+	GetAllInventoryAudits(c *gin.Context) ([]model.InventoryAuditResponse, int, *common.Error)
+	GetInventoryAuditById(c *gin.Context) (*model.InventoryAuditResponse, *common.Error)
+	CreateInventoryAudit(c *gin.Context) (*model.InventoryAuditResponse, *common.Error)
 	UpdateInventoryAudit(c *gin.Context) *common.Error
 	DeleteInventoryAudit(c *gin.Context) *common.Error
 	ApprovalAudit(c *gin.Context) *common.Error
 	ConfirmAudit(c *gin.Context) *common.Error
 
 	CreateInventoryAuditDetail(c *gin.Context) *common.Error
-	GetAllInventoryAuditDetails(c *gin.Context) ([]dtos.InventoryAuditDetailResponse, int, *common.Error)
+	GetAllInventoryAuditDetails(c *gin.Context) ([]model.InventoryAuditDetailResponse, int, *common.Error)
 	UpdateInventoryAuditDetail(c *gin.Context) *common.Error
 	DeleteInventoryAuditDetail(c *gin.Context) *common.Error
 }
@@ -51,8 +50,8 @@ func NewInventoryAuditService() IInventoryAuditService {
 	return inventoryAuditService
 }
 
-func (s *InventoryAuditService) GetAllInventoryAudits(c *gin.Context) ([]dtos.InventoryAuditResponse, int, *common.Error) {
-	var query dtos.InventoryAuditFilter
+func (s *InventoryAuditService) GetAllInventoryAudits(c *gin.Context) ([]model.InventoryAuditResponse, int, *common.Error) {
+	var query model.InventoryAuditFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -65,7 +64,7 @@ func (s *InventoryAuditService) GetAllInventoryAudits(c *gin.Context) ([]dtos.In
 		return nil, 0, common.NotFound
 	}
 
-	auditResponses := make([]dtos.InventoryAuditResponse, len(audits))
+	auditResponses := make([]model.InventoryAuditResponse, len(audits))
 	for i, audit := range audits {
 		auditResponses[i] = modelToInventoryAuditResponse(&audit)
 	}
@@ -73,7 +72,7 @@ func (s *InventoryAuditService) GetAllInventoryAudits(c *gin.Context) ([]dtos.In
 	return auditResponses, total, nil
 }
 
-func (s *InventoryAuditService) GetInventoryAuditById(c *gin.Context) (*dtos.InventoryAuditResponse, *common.Error) {
+func (s *InventoryAuditService) GetInventoryAuditById(c *gin.Context) (*model.InventoryAuditResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -97,8 +96,8 @@ func (s *InventoryAuditService) GetInventoryAuditById(c *gin.Context) (*dtos.Inv
 	return &auditResponse, nil
 }
 
-func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*dtos.InventoryAuditResponse, *common.Error) {
-	var req dtos.InventoryAuditCreate
+func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*model.InventoryAuditResponse, *common.Error) {
+	var req model.InventoryAuditCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -139,7 +138,7 @@ func (s *InventoryAuditService) CreateInventoryAudit(c *gin.Context) (*dtos.Inve
 }
 
 func (s *InventoryAuditService) UpdateInventoryAudit(c *gin.Context) *common.Error {
-	var req dtos.InventoryAuditUpdate
+	var req model.InventoryAuditUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -198,8 +197,8 @@ func (s *InventoryAuditService) DeleteInventoryAudit(c *gin.Context) *common.Err
 	return nil
 }
 
-func modelToInventoryAuditResponse(audit *model.InventoryAudit) dtos.InventoryAuditResponse {
-	return dtos.InventoryAuditResponse{
+func modelToInventoryAuditResponse(audit *model.InventoryAudit) model.InventoryAuditResponse {
+	return model.InventoryAuditResponse{
 		AuditID:     int(audit.AuditID),
 		WarehouseID: int(audit.WarehouseID),
 		StatusInt:   int(audit.StatusInt),
@@ -212,7 +211,7 @@ func modelToInventoryAuditResponse(audit *model.InventoryAudit) dtos.InventoryAu
 }
 
 func (s *InventoryAuditService) ApprovalAudit(c *gin.Context) *common.Error {
-	var req dtos.ApprovalAudit
+	var req model.ApprovalAudit
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -253,7 +252,7 @@ func (s *InventoryAuditService) ApprovalAudit(c *gin.Context) *common.Error {
 }
 
 func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
-	var req dtos.ConfirmAudit
+	var req model.ConfirmAudit
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -343,7 +342,7 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 					warehouseID = binInfo.WarehouseID
 				}
 
-				ledgerReq := &dtos.InventoryLedgerCreate{
+				ledgerReq := &model.InventoryLedgerCreate{
 					ComponentID:     detail.ComponentID,
 					WarehouseID:     warehouseID,
 					BinID:           detail.BinID,
@@ -392,7 +391,7 @@ func (s *InventoryAuditService) ConfirmAudit(c *gin.Context) *common.Error {
 }
 
 func (s *InventoryAuditService) CreateInventoryAuditDetail(c *gin.Context) *common.Error {
-	var req []dtos.InventoryAuditDetailCreate
+	var req []model.InventoryAuditDetailCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -428,8 +427,8 @@ func (s *InventoryAuditService) CreateInventoryAuditDetail(c *gin.Context) *comm
 
 	return nil
 }
-func (s *InventoryAuditService) GetAllInventoryAuditDetails(c *gin.Context) ([]dtos.InventoryAuditDetailResponse, int, *common.Error) {
-	var query dtos.InventoryAuditDetailFilter
+func (s *InventoryAuditService) GetAllInventoryAuditDetails(c *gin.Context) ([]model.InventoryAuditDetailResponse, int, *common.Error) {
+	var query model.InventoryAuditDetailFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -442,7 +441,7 @@ func (s *InventoryAuditService) GetAllInventoryAuditDetails(c *gin.Context) ([]d
 		return nil, 0, common.NotFound
 	}
 
-	var responses []dtos.InventoryAuditDetailResponse
+	var responses []model.InventoryAuditDetailResponse
 	for _, auditDetail := range auditDetails {
 		responses = append(responses, modelToInventoryAuditDetailResponse(&auditDetail))
 	}
@@ -450,7 +449,7 @@ func (s *InventoryAuditService) GetAllInventoryAuditDetails(c *gin.Context) ([]d
 }
 
 func (s *InventoryAuditService) UpdateInventoryAuditDetail(c *gin.Context) *common.Error {
-	var req []dtos.InventoryAuditDetailUpdate
+	var req []model.InventoryAuditDetailUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -547,8 +546,8 @@ func (s *InventoryAuditService) DeleteInventoryAuditDetail(c *gin.Context) *comm
 
 	return nil
 }
-func modelToInventoryAuditDetailResponse(auditDetail *model.InventoryAuditDetail) dtos.InventoryAuditDetailResponse {
-	return dtos.InventoryAuditDetailResponse{
+func modelToInventoryAuditDetailResponse(auditDetail *model.InventoryAuditDetail) model.InventoryAuditDetailResponse {
+	return model.InventoryAuditDetailResponse{
 		AuditDetailID:      auditDetail.AuditDetailID,
 		AuditID:            auditDetail.AuditID,
 		ComponentID:        auditDetail.ComponentID,

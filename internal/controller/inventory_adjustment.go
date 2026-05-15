@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +16,7 @@ type IInventoryAdjustmentController interface {
 }
 
 type InventoryAdjustmentController struct {
-	BaseController[dtos.InventoryAdjustmentResponse]
+	BaseController[model.InventoryAdjustmentResponse]
 	adjustmentService service.IInventoryAdjustmentService
 }
 

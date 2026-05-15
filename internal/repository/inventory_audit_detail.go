@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -11,7 +10,7 @@ type IInventoryAuditDetail interface {
 	IBaseRepository[model.InventoryAuditDetail, int]
 	GetByInventoryAuditDetailId(auditDetailId int) (*model.InventoryAuditDetail, error)
 	GetByAuditId(auditId int) ([]model.InventoryAuditDetail, error)
-	GetAllByCondition(query dtos.InventoryAuditDetailFilter) ([]model.InventoryAuditDetail, int, error)
+	GetAllByCondition(query model.InventoryAuditDetailFilter) ([]model.InventoryAuditDetail, int, error)
 	Delete(ids []int) error
 	Save(request *model.InventoryAuditDetail) error
 	Update(request *model.InventoryAuditDetail) error
@@ -45,7 +44,7 @@ func (r *InventoryAuditDetailRepository) GetByAuditId(auditId int) ([]model.Inve
 	err := r.DB.Where("audit_id = ?", auditId).Find(&details).Error
 	return details, err
 }
-func (r *InventoryAuditDetailRepository) GetAllByCondition(query dtos.InventoryAuditDetailFilter) ([]model.InventoryAuditDetail, int, error) {
+func (r *InventoryAuditDetailRepository) GetAllByCondition(query model.InventoryAuditDetailFilter) ([]model.InventoryAuditDetail, int, error) {
 	return r.GetPage("Select iad.* from inventory_audit_detail as iad "+
 		"where (? is Null or iad.audit_detail_id = ?)"+
 		"and (? is Null or iad.audit_id = ?) "+

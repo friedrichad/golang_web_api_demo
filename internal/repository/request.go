@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"gorm.io/gorm"
@@ -13,7 +12,7 @@ import (
 type IRequestRepository interface {
 	IBaseRepository[model.Request, int]
 	GetByRequestId(requestId int) (*model.Request, error)
-	GetAllByCondition(query dtos.RequestFilter) ([]model.Request, int, error)
+	GetAllByCondition(query model.RequestFilter) ([]model.Request, int, error)
 	Delete(ids []int) error
 	Save(request *model.Request) error
 	Update(request *model.Request) error
@@ -44,7 +43,7 @@ func (r *RequestRepository) GetByRequestId(requestId int) (*model.Request, error
 	}
 	return request, err
 }
-func (r *RequestRepository) GetAllByCondition(query dtos.RequestFilter) ([]model.Request, int, error) {
+func (r *RequestRepository) GetAllByCondition(query model.RequestFilter) ([]model.Request, int, error) {
 	return r.GetPage("Select r.* from request as r "+
 		" where (? is Null or r.request_id = ?)"+
 		" and (? is Null or r.request_type = ?) "+

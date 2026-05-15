@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
 	"github.com/gin-gonic/gin"
@@ -28,7 +27,7 @@ func (a AuthController) GetToken() gin.HandlerFunc {
 }
 
 func (a AuthController) Register() gin.HandlerFunc {
-	base := BaseController[dtos.UserResponse]{}
+	base := BaseController[model.UserResponse]{}
 	return base.ResponsePointer(a.AuthService.Register)
 }
 

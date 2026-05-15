@@ -11,16 +11,16 @@ import (
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/upload"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type IUploadService interface {
-	UploadBase64(c *gin.Context) (*dtos.UploadResponse, *common.Error)
-	UploadMultipart(c *gin.Context) (*dtos.UploadResponse, *common.Error)
-	UploadMultiple(c *gin.Context) ([]dtos.UploadResponse, int, *common.Error)
+	UploadBase64(c *gin.Context) (*model.UploadResponse, *common.Error)
+	UploadMultipart(c *gin.Context) (*model.UploadResponse, *common.Error)
+	UploadMultiple(c *gin.Context) ([]model.UploadResponse, int, *common.Error)
 }
 
 type UploadService struct {
@@ -36,7 +36,7 @@ func NewUploadService() IUploadService {
 	}
 }
 
-func (s *UploadService) UploadMultipart(c *gin.Context) (*dtos.UploadResponse, *common.Error) {
+func (s *UploadService) UploadMultipart(c *gin.Context) (*model.UploadResponse, *common.Error) {
 
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
@@ -80,14 +80,14 @@ func (s *UploadService) UploadMultipart(c *gin.Context) (*dtos.UploadResponse, *
 
 	url := s.ReturnUrl + "/" + fileName
 
-	return &dtos.UploadResponse{
+	return &model.UploadResponse{
 		FileName: fileName,
 		FileUrl:  url,
 		Size:     fileHeader.Size,
 	}, nil
 }
 
-func (s *UploadService) UploadMultiple(c *gin.Context) ([]dtos.UploadResponse, int, *common.Error) {
+func (s *UploadService) UploadMultiple(c *gin.Context) ([]model.UploadResponse, int, *common.Error) {
 	form, err := c.MultipartForm()
 	count := 0
 	if err != nil {
@@ -100,7 +100,7 @@ func (s *UploadService) UploadMultiple(c *gin.Context) ([]dtos.UploadResponse, i
 		return nil, 0, common.FileEmpty
 	}
 
-	var responses []dtos.UploadResponse
+	var responses []model.UploadResponse
 
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
@@ -131,7 +131,7 @@ func (s *UploadService) UploadMultiple(c *gin.Context) ([]dtos.UploadResponse, i
 
 		url := s.ReturnUrl + "/" + fileName
 
-		responses = append(responses, dtos.UploadResponse{
+		responses = append(responses, model.UploadResponse{
 			FileName: fileName,
 			FileUrl:  url,
 			Size:     fileHeader.Size,
@@ -142,9 +142,9 @@ func (s *UploadService) UploadMultiple(c *gin.Context) ([]dtos.UploadResponse, i
 	return responses, count, nil
 }
 
-func (s *UploadService) UploadBase64(c *gin.Context) (*dtos.UploadResponse, *common.Error) {
+func (s *UploadService) UploadBase64(c *gin.Context) (*model.UploadResponse, *common.Error) {
 
-	var req dtos.UploadBase64Request
+	var req model.UploadBase64Request
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Println(err)
@@ -183,7 +183,7 @@ func (s *UploadService) UploadBase64(c *gin.Context) (*dtos.UploadResponse, *com
 
 	url := s.ReturnUrl + "/" + fileName
 
-	return &dtos.UploadResponse{
+	return &model.UploadResponse{
 		FileName: fileName,
 		FileUrl:  url,
 		Size:     int64(len(decoded)),

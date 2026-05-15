@@ -5,23 +5,22 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
 type IRoleService interface {
-	GetAllRoles(c *gin.Context) ([]dtos.RoleResponse, int, *common.Error)
-	GetRoleById(c *gin.Context) (*dtos.RoleResponse, *common.Error)
-	CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Error)
+	GetAllRoles(c *gin.Context) ([]model.RoleResponse, int, *common.Error)
+	GetRoleById(c *gin.Context) (*model.RoleResponse, *common.Error)
+	CreateRole(c *gin.Context) (*model.RoleResponse, *common.Error)
 	UpdateRole(c *gin.Context) *common.Error
 	DeleteRole(c *gin.Context) *common.Error
 	AssignRoleMenus(c *gin.Context) *common.Error
 	GetRoleMenus(c *gin.Context) ([]int, *common.Error)
-	GetAllPermissions(c *gin.Context) ([]dtos.PermissionDTO, *common.Error)
-	GetPermissionById(c *gin.Context) (*dtos.PermissionDTO, *common.Error)
-	CreatePermission(c *gin.Context) (*dtos.PermissionDTO, *common.Error)
+	GetAllPermissions(c *gin.Context) ([]model.PermissionDTO, *common.Error)
+	GetPermissionById(c *gin.Context) (*model.PermissionDTO, *common.Error)
+	CreatePermission(c *gin.Context) (*model.PermissionDTO, *common.Error)
 	UpdatePermission(c *gin.Context) *common.Error
 	DeletePermissions(c *gin.Context) *common.Error
 }
@@ -41,8 +40,8 @@ func NewRoleService() IRoleService {
 	return roleService
 }
 
-func (s *RoleService) GetAllRoles(c *gin.Context) ([]dtos.RoleResponse, int, *common.Error) {
-	var query dtos.RoleFilter
+func (s *RoleService) GetAllRoles(c *gin.Context) ([]model.RoleResponse, int, *common.Error) {
+	var query model.RoleFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -55,7 +54,7 @@ func (s *RoleService) GetAllRoles(c *gin.Context) ([]dtos.RoleResponse, int, *co
 		return nil, 0, common.NotFound
 	}
 
-	roleResponses := make([]dtos.RoleResponse, len(roles))
+	roleResponses := make([]model.RoleResponse, len(roles))
 	for i, role := range roles {
 		roleResponses[i] = modelToRoleResponse(&role)
 	}
@@ -63,7 +62,7 @@ func (s *RoleService) GetAllRoles(c *gin.Context) ([]dtos.RoleResponse, int, *co
 	return roleResponses, total, nil
 }
 
-func (s *RoleService) GetRoleById(c *gin.Context) (*dtos.RoleResponse, *common.Error) {
+func (s *RoleService) GetRoleById(c *gin.Context) (*model.RoleResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -87,8 +86,8 @@ func (s *RoleService) GetRoleById(c *gin.Context) (*dtos.RoleResponse, *common.E
 	return &roleResponse, nil
 }
 
-func (s *RoleService) CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Error) {
-	var req dtos.RoleCreate
+func (s *RoleService) CreateRole(c *gin.Context) (*model.RoleResponse, *common.Error) {
+	var req model.RoleCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -113,7 +112,7 @@ func (s *RoleService) CreateRole(c *gin.Context) (*dtos.RoleResponse, *common.Er
 }
 
 func (s *RoleService) UpdateRole(c *gin.Context) *common.Error {
-	var req dtos.RoleUpdate
+	var req model.RoleUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -168,8 +167,8 @@ func (s *RoleService) DeleteRole(c *gin.Context) *common.Error {
 	return nil
 }
 
-func modelToRoleResponse(role *model.Role) dtos.RoleResponse {
-	return dtos.RoleResponse{
+func modelToRoleResponse(role *model.Role) model.RoleResponse {
+	return model.RoleResponse{
 		RoleID:      int(role.RoleID),
 		RoleName:    role.RoleName,
 		Description: role.Description,
@@ -182,7 +181,7 @@ func modelToRoleResponse(role *model.Role) dtos.RoleResponse {
 
 // role_menu
 func (s *RoleService) AssignRoleMenus(c *gin.Context) *common.Error {
-	var req dtos.RoleMenuAssign
+	var req model.RoleMenuAssign
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -226,15 +225,15 @@ func (s *RoleService) GetRoleMenus(c *gin.Context) ([]int, *common.Error) {
 }
 
 // permission
-func (s *RoleService) GetAllPermissions(c *gin.Context) ([]dtos.PermissionDTO, *common.Error) {
+func (s *RoleService) GetAllPermissions(c *gin.Context) ([]model.PermissionDTO, *common.Error) {
 	permissions, err := s.roleRepo.GetAllPermissions()
 	if err != nil {
 		return nil, common.SystemError
 	}
 
-	permissionDTOs := make([]dtos.PermissionDTO, len(permissions))
+	permissionDTOs := make([]model.PermissionDTO, len(permissions))
 	for i, p := range permissions {
-		permissionDTOs[i] = dtos.PermissionDTO{
+		permissionDTOs[i] = model.PermissionDTO{
 			PermissionID:   p.PermissionID,
 			PermissionName: p.PermissionName,
 		}
@@ -242,7 +241,7 @@ func (s *RoleService) GetAllPermissions(c *gin.Context) ([]dtos.PermissionDTO, *
 	return permissionDTOs, nil
 }
 
-func (s *RoleService) GetPermissionById(c *gin.Context) (*dtos.PermissionDTO, *common.Error) {
+func (s *RoleService) GetPermissionById(c *gin.Context) (*model.PermissionDTO, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -258,14 +257,14 @@ func (s *RoleService) GetPermissionById(c *gin.Context) (*dtos.PermissionDTO, *c
 		return nil, common.NotFound
 	}
 
-	return &dtos.PermissionDTO{
+	return &model.PermissionDTO{
 		PermissionID:   permission.PermissionID,
 		PermissionName: permission.PermissionName,
 	}, nil
 }
 
-func (s *RoleService) CreatePermission(c *gin.Context) (*dtos.PermissionDTO, *common.Error) {
-	var req dtos.PermissionCreate
+func (s *RoleService) CreatePermission(c *gin.Context) (*model.PermissionDTO, *common.Error) {
+	var req model.PermissionCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -278,14 +277,14 @@ func (s *RoleService) CreatePermission(c *gin.Context) (*dtos.PermissionDTO, *co
 		return nil, common.SystemError
 	}
 
-	return &dtos.PermissionDTO{
+	return &model.PermissionDTO{
 		PermissionID:   permission.PermissionID,
 		PermissionName: permission.PermissionName,
 	}, nil
 }
 
 func (s *RoleService) UpdatePermission(c *gin.Context) *common.Error {
-	var req dtos.PermissionUpdate
+	var req model.PermissionUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
@@ -16,11 +15,11 @@ import (
 )
 
 type IInventoryLedgerService interface {
-	GetAllInventoryLedgers(c *gin.Context) ([]dtos.InventoryLedgerResponse, int, *common.Error)
-	GetInventoryLedgerById(c *gin.Context) (*dtos.InventoryLedgerResponse, *common.Error)
+	GetAllInventoryLedgers(c *gin.Context) ([]model.InventoryLedgerResponse, int, *common.Error)
+	GetInventoryLedgerById(c *gin.Context) (*model.InventoryLedgerResponse, *common.Error)
 	ExportInventoryLedgersToExcel(c *gin.Context) ([]byte, *common.Error)
 	// Internal method for creating ledger entries from other services
-	CreateInventoryLedgerEntry(req *dtos.InventoryLedgerCreate) error
+	CreateInventoryLedgerEntry(req *model.InventoryLedgerCreate) error
 }
 
 type InventoryLedgerService struct {
@@ -38,8 +37,8 @@ func NewInventoryLedgerService() IInventoryLedgerService {
 	return inventoryLedgerService
 }
 
-func (s *InventoryLedgerService) GetAllInventoryLedgers(c *gin.Context) ([]dtos.InventoryLedgerResponse, int, *common.Error) {
-	var query dtos.InventoryLedgerFilter
+func (s *InventoryLedgerService) GetAllInventoryLedgers(c *gin.Context) ([]model.InventoryLedgerResponse, int, *common.Error) {
+	var query model.InventoryLedgerFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -52,7 +51,7 @@ func (s *InventoryLedgerService) GetAllInventoryLedgers(c *gin.Context) ([]dtos.
 		return nil, 0, common.NotFound
 	}
 
-	ledgerResponses := make([]dtos.InventoryLedgerResponse, len(ledgers))
+	ledgerResponses := make([]model.InventoryLedgerResponse, len(ledgers))
 	for i, ledger := range ledgers {
 		ledgerResponses[i] = modelToInventoryLedgerResponse(&ledger)
 	}
@@ -60,7 +59,7 @@ func (s *InventoryLedgerService) GetAllInventoryLedgers(c *gin.Context) ([]dtos.
 	return ledgerResponses, total, nil
 }
 
-func (s *InventoryLedgerService) GetInventoryLedgerById(c *gin.Context) (*dtos.InventoryLedgerResponse, *common.Error) {
+func (s *InventoryLedgerService) GetInventoryLedgerById(c *gin.Context) (*model.InventoryLedgerResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -86,7 +85,7 @@ func (s *InventoryLedgerService) GetInventoryLedgerById(c *gin.Context) (*dtos.I
 
 // ExportInventoryLedgersToExcel - Export inventory ledger data to Excel file
 func (s *InventoryLedgerService) ExportInventoryLedgersToExcel(c *gin.Context) ([]byte, *common.Error) {
-	var query dtos.InventoryLedgerFilter
+	var query model.InventoryLedgerFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -293,8 +292,8 @@ func (s *InventoryLedgerService) ExportInventoryLedgersToExcel(c *gin.Context) (
 	return buf.Bytes(), nil
 }
 
-func modelToInventoryLedgerResponse(ledger *model.InventoryLedger) dtos.InventoryLedgerResponse {
-	return dtos.InventoryLedgerResponse{
+func modelToInventoryLedgerResponse(ledger *model.InventoryLedger) model.InventoryLedgerResponse {
+	return model.InventoryLedgerResponse{
 		LedgerID:        int(ledger.LedgerID),
 		ComponentID:     int(ledger.ComponentID),
 		WarehouseID:     int(ledger.WarehouseID),
@@ -313,7 +312,7 @@ func modelToInventoryLedgerResponse(ledger *model.InventoryLedger) dtos.Inventor
 }
 
 // CreateInventoryLedgerEntry - Internal method to create ledger entries from other services
-func (s *InventoryLedgerService) CreateInventoryLedgerEntry(req *dtos.InventoryLedgerCreate) error {
+func (s *InventoryLedgerService) CreateInventoryLedgerEntry(req *model.InventoryLedgerCreate) error {
 	// Validate reference type
 	if !constants.IsValidLedgerReferenceType(req.ReferenceType) {
 		return fmt.Errorf("loại tham chiếu không hợp lệ")

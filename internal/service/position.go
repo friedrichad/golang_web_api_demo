@@ -6,16 +6,15 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
 type IPositionService interface {
-	GetAllPositions(c *gin.Context) ([]dtos.PositionResponse, int, *common.Error)
-	GetPositionById(c *gin.Context) (*dtos.PositionResponse, *common.Error)
-	CreatePosition(c *gin.Context) (*dtos.PositionResponse, *common.Error)
+	GetAllPositions(c *gin.Context) ([]model.PositionResponse, int, *common.Error)
+	GetPositionById(c *gin.Context) (*model.PositionResponse, *common.Error)
+	CreatePosition(c *gin.Context) (*model.PositionResponse, *common.Error)
 	UpdatePosition(c *gin.Context) *common.Error
 	DeletePosition(c *gin.Context) *common.Error
 }
@@ -35,8 +34,8 @@ func NewPositionService() IPositionService {
 	return positionService
 }
 
-func (s *PositionService) GetAllPositions(c *gin.Context) ([]dtos.PositionResponse, int, *common.Error) {
-	var query dtos.PositionFilter
+func (s *PositionService) GetAllPositions(c *gin.Context) ([]model.PositionResponse, int, *common.Error) {
+	var query model.PositionFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		log.Print("Lỗi khi bind query: ", err)
 		return nil, 0, common.RequestInvalid
@@ -52,7 +51,7 @@ func (s *PositionService) GetAllPositions(c *gin.Context) ([]dtos.PositionRespon
 		return nil, 0, common.NotFound
 	}
 
-	positionResponses := make([]dtos.PositionResponse, len(positions))
+	positionResponses := make([]model.PositionResponse, len(positions))
 	for i, position := range positions {
 		positionResponses[i] = modelToPositionResponse(&position)
 	}
@@ -60,7 +59,7 @@ func (s *PositionService) GetAllPositions(c *gin.Context) ([]dtos.PositionRespon
 	return positionResponses, total, nil
 }
 
-func (s *PositionService) GetPositionById(c *gin.Context) (*dtos.PositionResponse, *common.Error) {
+func (s *PositionService) GetPositionById(c *gin.Context) (*model.PositionResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -85,8 +84,8 @@ func (s *PositionService) GetPositionById(c *gin.Context) (*dtos.PositionRespons
 	return &positionResponse, nil
 }
 
-func (s *PositionService) CreatePosition(c *gin.Context) (*dtos.PositionResponse, *common.Error) {
-	var req dtos.PositionCreate
+func (s *PositionService) CreatePosition(c *gin.Context) (*model.PositionResponse, *common.Error) {
+	var req model.PositionCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Print("Lỗi khi bind json: ", err)
 		return nil, common.RequestInvalid
@@ -109,7 +108,7 @@ func (s *PositionService) CreatePosition(c *gin.Context) (*dtos.PositionResponse
 }
 
 func (s *PositionService) UpdatePosition(c *gin.Context) *common.Error {
-	var req dtos.PositionUpdate
+	var req model.PositionUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Print("Lỗi khi bind json: ", err)
 		return common.RequestInvalid
@@ -161,8 +160,8 @@ func (s *PositionService) DeletePosition(c *gin.Context) *common.Error {
 	return nil
 }
 
-func modelToPositionResponse(position *model.Position) dtos.PositionResponse {
-	return dtos.PositionResponse{
+func modelToPositionResponse(position *model.Position) model.PositionResponse {
+	return model.PositionResponse{
 		PositionID:   position.PositionID,
 		PositionName: position.PositionName,
 		Description:  position.Description,

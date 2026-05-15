@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -10,7 +9,7 @@ import (
 type IComponentRepository interface {
 	IBaseRepository[model.Component, int]
 	GetByComponentId(componentId int) (*model.Component, error)
-	GetAllByCondition(query dtos.ComponentFilter) ([]model.Component, int, error)
+	GetAllByCondition(query model.ComponentFilter) ([]model.Component, int, error)
 	Delete(ids []int) error
 	Save(component *model.Component) error
 	Update(component *model.Component) error
@@ -42,7 +41,7 @@ func (c *ComponentRepository) GetByComponentId(componentId int) (*model.Componen
 	}
 	return component, err
 }
-func (c *ComponentRepository) GetAllByCondition(query dtos.ComponentFilter) ([]model.Component, int, error) {
+func (c *ComponentRepository) GetAllByCondition(query model.ComponentFilter) ([]model.Component, int, error) {
 	return c.GetPage("Select c.* from component c "+
 		" where (? is Null or c.component_id = ?)"+
 		" and (? is Null or c.component_name = ?) "+

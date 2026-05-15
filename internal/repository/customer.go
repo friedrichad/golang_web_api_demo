@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -10,7 +9,7 @@ import (
 type ICustomer interface {
 	IBaseRepository[model.Customer, int]
 	GetByCustomerId(customerId int) (*model.Customer, error)
-	GetAllByCondition(query dtos.CustomerFilter) ([]model.Customer, int, error)
+	GetAllByCondition(query model.CustomerFilter) ([]model.Customer, int, error)
 	Delete(ids []int) error
 	Save(request *model.Customer) error
 	Update(request *model.Customer) error
@@ -41,7 +40,7 @@ func (r *CustomerRepository) GetByCustomerId(customerId int) (*model.Customer, e
 	return customer, err
 }
 
-func (r *CustomerRepository) GetAllByCondition(query dtos.CustomerFilter) ([]model.Customer, int, error) {
+func (r *CustomerRepository) GetAllByCondition(query model.CustomerFilter) ([]model.Customer, int, error) {
 	return r.GetPage("Select c.* from customer as c "+
 		" where (? is Null or c.customer_name = ?)"+
 		" and (? is null or c.created_at >= ?) "+

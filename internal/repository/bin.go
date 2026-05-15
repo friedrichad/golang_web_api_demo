@@ -2,14 +2,13 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
 
 type IBinRepository interface {
 	IBaseRepository[model.Bin, int]
-	GetAllByCondition(query dtos.BinFilter) ([]model.Bin, int, error)
+	GetAllByCondition(query model.BinFilter) ([]model.Bin, int, error)
 	Delete(ids []int) error
 	GetById(id int) (*model.Bin, error)
 	Save(bin *model.Bin) error
@@ -34,7 +33,7 @@ func NewBinRepository() IBinRepository {
 	return binRepository
 }
 
-func (b *BinRepository) GetAllByCondition(query dtos.BinFilter) ([]model.Bin, int, error) {
+func (b *BinRepository) GetAllByCondition(query model.BinFilter) ([]model.Bin, int, error) {
 	return b.GetPage("select b.* from bin b"+
 		" where (? is null or b.location_in_warehouse like ?)"+
 		" and (? is null or b.status_int = ?)"+

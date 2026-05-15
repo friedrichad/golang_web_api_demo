@@ -25,3 +25,32 @@ type Position struct {
 func (*Position) TableName() string {
 	return TableNamePosition
 }
+
+type PositionFilter struct {
+	PositionID   int    `json:"position_id"`
+	PositionName string `json:"position_name"`
+	Description  string `json:"description"`
+	PageSize
+	DateRequest
+}
+
+type PositionCreate struct {
+	PositionName string `json:"position_name" binding:"required"`
+	Description  string `json:"description"`
+}
+
+type PositionUpdate struct {
+	PositionID   int    `json:"position_id" binding:"required"`
+	PositionName string `json:"position_name"`
+	Description  string `json:"description"`
+}
+
+type PositionResponse struct {
+	PositionID   int    `json:"position_id"`
+	PositionName string `json:"position_name"`
+	Description  string `json:"description"`
+	CreatedBy    int    `json:"created_by"`
+	CreatedAt    string `json:"created_at"`
+	UpdatedBy    int    `json:"updated_by"`
+	UpdatedAt    string `json:"updated_at"`
+}

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
+	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +17,7 @@ type IInventoryLedgerController interface {
 }
 
 type InventoryLedgerController struct {
-	BaseController[dtos.InventoryLedgerResponse]
+	BaseController[model.InventoryLedgerResponse]
 	ledgerService service.IInventoryLedgerService
 }
 

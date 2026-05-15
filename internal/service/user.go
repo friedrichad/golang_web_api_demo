@@ -4,18 +4,16 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
-	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/common"	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
 type IUserService interface {
-	GetAllUsers(c *gin.Context) ([]dtos.UserResponse, int, *common.Error)
-	GetUserByUuid(c *gin.Context) (*dtos.UserResponse, *common.Error)
-	CreateUser(c *gin.Context) (*dtos.UserResponse, *common.Error)
+	GetAllUsers(c *gin.Context) ([]model.UserResponse, int, *common.Error)
+	GetUserByUuid(c *gin.Context) (*model.UserResponse, *common.Error)
+	CreateUser(c *gin.Context) (*model.UserResponse, *common.Error)
 	UpdateUser(c *gin.Context) *common.Error
 	DeleteUser(c *gin.Context) *common.Error
 	GetUserAuthorities(c *gin.Context) ([]string, *common.Error)
@@ -36,8 +34,8 @@ func NewUserService() IUserService {
 	return userService
 }
 
-func (s *UserService) GetAllUsers(c *gin.Context) ([]dtos.UserResponse, int, *common.Error) {
-	var query dtos.UserFilter
+func (s *UserService) GetAllUsers(c *gin.Context) ([]model.UserResponse, int, *common.Error) {
+	var query model.UserFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -51,7 +49,7 @@ func (s *UserService) GetAllUsers(c *gin.Context) ([]dtos.UserResponse, int, *co
 	}
 
 	// Convert models to DTOs
-	userResponses := make([]dtos.UserResponse, len(users))
+	userResponses := make([]model.UserResponse, len(users))
 	for i, user := range users {
 		userResponses[i] = modelToUserResponse(&user)
 	}
@@ -59,7 +57,7 @@ func (s *UserService) GetAllUsers(c *gin.Context) ([]dtos.UserResponse, int, *co
 	return userResponses, total, nil
 }
 
-func (s *UserService) GetUserByUuid(c *gin.Context) (*dtos.UserResponse, *common.Error) {
+func (s *UserService) GetUserByUuid(c *gin.Context) (*model.UserResponse, *common.Error) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		return nil, common.RequestInvalid
@@ -84,8 +82,8 @@ func (s *UserService) GetUserByUuid(c *gin.Context) (*dtos.UserResponse, *common
 	return &userResponse, nil
 }
 
-func (s *UserService) CreateUser(c *gin.Context) (*dtos.UserResponse, *common.Error) {
-	var req dtos.UserCreate
+func (s *UserService) CreateUser(c *gin.Context) (*model.UserResponse, *common.Error) {
+	var req model.UserCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -122,7 +120,7 @@ func (s *UserService) CreateUser(c *gin.Context) (*dtos.UserResponse, *common.Er
 }
 
 func (s *UserService) UpdateUser(c *gin.Context) *common.Error {
-	var req dtos.UserUpdate
+	var req model.UserUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -217,8 +215,8 @@ func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Erro
 }
 
 // Helper function to convert User model to UserResponse DTO
-func modelToUserResponse(user *model.User) dtos.UserResponse {
-	return dtos.UserResponse{
+func modelToUserResponse(user *model.User) model.UserResponse {
+	return model.UserResponse{
 		UserID:      user.UserID,
 		Username:    user.Username,
 		DisplayName: user.DisplayName,

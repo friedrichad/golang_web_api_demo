@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -10,7 +9,7 @@ import (
 type IRequestDetailRepository interface {
 	IBaseRepository[model.RequestDetail, int]
 	GetByRequestId(requestId int) ([]model.RequestDetail, error)
-	GetAllByCondition(query dtos.RequestDetailFilter) ([]model.RequestDetail, int, error)
+	GetAllByCondition(query model.RequestDetailFilter) ([]model.RequestDetail, int, error)
 	Delete(ids []int) error
 	Save(request *model.RequestDetail) error
 	Update(request *model.RequestDetail) error
@@ -44,7 +43,7 @@ func (r *RequestDetailRepository) GetByRequestId(requestId int) ([]model.Request
 	}
 	return requestDetail, nil
 }
-func (r *RequestDetailRepository) GetAllByCondition(query dtos.RequestDetailFilter) ([]model.RequestDetail, int, error) {
+func (r *RequestDetailRepository) GetAllByCondition(query model.RequestDetailFilter) ([]model.RequestDetail, int, error) {
 	return r.GetPage("Select rd.* from request_detail as rd "+
 		" where (? is Null or rd.request_id = ?) "+
 		" and (? is Null or rd.component_id = ?) "+

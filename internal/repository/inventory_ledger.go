@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
@@ -10,7 +9,7 @@ import (
 type IInventoryLedger interface {
 	IBaseRepository[model.InventoryLedger, int]
 	GetByLedgerId(ledgerId int) (*model.InventoryLedger, error)
-	GetAllByCondition(query dtos.InventoryLedgerFilter) ([]model.InventoryLedger, int, error)
+	GetAllByCondition(query model.InventoryLedgerFilter) ([]model.InventoryLedger, int, error)
 	Delete(ids []int) error
 	Save(request *model.InventoryLedger) error
 	Update(request *model.InventoryLedger) error
@@ -40,7 +39,7 @@ func (r *InventoryLedgerRepository) GetByLedgerId(ledgerId int) (*model.Inventor
 	return inventoryLedger, err
 }
 
-func (r *InventoryLedgerRepository) GetAllByCondition(query dtos.InventoryLedgerFilter) ([]model.InventoryLedger, int, error) {
+func (r *InventoryLedgerRepository) GetAllByCondition(query model.InventoryLedgerFilter) ([]model.InventoryLedger, int, error) {
 	return r.GetPage("Select il.* from inventory_ledger as il "+
 		" where (? is Null or il.ledger_id = ?)"+
 		" and (? is null or il.component_id = ?) "+

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
@@ -16,7 +15,7 @@ import (
 )
 
 type IRequestPermissionService interface {
-	GetAllPermissionByCondition(c *gin.Context) ([]dtos.RequestPermissionResponse, int, *common.Error)
+	GetAllPermissionByCondition(c *gin.Context) ([]model.RequestPermissionResponse, int, *common.Error)
 	Save(c *gin.Context) *common.Error
 	Update(c *gin.Context) *common.Error
 	Delete(c *gin.Context) *common.Error
@@ -25,8 +24,8 @@ type IRequestPermissionService interface {
 
 type RequestPermissionService struct {
 	repoRequestPermission repository.IRequestPermissionRepository
-	repoRequest repository.IRequestRepository
-	repoUserPermission repository.IUserPermissionRepository
+	repoRequest           repository.IRequestRepository
+	repoUserPermission    repository.IUserPermissionRepository
 }
 
 var requestPermissionService IRequestPermissionService
@@ -35,15 +34,15 @@ func NewRequestPermissionService() IRequestPermissionService {
 	if requestPermissionService == nil {
 		requestPermissionService = &RequestPermissionService{
 			repoRequestPermission: repository.NewRequestPermissionRepository(),
-			repoRequest:                  repository.NewRequestRepository(),
-			repoUserPermission: repository.NewUserPermissionRepository(),
+			repoRequest:           repository.NewRequestRepository(),
+			repoUserPermission:    repository.NewUserPermissionRepository(),
 		}
 	}
 	return requestPermissionService
 }
 
-func (s *RequestPermissionService) GetAllPermissionByCondition(c *gin.Context) ([]dtos.RequestPermissionResponse, int, *common.Error) {
-	var query dtos.RequestPermissionFilter
+func (s *RequestPermissionService) GetAllPermissionByCondition(c *gin.Context) ([]model.RequestPermissionResponse, int, *common.Error) {
+	var query model.RequestPermissionFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		log.Print("Lỗi khi bind query: ", err)
 		return nil, 0, common.RequestInvalid
@@ -53,9 +52,9 @@ func (s *RequestPermissionService) GetAllPermissionByCondition(c *gin.Context) (
 		log.Print("Lỗi khi lấy dữ liệu: ", err)
 		return nil, 0, common.SystemError
 	}
-	requestPermissionResponses := make([]dtos.RequestPermissionResponse, len(requestPermissions))
+	requestPermissionResponses := make([]model.RequestPermissionResponse, len(requestPermissions))
 	for i, _ := range requestPermissionResponses {
-		requestPermissionResponses[i] = dtos.RequestPermissionResponse{
+		requestPermissionResponses[i] = model.RequestPermissionResponse{
 			RequestPermissionID: requestPermissions[i].RequestPermissionID,
 			RequestID:           requestPermissions[i].RequestID,
 			MenuID:              requestPermissions[i].MenuID,
@@ -68,7 +67,7 @@ func (s *RequestPermissionService) GetAllPermissionByCondition(c *gin.Context) (
 }
 
 func (s *RequestPermissionService) Save(c *gin.Context) *common.Error {
-	var requestPermissionCreate dtos.RequestPermissionCreate
+	var requestPermissionCreate model.RequestPermissionCreate
 	if err := c.ShouldBindJSON(&requestPermissionCreate); err != nil {
 		log.Print("Lỗi khi bind json: ", err)
 		return common.RequestInvalid
@@ -89,7 +88,7 @@ func (s *RequestPermissionService) Save(c *gin.Context) *common.Error {
 }
 
 func (s *RequestPermissionService) Update(c *gin.Context) *common.Error {
-	var requestPermissionUpdate dtos.RequestPermissionUpdate
+	var requestPermissionUpdate model.RequestPermissionUpdate
 	if err := c.ShouldBindJSON(&requestPermissionUpdate); err != nil {
 		log.Print("Lỗi khi bind json: ", err)
 		return common.RequestInvalid
@@ -133,7 +132,7 @@ func (s *RequestPermissionService) Delete(c *gin.Context) *common.Error {
 }
 
 func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
-	var req dtos.ApprovalRequest
+	var req model.ApprovalRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Print("Lỗi khi bind json: ", err)
@@ -210,17 +209,17 @@ func (s *RequestPermissionService) Confirm(c *gin.Context, requestId int, approv
 	}
 	for _, rp := range requestPermissions {
 		var req = model.UserPermission{
-			UserID:    requesterId,
-			MenuID:    rp.MenuID,
+			UserID:       requesterId,
+			MenuID:       rp.MenuID,
 			PermissionID: rp.PermissionID,
-			UpdatedBy: approverId,
-			UpdatedAt: time.Now(),
+			UpdatedBy:    approverId,
+			UpdatedAt:    time.Now(),
 		}
 		err := s.repoUserPermission.Save(&req)
 		if err != nil {
 			log.Print("Có lỗi xảy ra khi lưu user permission: Menu ", rp.MenuID, ", Permission ", rp.PermissionID, ": ", err)
 			return err
 		}
-	} 
+	}
 	return nil
 }

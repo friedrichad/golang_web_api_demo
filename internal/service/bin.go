@@ -5,16 +5,15 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/dtos"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
 type IBinService interface {
-	GetAllBins(c *gin.Context) ([]dtos.BinResponse, int, *common.Error)
-	GetBinByBinId(c *gin.Context) (*dtos.BinResponse, *common.Error)
-	CreateBin(c *gin.Context) (*dtos.BinResponse, *common.Error)
+	GetAllBins(c *gin.Context) ([]model.BinResponse, int, *common.Error)
+	GetBinByBinId(c *gin.Context) (*model.BinResponse, *common.Error)
+	CreateBin(c *gin.Context) (*model.BinResponse, *common.Error)
 	UpdateBin(c *gin.Context) *common.Error
 	DeleteBin(c *gin.Context) *common.Error
 }
@@ -34,8 +33,8 @@ func NewBinService() IBinService {
 	return binService
 }
 
-func (s *BinService) GetAllBins(c *gin.Context) ([]dtos.BinResponse, int, *common.Error) {
-	var query dtos.BinFilter
+func (s *BinService) GetAllBins(c *gin.Context) ([]model.BinResponse, int, *common.Error) {
+	var query model.BinFilter
 	if err := c.ShouldBindQuery(&query); err != nil {
 		return nil, 0, common.RequestInvalid
 	}
@@ -45,7 +44,7 @@ func (s *BinService) GetAllBins(c *gin.Context) ([]dtos.BinResponse, int, *commo
 		return nil, 0, common.SystemError
 	}
 
-	binResponses := make([]dtos.BinResponse, len(bins))
+	binResponses := make([]model.BinResponse, len(bins))
 	for i, bin := range bins {
 		binResponses[i] = modelToBinResponse(&bin)
 	}
@@ -53,7 +52,7 @@ func (s *BinService) GetAllBins(c *gin.Context) ([]dtos.BinResponse, int, *commo
 	return binResponses, total, nil
 }
 
-func (s *BinService) GetBinByBinId(c *gin.Context) (*dtos.BinResponse, *common.Error) {
+func (s *BinService) GetBinByBinId(c *gin.Context) (*model.BinResponse, *common.Error) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -72,8 +71,8 @@ func (s *BinService) GetBinByBinId(c *gin.Context) (*dtos.BinResponse, *common.E
 	return &res, nil
 }
 
-func (s *BinService) CreateBin(c *gin.Context) (*dtos.BinResponse, *common.Error) {
-	var req dtos.BinCreate
+func (s *BinService) CreateBin(c *gin.Context) (*model.BinResponse, *common.Error) {
+	var req model.BinCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
 	}
@@ -95,7 +94,7 @@ func (s *BinService) CreateBin(c *gin.Context) (*dtos.BinResponse, *common.Error
 }
 
 func (s *BinService) UpdateBin(c *gin.Context) *common.Error {
-	var req dtos.BinUpdate
+	var req model.BinUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return common.RequestInvalid
 	}
@@ -139,8 +138,8 @@ func (s *BinService) DeleteBin(c *gin.Context) *common.Error {
 	return nil
 }
 
-func modelToBinResponse(b *model.Bin) dtos.BinResponse {
-	return dtos.BinResponse{
+func modelToBinResponse(b *model.Bin) model.BinResponse {
+	return model.BinResponse{
 		BinID:               int(b.BinID),
 		LocationInWarehouse: b.LocationInWarehouse,
 		WarehouseID:         int(b.WarehouseID),
