@@ -182,7 +182,7 @@ func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
 	switch req.StatusInt {
 
 	case constants.RequestStatusApproved:
-		if err := s.Confirm(c, req.RequestID, userID, request.PerformedByID); err != nil {
+		if err := s.Confirm(c, req.RequestID, userID, request.PerformedByID, request.ExpiredDate); err != nil {
 			log.Print("Lỗi confirm request: ", err)
 			return common.SystemError
 		}
@@ -201,7 +201,7 @@ func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
 	return nil
 }
 
-func (s *RequestPermissionService) Confirm(c *gin.Context, requestId int, approverId int, requesterId int) error {
+func (s *RequestPermissionService) Confirm(c *gin.Context, requestId int, approverId int, requesterId int, expiredDate time.Time) error {
 	requestPermissions, err := s.repoRequestPermission.GetRequestPermissionByRequestId(requestId)
 	if err != nil {
 		log.Print("Có lỗi xảy ra khi truy vấn request: ", err)
@@ -212,6 +212,9 @@ func (s *RequestPermissionService) Confirm(c *gin.Context, requestId int, approv
 			UserID:       requesterId,
 			MenuID:       rp.MenuID,
 			PermissionID: rp.PermissionID,
+			ExpriedDate:  expiredDate,
+			CreatedBy:    approverId,
+			CreatedAt:    time.Now(),
 			UpdatedBy:    approverId,
 			UpdatedAt:    time.Now(),
 		}

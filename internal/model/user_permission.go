@@ -15,6 +15,7 @@ type UserPermission struct {
 	UserID       int       `gorm:"column:user_id;primaryKey" json:"user_id"`
 	MenuID       int       `gorm:"column:menu_id;primaryKey" json:"menu_id"`
 	PermissionID int       `gorm:"column:permission_id;primaryKey" json:"permission_id"`
+	ExpriedDate  time.Time `gorm:"column:expried_date" json:"expried_date"`
 	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy    int       `gorm:"column:updated_by" json:"updated_by"`

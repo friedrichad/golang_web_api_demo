@@ -3,6 +3,9 @@ package model
 type TokenInfo struct {
 	Id          string   `json:"id"`
 	Username    string   `json:"user_name"`
+	PositionID   int      `json:"position_id"`
+	PositionName  string   `json:"position_name"`
+	Level	    int      `json:"position_level"`
 	Exp         int64    `json:"exp"`
 	Authorities []string `json:"authorities"`
 	ClientId    string   `json:"client_id"`

@@ -15,6 +15,7 @@ type Position struct {
 	PositionID   int       `gorm:"column:position_id;primaryKey;autoIncrement:true" json:"position_id"`
 	PositionName string    `gorm:"column:position_name" json:"position_name"`
 	Description  string    `gorm:"column:description" json:"description"`
+	PositionLevel int 	   `gorm:"column:position_level" json:"position_level"`
 	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy    int       `gorm:"column:updated_by" json:"updated_by"`
@@ -37,18 +38,21 @@ type PositionFilter struct {
 type PositionCreate struct {
 	PositionName string `json:"position_name" binding:"required"`
 	Description  string `json:"description"`
+	PositionLevel int `json:"position_level"`
 }
 
 type PositionUpdate struct {
 	PositionID   int    `json:"position_id" binding:"required"`
 	PositionName string `json:"position_name"`
 	Description  string `json:"description"`
+	PositionLevel int `json:"position_level"`
 }
 
 type PositionResponse struct {
 	PositionID   int    `json:"position_id"`
 	PositionName string `json:"position_name"`
 	Description  string `json:"description"`
+	PositionLevel int `json:"position_level"`
 	CreatedBy    int    `json:"created_by"`
 	CreatedAt    string `json:"created_at"`
 	UpdatedBy    int    `json:"updated_by"`

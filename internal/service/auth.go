@@ -96,6 +96,10 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	response.Id = strconv.FormatInt(int64(user.UserID), 10)
 	response.Username = user.Username
 	response.Active = true
+	response.PositionID = user.PositionID
+	response.PositionName = user.PositionName
+	response.Level = user.PositionLevel
+	log.Printf("User %s đăng nhập thành công với position level %d", user.Username, user.PositionLevel)
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)
 	authorities, err := a.repository.GetAuthorities(user.UserID)
@@ -136,6 +140,9 @@ func createJwtToken(jwtSecret string, token model.TokenResponse) (string, error)
 	claims["authorities"] = token.Authorities
 	claims["client_id"] = token.ClientId
 	claims["refresh_exp"] = token.RefreshExp
+	claims["position_id"] = token.PositionID
+	claims["position_name"] = token.PositionName
+	claims["position_level"] = token.Level
 	accessToken, err := t.SignedString([]byte(jwtSecret))
 	if err != nil {
 		return "", err
@@ -166,6 +173,9 @@ func refreshToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.
 	}
 	response.Id = claims.Id
 	response.Username = claims.Username
+	response.PositionID = claims.PositionID
+	response.PositionName = claims.PositionName
+	response.Level = claims.Level
 	response.Active = true
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)

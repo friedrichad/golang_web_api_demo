@@ -35,14 +35,21 @@ func NewUserRepository() IUserRepository {
 }
 
 func (u *UserRepository) GetByUsername(username string) (*model.User, error) {
-	var user *model.User
-	err := u.DB.Where("username = ?", username).First(&user).Error
+
+	var user model.User
+
+	err := u.DB.
+		Joins("LEFT JOIN position p ON p.position_id = user.position_id").
+		Where("user.username = ?", username).
+		Select("user.*, p.position_name, p.position_level").
+		First(&user).Error
+
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
-	return user, err
-}
 
+	return &user, err
+}
 func (u *UserRepository) GetAllByCondition(query model.UserFilter) ([]model.User, int, error) {
 	return u.GetPage("SELECT * FROM user "+
 		"where (? is null OR username like ?) "+

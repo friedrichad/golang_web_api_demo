@@ -24,6 +24,8 @@ type User struct {
 	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
 	DepartmentID int       `gorm:"column:department_id" json:"department_id"`
 	PositionID   int       `gorm:"column:position_id" json:"position_id"`
+	PositionName  string `json:"position_name"`
+	PositionLevel int    `json:"position_level"`
 }
 
 // TableName User's table name
@@ -42,6 +44,8 @@ type UserResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedBy   int       `json:"updated_by"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	PositionName  string `json:"position_name"`
+	PositionLevel int    `json:"position_level"`
 }
 
 // UserFilter - GET request with query parameters
@@ -72,4 +76,7 @@ type UserUpdate struct {
 	NewPassword string `json:"new_password" binding:"min=6"`
 	StatusInt   int    `json:"status_int"`
 	UpdatedBy   int    `json:"updated_by"`
+	PositionID   int       `json:"position_id"`
+	PositionName  string `json:"position_name"`
+	PositionLevel int    `json:"position_level"`
 }
