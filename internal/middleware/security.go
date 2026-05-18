@@ -4,12 +4,14 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -75,6 +77,7 @@ func BearerAuthenticator() gin.HandlerFunc {
 }
 
 // Authorizator checks if user has required authorities/permissions
+// Check flow: JWT authorities -> Redis cache -> Database (lazy load + cache)
 // Can be called with multiple authorities - user needs at least one of them
 func Authorizator(authority ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -87,11 +90,35 @@ func Authorizator(authority ...string) gin.HandlerFunc {
 		userIdStr := GetUserID(c)
 		userId, _ := strconv.Atoi(userIdStr)
 
+		// Check Redis cache first
 		if userId > 0 && redis.CheckPermissionRedis(redis.Rdb, userId, authority) {
 			c.Next()
 			return
 		}
-
+		// If not in Redis, try to load from database and cache
+		if userId > 0 {
+			userRepo := repository.NewUserRepository()
+			perms, err := userRepo.GetUserPermissionScopes(userId)
+			if err != nil {
+				log.Printf("Error fetching permissions from DB for user %d: %v", userId, err)
+			} else if len(perms) > 0 {
+				// Build permission map for Redis cache (scope -> expiredDate)
+				permMap := make(map[string]interface{})
+				for _, perm := range perms {
+					permMap[perm.Scope] = perm.ExpiredDate
+				}
+				// Save to Redis cache (24 hour TTL)
+				cacheErr := redis.SaveUserPermissionCache(redis.Rdb, userId, permMap, 24*time.Hour)
+				if cacheErr != nil {
+					log.Printf("Error saving permissions to Redis cache for user %d: %v", userId, cacheErr)
+				}
+				// Now check if requested authority exists in cached permissions
+				if redis.CheckPermissionRedis(redis.Rdb, userId, authority) {
+					c.Next()
+					return
+				}
+			}
+		}
 		c.JSON(http.StatusForbidden, model.ResponseWrapper{
 			Code:    "403",
 			Message: "Không có quyền truy cập",

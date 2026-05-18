@@ -109,15 +109,26 @@ func CheckPermissionRedis(rdb *redis.Client, userId int, authorities []string) b
 
 	// Get only the specific permissions we need to check
 	results, err := rdb.HMGet(Ctx, key, authorities...).Result()
-	if err != nil || len(results) == 0 {
+	if err != nil {
+		log.Printf("Redis HMGET error for user %d: %v", userId, err)
 		return false
 	}
 
+	if len(results) == 0 {
+		log.Printf("No permissions in Redis for user %d, searching for: %v", userId, authorities)
+		return false
+	}
+
+	// Debug: log all cached permissions for this user
+	allPerms, _ := rdb.HGetAll(Ctx, key).Result()
+	log.Printf("User %d cached permissions: %v, checking for: %v, results: %v", userId, allPerms, authorities, results)
+
 	now := time.Now().Unix()
-	for _, val := range results {
+	for i, val := range results {
 		if val != nil {
 			if exp, err := strconv.ParseInt(val.(string), 10, 64); err == nil {
 				if exp == 0 || exp > now {
+					log.Printf("User %d permission '%s' valid (exp: %d, now: %d)", userId, authorities[i], exp, now)
 					return true
 				}
 			}

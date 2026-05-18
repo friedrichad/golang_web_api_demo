@@ -59,10 +59,10 @@ func (a AuthService) Authentication(c *gin.Context) (*model.TokenResponse, *comm
 
 func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.Error) {
 	sessionId := utils.GetOrCreateSessionID(c, time.Until(time.Unix(getExpiredTime(a.accessTokenExpired), 0)))
-	// if existedUserId, err := utils.BrowserHasSession(sessionId); err == nil && existedUserId != "" {
-	// 	log.Printf("Trình duyệt đã có session_id %s với user_id %s", sessionId, existedUserId)
-	// 	return nil, common.AlreadyLoggedIn
-	// }
+	if existedUserId, err := utils.BrowserHasSession(sessionId); err == nil && existedUserId != "" {
+		log.Printf("Trình duyệt đã có session_id %s với user_id %s", sessionId, existedUserId)
+		return nil, common.AlreadyLoggedIn
+	}
 	username := c.Request.FormValue("username")
 	password := c.Request.FormValue("password")
 	if len(password) == 0 {
@@ -93,6 +93,7 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 		AccessToken: "",
 		TokenType:   "bearer",
 	}
+	log.Printf("UserId: %v", user.UserID)
 	response.Id = strconv.FormatInt(int64(user.UserID), 10)
 	response.Username = user.Username
 	response.Active = true

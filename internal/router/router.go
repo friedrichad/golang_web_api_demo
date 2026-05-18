@@ -227,9 +227,9 @@ func initInventoryLedgerRouter(router *gin.Engine) {
 	ledgerGroup := router.Group("/ledgers")
 	ledgerGroup.Use(middleware.BearerAuthenticator())
 	{
-		ledgerGroup.GET("", middleware.Authorizator("ledgers:view"), ledgerController.GetAllLedgers())
-		ledgerGroup.GET("/export", middleware.Authorizator("ledgers:view"), ledgerController.ExportLedgersExcel())
-		ledgerGroup.GET("/:id", middleware.Authorizator("ledgers:view"), ledgerController.GetLedgerById())
+		ledgerGroup.GET("", middleware.Authorizator("ledger:view"), ledgerController.GetAllLedgers())
+		ledgerGroup.GET("/export", middleware.Authorizator("ledger:view"), ledgerController.ExportLedgersExcel())
+		ledgerGroup.GET("/:id", middleware.Authorizator("ledger:view"), ledgerController.GetLedgerById())
 	}
 }
 

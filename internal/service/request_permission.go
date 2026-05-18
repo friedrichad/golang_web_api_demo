@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
@@ -207,7 +206,6 @@ func (s *RequestPermissionService) Confirm(c *gin.Context,requestId int,approver
 		log.Print("Không tìm thấy request permissions cho request: ", requestId)
 		return nil
 	}
-
 	// batch DB insert
 	userPermissions := make([]model.UserPermission, 0, len(requestPermissions))
 
@@ -232,28 +230,10 @@ func (s *RequestPermissionService) Confirm(c *gin.Context,requestId int,approver
 
 		redisData[field] = value
 	}
-
 	err = s.repoUserPermission.SaveBatch(userPermissions)
 	if err != nil {
 		log.Print("Có lỗi xảy ra khi lưu batch user permissions: ", err)
 		return err
 	}
-
-	cacheKey := fmt.Sprintf("user:permissions:%d", requesterId)
-
-	// 1. write hash
-	if err := redis.Rdb.HSet(c, cacheKey, redisData).Err(); err != nil {
-		log.Printf("Cảnh báo: lỗi cache permissions: %v", err)
-		return nil
-	}
-
-	ttl := time.Until(expiredDate)
-	if ttl > 0 {
-		if err := redis.Rdb.Expire(c, cacheKey, ttl).Err(); err != nil {
-			log.Printf("Cảnh báo: lỗi set TTL cache: %v", err)
-		}
-	}
-	log.Printf("Đã cache permissions HASH cho user %d", requesterId)
-
 	return nil
 }
