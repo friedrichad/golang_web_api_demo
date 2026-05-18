@@ -6,15 +6,16 @@ import (
 )
 
 type Claims struct {
-	Id          string   `json:"id"`
-	Username    string   `json:"user_name"`
+	Id           string   `json:"id"`
+	Username     string   `json:"user_name"`
 	PositionID   int      `json:"position_id"`
-	PositionName  string   `json:"position_name"`
-	Level	    int      `json:"position_level"`
-	Authorities []string `json:"authorities"`
-	ClientId    string   `json:"client_id"`
-	Exp         int64    `json:"exp"`
-	RefreshExp  int64    `json:"refresh_exp"`
+	PositionName string   `json:"position_name"`
+	IsOP         int      `json:"is_op"`
+	Level        int      `json:"position_level"`
+	Authorities  []string `json:"authorities"`
+	ClientId     string   `json:"client_id"`
+	Exp          int64    `json:"exp"`
+	RefreshExp   int64    `json:"refresh_exp"`
 }
 
 func (c Claims) Valid() error {

@@ -72,6 +72,7 @@ func BearerAuthenticator() gin.HandlerFunc {
 		c.Set("username", jwtClaims.Username)
 		c.Set("authorities", jwtClaims.Authorities)
 		c.Set("position_level", jwtClaims.Level)
+		c.Set("is_op", jwtClaims.IsOP)
 		c.Next()
 	}
 }
@@ -81,12 +82,15 @@ func BearerAuthenticator() gin.HandlerFunc {
 // Can be called with multiple authorities - user needs at least one of them
 func Authorizator(authority ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if c.GetInt("is_op") == 1 {
+			c.Next()
+			return
+		}
 		jwtAuthorities := c.GetStringSlice("authorities")
 		if len(jwtAuthorities) > 0 && utils.AnyContains(jwtAuthorities, authority) {
 			c.Next()
 			return
 		}
-
 		userIdStr := GetUserID(c)
 		userId, _ := strconv.Atoi(userIdStr)
 

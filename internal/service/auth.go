@@ -99,6 +99,7 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	response.Active = true
 	response.PositionID = user.PositionID
 	response.PositionName = user.PositionName
+	response.IsOP = user.IsOP
 	response.Level = user.PositionLevel
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)
@@ -141,6 +142,7 @@ func createJwtToken(jwtSecret string, token model.TokenResponse) (string, error)
 	claims["position_id"] = token.PositionID
 	claims["position_name"] = token.PositionName
 	claims["position_level"] = token.Level
+	claims["is_op"] = token.IsOP
 	accessToken, err := t.SignedString([]byte(jwtSecret))
 	if err != nil {
 		return "", err
@@ -174,6 +176,7 @@ func refreshToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.
 	response.PositionID = claims.PositionID
 	response.PositionName = claims.PositionName
 	response.Level = claims.Level
+	response.IsOP = claims.IsOP
 	response.Active = true
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)

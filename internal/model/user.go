@@ -18,6 +18,7 @@ type User struct {
 	Email        string    `gorm:"column:email" json:"email"`
 	PasswordHash string    `gorm:"column:password_hash" json:"password_hash"`
 	StatusInt    int       `gorm:"column:status_int" json:"status_int"`
+	IsOP         int       `gorm:"column:is_op" json:"is_op"`
 	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy    int       `gorm:"column:updated_by" json:"updated_by"`
