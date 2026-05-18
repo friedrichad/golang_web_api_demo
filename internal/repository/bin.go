@@ -11,6 +11,7 @@ type IBinRepository interface {
 	GetAllByCondition(query model.BinFilter) ([]model.Bin, int, error)
 	Delete(ids []int) error
 	GetById(id int) (*model.Bin, error)
+	GetByIds(ids []int) map[int]*model.Bin
 	Save(bin *model.Bin) error
 	Update(bin *model.Bin) error
 	CreateBinTx(bin *model.Bin) (*model.Bin, error)
@@ -49,6 +50,24 @@ func (b *BinRepository) GetById(id int) (*model.Bin, error) {
 	err := b.DB.Where("bin_id = ?", id).First(&bin).Error
 	return bin, err
 }
+
+// GetByIds loads multiple bins by their IDs in a single query
+func (b *BinRepository) GetByIds(ids []int) map[int]*model.Bin {
+	if len(ids) == 0 {
+		return make(map[int]*model.Bin)
+	}
+
+	var bins []model.Bin
+	b.DB.Where("bin_id IN ?", ids).Find(&bins)
+
+	// Map by bin_id for easy lookup
+	result := make(map[int]*model.Bin)
+	for i := range bins {
+		result[int(bins[i].BinID)] = &bins[i]
+	}
+	return result
+}
+
 func (b *BinRepository) Save(bin *model.Bin) error {
 	return b.BaseRepository.Create(bin)
 }

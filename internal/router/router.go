@@ -29,9 +29,16 @@ func InitRouter() *gin.Engine {
 	initInventoryLedgerRouter(router)
 	initComponentCategoryRouter(router)
 	initUploadRouter(router)
+	initNonAuthRouter(router)
 	return router
 }
-
+func initNonAuthRouter(router *gin.Engine) {
+	componentController := controller.NewComponentController()
+	authController := controller.NewAuthController()
+	nonAuth := router.Group("non-auth")
+	nonAuth.GET("components", componentController.GetAllComponents())
+	nonAuth.POST("Login", authController.GetToken())
+}
 func configCors(router *gin.Engine) {
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:  viper.GetStringSlice("security.cors"),

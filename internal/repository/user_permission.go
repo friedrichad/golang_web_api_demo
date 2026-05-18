@@ -2,12 +2,15 @@ package repository
 
 import (
 	"log"
+
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
 )
+
 type IUserPermissionRepository interface {
 	Save(userPermission *model.UserPermission) error
+	SaveBatch(userPermissions []model.UserPermission) error
 	Delete(userID int, menuID int, permissionID int) error
 }
 
@@ -18,7 +21,7 @@ type UserPermissionRepository struct {
 
 var userPermissionRepository IUserPermissionRepository
 
-func NewUserPermissionRepository() IUserPermissionRepository {	
+func NewUserPermissionRepository() IUserPermissionRepository {
 	if userPermissionRepository == nil {
 		userPermissionRepository = &UserPermissionRepository{DB: db.Instance}
 	}
@@ -32,6 +35,20 @@ func (r *UserPermissionRepository) Save(userPermission *model.UserPermission) er
 	}
 	return nil
 }
+
+// SaveBatch creates multiple user permissions in a single batch query
+func (r *UserPermissionRepository) SaveBatch(userPermissions []model.UserPermission) error {
+	if len(userPermissions) == 0 {
+		return nil
+	}
+	err := r.DB.CreateInBatches(userPermissions, 100).Error
+	if err != nil {
+		log.Print("Lỗi khi lưu batch user permissions: ", err)
+		return err
+	}
+	return nil
+}
+
 func (r *UserPermissionRepository) Delete(userID int, menuID int, permissionID int) error {
 	err := r.DB.Where("user_id = ? AND menu_id = ? AND permission_id = ?", userID, menuID, permissionID).Delete(&model.UserPermission{}).Error
 	if err != nil {

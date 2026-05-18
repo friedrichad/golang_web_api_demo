@@ -2,7 +2,9 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -35,8 +37,16 @@ func Save(rdb *redis.Client, key string, value string, expiration time.Duration)
 }
 
 // Read (Get)
+// Returns empty string if key not found (no error)
 func Get(rdb *redis.Client, key string) (string, error) {
-	return rdb.Get(Ctx, key).Result()
+	val, err := rdb.Get(Ctx, key).Result()
+
+	// Handle key not found as normal case (not an error)
+	if err == redis.Nil {
+		return "", nil
+	}
+
+	return val, err
 }
 
 // Delete (Del)
@@ -71,4 +81,47 @@ func IsBlacklisted(token string) (bool, error) {
 	key := "blacklist:" + token
 	n, err := Rdb.Exists(Ctx, key).Result()
 	return n > 0, err
+}
+
+func SaveUserPermissionCache(rdb *redis.Client, userId int, data map[string]interface{}, ttl time.Duration) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	key := fmt.Sprintf("user_permission:%d", userId)
+
+	// Convert to strings for Redis and save all at once
+	stringData := make(map[string]interface{}, len(data))
+	for scope, exp := range data {
+		log.Printf("Caching permission for user %d: %s with expiration %v", userId, scope, exp)
+		stringData[scope] = fmt.Sprint(exp)
+	}
+
+	if err := rdb.HSet(Ctx, key, stringData).Err(); err != nil {
+		return err
+	}
+
+	return rdb.Expire(Ctx, key, ttl).Err()
+}
+
+func CheckPermissionRedis(rdb *redis.Client, userId int, authorities []string) bool {
+	key := "user_permission:" + strconv.Itoa(userId)
+
+	// Get only the specific permissions we need to check
+	results, err := rdb.HMGet(Ctx, key, authorities...).Result()
+	if err != nil || len(results) == 0 {
+		return false
+	}
+
+	now := time.Now().Unix()
+	for _, val := range results {
+		if val != nil {
+			if exp, err := strconv.ParseInt(val.(string), 10, 64); err == nil {
+				if exp == 0 || exp > now {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }

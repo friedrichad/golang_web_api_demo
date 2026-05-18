@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"strconv"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
@@ -68,6 +69,7 @@ func BearerAuthenticator() gin.HandlerFunc {
 		c.Set("user_id", jwtClaims.Id)
 		c.Set("username", jwtClaims.Username)
 		c.Set("authorities", jwtClaims.Authorities)
+		c.Set("position_level", jwtClaims.Level)
 		c.Next()
 	}
 }
@@ -76,16 +78,25 @@ func BearerAuthenticator() gin.HandlerFunc {
 // Can be called with multiple authorities - user needs at least one of them
 func Authorizator(authority ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authorities := c.GetStringSlice("authorities")
-		if len(authorities) == 0 || !utils.AnyContains(authorities, authority) {
-			c.JSON(http.StatusForbidden, model.ResponseWrapper{
-				Code:    "403",
-				Message: "Không có quyền truy cập",
-			})
-			c.Abort()
+		jwtAuthorities := c.GetStringSlice("authorities")
+		if len(jwtAuthorities) > 0 && utils.AnyContains(jwtAuthorities, authority) {
+			c.Next()
 			return
 		}
-		c.Next()
+
+		userIdStr := GetUserID(c)
+		userId, _ := strconv.Atoi(userIdStr)
+
+		if userId > 0 && redis.CheckPermissionRedis(redis.Rdb, userId, authority) {
+			c.Next()
+			return
+		}
+
+		c.JSON(http.StatusForbidden, model.ResponseWrapper{
+			Code:    "403",
+			Message: "Không có quyền truy cập",
+		})
+		c.Abort()
 	}
 }
 

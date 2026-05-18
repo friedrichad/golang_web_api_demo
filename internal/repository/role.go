@@ -23,6 +23,7 @@ type IRoleRepository interface {
 
 	// permissions
 	GetAllPermissions() ([]model.Permission, error)
+	GetAllPermissionsPaginated(page int, size int) ([]model.Permission, error)
 	GetPermissionById(id int) (*model.Permission, error)
 	CreatePermission(permission *model.Permission) error
 	UpdatePermission(permission *model.Permission) error
@@ -130,6 +131,14 @@ func (r *RoleRepository) CreateRoleMenus(roleMenus []model.RoleMenu) error {
 func (r *RoleRepository) GetAllPermissions() ([]model.Permission, error) {
 	var permissions []model.Permission
 	err := r.DB.Find(&permissions).Error
+	return permissions, err
+}
+
+// GetAllPermissionsPaginated loads permissions with pagination to avoid loading all records
+func (r *RoleRepository) GetAllPermissionsPaginated(page int, size int) ([]model.Permission, error) {
+	var permissions []model.Permission
+	offset := (page - 1) * size
+	err := r.DB.Limit(size).Offset(offset).Order("permission_id").Find(&permissions).Error
 	return permissions, err
 }
 

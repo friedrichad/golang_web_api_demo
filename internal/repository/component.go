@@ -16,6 +16,8 @@ type IComponentRepository interface {
 	CreateComponentTx(component *model.Component, categories []model.ComponentCategoryMap) (*model.Component, error)
 	UpdateComponentTx(component *model.Component, categories []model.ComponentCategoryMap) error
 	DeleteComponentTx(ids []int) error
+	GetComponentCategories(componentId int) []model.ComponentCategoryDTO
+	GetAllComponentCategories(componentIds []int) map[int][]model.ComponentCategoryDTO
 }
 
 type ComponentRepository struct {
@@ -174,4 +176,49 @@ func (c *ComponentRepository) DeleteComponentTx(ids []int) error {
 	}
 
 	return nil
+}
+
+// GetComponentCategories retrieves all categories for a single component
+func (c *ComponentRepository) GetComponentCategories(componentId int) []model.ComponentCategoryDTO {
+	var categories []model.ComponentCategoryDTO
+	c.DB.Model(&model.ComponentCategory{}).
+		Select("component_category.category_id, component_category.category_name").
+		Joins("INNER JOIN component_category_map ON component_category.category_id = component_category_map.category_id").
+		Where("component_category_map.component_id = ?", componentId).
+		Scan(&categories)
+	return categories
+}
+
+// GetAllComponentCategories loads all categories for multiple components in a single query (batch optimization)
+func (c *ComponentRepository) GetAllComponentCategories(componentIds []int) map[int][]model.ComponentCategoryDTO {
+	if len(componentIds) == 0 {
+		return make(map[int][]model.ComponentCategoryDTO)
+	}
+
+	type result struct {
+		ComponentID  int
+		CategoryID   int
+		CategoryName string
+	}
+
+	var results []result
+	c.DB.Model(&model.ComponentCategory{}).
+		Select("component_category_map.component_id, component_category.category_id, component_category.category_name").
+		Joins("INNER JOIN component_category_map ON component_category.category_id = component_category_map.category_id").
+		Where("component_category_map.component_id IN ?", componentIds).
+		Scan(&results)
+
+	// Map results by component_id
+	categoriesMap := make(map[int][]model.ComponentCategoryDTO)
+	for _, res := range results {
+		if _, exists := categoriesMap[res.ComponentID]; !exists {
+			categoriesMap[res.ComponentID] = []model.ComponentCategoryDTO{}
+		}
+		categoriesMap[res.ComponentID] = append(categoriesMap[res.ComponentID], model.ComponentCategoryDTO{
+			CategoryID:   res.CategoryID,
+			CategoryName: res.CategoryName,
+		})
+	}
+
+	return categoriesMap
 }

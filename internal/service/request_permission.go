@@ -1,11 +1,14 @@
 package service
 
 import (
+	"fmt"
+	// "encoding/json"
 	"log"
 	"strconv"
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
@@ -168,28 +171,19 @@ func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 
-	ok, err := s.repoRequest.CanApprove(userID, request.PerformedByID)
-	if err != nil {
-		log.Print("Lỗi kiểm tra quyền phê duyệt: ", err)
-		return common.SystemError
-	}
-
-	if !ok {
-		log.Print("User không có quyền phê duyệt request")
-		return common.UserForbidden
-	}
-
 	switch req.StatusInt {
 
 	case constants.RequestStatusApproved:
-		if err := s.Confirm(c, req.RequestID, userID, request.PerformedByID, request.ExpiredDate); err != nil {
+		if err := s.Confirm(c, req.RequestID, userID, request.PerformedByID, request.ExpiredDate); 
+		err != nil {
 			log.Print("Lỗi confirm request: ", err)
 			return common.SystemError
 		}
-
+		request.ApproverID = userID
 		request.StatusInt = constants.RequestStatusApproved
 
 	case constants.RequestStatusRejected:
+		request.ApproverID = userID
 		request.StatusInt = constants.RequestStatusRejected
 	}
 
@@ -201,28 +195,65 @@ func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
 	return nil
 }
 
-func (s *RequestPermissionService) Confirm(c *gin.Context, requestId int, approverId int, requesterId int, expiredDate time.Time) error {
+func (s *RequestPermissionService) Confirm(c *gin.Context,requestId int,approverId int,requesterId int,expiredDate time.Time,) error {
+
 	requestPermissions, err := s.repoRequestPermission.GetRequestPermissionByRequestId(requestId)
 	if err != nil {
 		log.Print("Có lỗi xảy ra khi truy vấn request: ", err)
 		return err
 	}
+
+	if len(requestPermissions) == 0 {
+		log.Print("Không tìm thấy request permissions cho request: ", requestId)
+		return nil
+	}
+
+	// batch DB insert
+	userPermissions := make([]model.UserPermission, 0, len(requestPermissions))
+
+	// redis pipeline data
+	redisData := make(map[string]interface{})
+
 	for _, rp := range requestPermissions {
-		var req = model.UserPermission{
+
+		userPermissions = append(userPermissions, model.UserPermission{
 			UserID:       requesterId,
 			MenuID:       rp.MenuID,
 			PermissionID: rp.PermissionID,
-			ExpriedDate:  expiredDate,
+			ExpiredDate:  expiredDate,
 			CreatedBy:    approverId,
 			CreatedAt:    time.Now(),
 			UpdatedBy:    approverId,
 			UpdatedAt:    time.Now(),
-		}
-		err := s.repoUserPermission.Save(&req)
-		if err != nil {
-			log.Print("Có lỗi xảy ra khi lưu user permission: Menu ", rp.MenuID, ", Permission ", rp.PermissionID, ": ", err)
-			return err
+		})
+
+		field := fmt.Sprintf("%d:%d", rp.MenuID, rp.PermissionID)
+		value := expiredDate.Unix()
+
+		redisData[field] = value
+	}
+
+	err = s.repoUserPermission.SaveBatch(userPermissions)
+	if err != nil {
+		log.Print("Có lỗi xảy ra khi lưu batch user permissions: ", err)
+		return err
+	}
+
+	cacheKey := fmt.Sprintf("user:permissions:%d", requesterId)
+
+	// 1. write hash
+	if err := redis.Rdb.HSet(c, cacheKey, redisData).Err(); err != nil {
+		log.Printf("Cảnh báo: lỗi cache permissions: %v", err)
+		return nil
+	}
+
+	ttl := time.Until(expiredDate)
+	if ttl > 0 {
+		if err := redis.Rdb.Expire(c, cacheKey, ttl).Err(); err != nil {
+			log.Printf("Cảnh báo: lỗi set TTL cache: %v", err)
 		}
 	}
+	log.Printf("Đã cache permissions HASH cho user %d", requesterId)
+
 	return nil
 }

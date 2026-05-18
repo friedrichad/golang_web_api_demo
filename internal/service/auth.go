@@ -59,10 +59,10 @@ func (a AuthService) Authentication(c *gin.Context) (*model.TokenResponse, *comm
 
 func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.Error) {
 	sessionId := utils.GetOrCreateSessionID(c, time.Until(time.Unix(getExpiredTime(a.accessTokenExpired), 0)))
-	if existedUserId, err := utils.BrowserHasSession(sessionId); err == nil && existedUserId != "" {
-		log.Printf("Trình duyệt đã có session_id %s với user_id %s", sessionId, existedUserId)
-		return nil, common.AlreadyLoggedIn
-	}
+	// if existedUserId, err := utils.BrowserHasSession(sessionId); err == nil && existedUserId != "" {
+	// 	log.Printf("Trình duyệt đã có session_id %s với user_id %s", sessionId, existedUserId)
+	// 	return nil, common.AlreadyLoggedIn
+	// }
 	username := c.Request.FormValue("username")
 	password := c.Request.FormValue("password")
 	if len(password) == 0 {
@@ -99,7 +99,6 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	response.PositionID = user.PositionID
 	response.PositionName = user.PositionName
 	response.Level = user.PositionLevel
-	log.Printf("User %s đăng nhập thành công với position level %d", user.Username, user.PositionLevel)
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)
 	authorities, err := a.repository.GetAuthorities(user.UserID)
@@ -115,12 +114,10 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	ttl := time.Until(time.Unix(response.Exp, 0))
 	err = utils.SaveBrowserSession(sessionId, response.Id, ttl)
 	if err != nil {
-		log.Printf("Không lưu được session trình duyệt vào Cookie: %v", err)
 		return nil, common.SystemError
 	}
 	err = redis.Save(redis.Rdb, "auth:token:"+response.Id, response.AccessToken, ttl)
 	if err != nil {
-		log.Printf("Không lưu được token vào Redis: %v", err)
 		return nil, common.SystemError
 	}
 	return response, nil
@@ -261,15 +258,11 @@ func (a AuthService) Register(c *gin.Context) (*model.UserResponse, *common.Erro
 }
 
 func (a AuthService) Logout(c *gin.Context) *common.Error {
-	// Extract token from Authorization header
 	token := c.GetHeader("Authorization")
 	if token == "" {
 		return common.TokenInvalid
 	}
-	// Remove "Bearer " prefix if present
 	token = strings.Replace(token, "Bearer ", "", 1)
-
-	// Parse token to get expiration time
 	claims := &model.Claims{}
 	_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(a.jwtSecret), nil
@@ -279,14 +272,10 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 		log.Printf("Failed to parse token: %v", err)
 		return common.TokenInvalid
 	}
-
-	// Calculate TTL from token expiration time
 	ttl := time.Until(time.Unix(claims.RefreshExp, 0))
 	if ttl <= 0 {
 		ttl = 1 * time.Second // Minimum TTL
 	}
-
-	// Add token to blacklist with TTL
 	err = redis.AddToBlacklist(token, ttl)
 	if err != nil {
 		log.Printf("Failed to add token to blacklist: %v", err)
@@ -301,31 +290,22 @@ func (a AuthService) Logout(c *gin.Context) *common.Error {
 	if sessionID != "" {
 		redis.Delete(redis.Rdb, "auth:browser:"+sessionID)
 	}
-	// delete cookie
 	utils.ClearSessionCookie(c)
 	return nil
 }
 
 func LockAccount(userID int, attempt int) (bool, int) {
 	key := "auth:lock:" + strconv.Itoa(userID)
-
-	value, err := redis.Get(redis.Rdb, key)
-	if err != nil {
-		log.Printf("Redis error: %v", err)
-	}
-
+	value, _ := redis.Get(redis.Rdb, key)
 	count := 0
 	if value != "" {
 		count, _ = strconv.Atoi(value)
 	}
-
 	count++
-
-	err = redis.Save(redis.Rdb, key, strconv.Itoa(count), 15*time.Minute)
+	err := redis.Save(redis.Rdb, key, strconv.Itoa(count), 15*time.Minute)
 	if err != nil {
 		log.Printf("Redis save error: %v", err)
 	}
-
 	if count >= attempt {
 		return true, count
 	}
@@ -334,11 +314,7 @@ func LockAccount(userID int, attempt int) (bool, int) {
 
 func IsLockedAccount(userID int, attempt int) bool {
 	key := "auth:lock:" + strconv.Itoa(userID)
-	value, err := redis.Get(redis.Rdb, key)
-	if err != nil {
-		log.Printf("Redis error: %v", err)
-		return false
-	}
+	value, _ := redis.Get(redis.Rdb, key)
 	if value == "" {
 		return false
 	}
@@ -347,4 +323,27 @@ func IsLockedAccount(userID int, attempt int) bool {
 		return true
 	}
 	return false
+}
+
+func InitUserPermissionCache(userID int) {
+	var perms []model.UserPermissionScope
+	perms, err := repository.NewUserRepository().GetUserPermissionScopes(userID)
+	if err != nil {
+		log.Printf("Failed to get user permissions: %v", err)
+		return
+	}
+	permMap := BuildPermissionMap(perms)
+	err = redis.SaveUserPermissionCache(redis.Rdb, userID, permMap, 24*time.Hour)
+	if err != nil {
+		log.Printf("Failed to save user permission cache: %v", err)
+	}
+}
+
+func BuildPermissionMap(perms []model.UserPermissionScope) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	for _, p := range perms {
+		result[p.Scope] = p.ExpiredDate
+	}
+	return result
 }

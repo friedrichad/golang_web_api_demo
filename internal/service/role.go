@@ -226,7 +226,20 @@ func (s *RoleService) GetRoleMenus(c *gin.Context) ([]int, *common.Error) {
 
 // permission
 func (s *RoleService) GetAllPermissions(c *gin.Context) ([]model.PermissionDTO, *common.Error) {
-	permissions, err := s.roleRepo.GetAllPermissions()
+	// Add pagination support - limit to 100 records per request
+	pageStr := c.DefaultQuery("page", "1")
+	sizeStr := c.DefaultQuery("size", "100")
+
+	page := 1
+	size := 100
+	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+		page = p
+	}
+	if s, err := strconv.Atoi(sizeStr); err == nil && s > 0 && s <= 100 {
+		size = s
+	}
+
+	permissions, err := s.roleRepo.GetAllPermissionsPaginated(page, size)
 	if err != nil {
 		return nil, common.SystemError
 	}

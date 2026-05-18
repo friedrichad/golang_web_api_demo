@@ -5,11 +5,9 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type IComponentService interface {
@@ -22,7 +20,6 @@ type IComponentService interface {
 
 type ComponentService struct {
 	componentRepo repository.IComponentRepository
-	db            *gorm.DB
 }
 
 var componentService IComponentService
@@ -31,7 +28,6 @@ func NewComponentService() IComponentService {
 	if componentService == nil {
 		componentService = &ComponentService{
 			componentRepo: repository.NewComponentRepository(),
-			db:            db.Instance,
 		}
 	}
 	return componentService
@@ -48,11 +44,17 @@ func (s *ComponentService) GetAllComponents(c *gin.Context) ([]model.ComponentRe
 		return nil, 0, common.SystemError
 	}
 
+	// Load all categories in one query (batch instead of N+1)
+	componentIds := make([]int, len(components))
+	for i, comp := range components {
+		componentIds[i] = int(comp.ComponentID)
+	}
+	categoriesMap := s.componentRepo.GetAllComponentCategories(componentIds)
+
 	res := make([]model.ComponentResponse, len(components))
 	for i, comp := range components {
 		resp := modelToComponentResponse(&comp)
-		resp.ComponentCategory = s.getComponentCategories(int(comp.ComponentID))
-		// Quantity can be joined from inventory, but for simplicty we set 0 if not handled by repo
+		resp.ComponentCategory = categoriesMap[int(comp.ComponentID)]
 		res[i] = resp
 	}
 
@@ -72,7 +74,8 @@ func (s *ComponentService) GetComponentById(c *gin.Context) (*model.ComponentRes
 	}
 
 	res := modelToComponentResponse(comp)
-	res.ComponentCategory = s.getComponentCategories(id)
+	// Single component - can keep direct call or use batch for consistency
+	res.ComponentCategory = s.componentRepo.GetComponentCategories(id)
 	return &res, nil
 }
 
@@ -108,7 +111,7 @@ func (s *ComponentService) CreateComponent(c *gin.Context) (*model.ComponentResp
 	}
 
 	res := modelToComponentResponse(result)
-	res.ComponentCategory = s.getComponentCategories(int(result.ComponentID))
+	res.ComponentCategory = s.componentRepo.GetComponentCategories(int(result.ComponentID))
 	return &res, nil
 }
 
@@ -170,16 +173,6 @@ func (s *ComponentService) DeleteComponent(c *gin.Context) *common.Error {
 	}
 
 	return nil
-}
-
-func (s *ComponentService) getComponentCategories(componentId int) []model.ComponentCategoryDTO {
-	var categories []model.ComponentCategoryDTO
-	s.db.Model(&model.ComponentCategory{}).
-		Select("component_category.category_id, component_category.category_name").
-		Joins("INNER JOIN component_category_map ON component_category.category_id = component_category_map.category_id").
-		Where("component_category_map.component_id = ?", componentId).
-		Scan(&categories)
-	return categories
 }
 
 func modelToComponentResponse(c *model.Component) model.ComponentResponse {

@@ -1,10 +1,11 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"gorm.io/gorm"
-	"time"
 )
 
 type IUserRepository interface {
@@ -17,6 +18,7 @@ type IUserRepository interface {
 	Save(user *model.User) error
 	Update(user *model.User) error
 	AddUserRole(userId int, roleId int) error
+	GetUserPermissionScopes(userId int) ([]model.UserPermissionScope, error)
 }
 
 type UserRepository struct {
@@ -63,35 +65,36 @@ func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
 	var authorities []string
 
 	err := u.DB.Raw(`
-        SELECT DISTINCT scope FROM (
-            SELECT CONCAT(m.menu_name, ':', p.permission_name) AS scope
-            FROM user u
-            JOIN position_role pr 
-                ON u.position_id = pr.position_id
-            JOIN role_menu_permission rmp 
-                ON pr.role_id = rmp.role_id
-            JOIN menu m 
-                ON rmp.menu_id = m.menu_id
-            JOIN permissions p 
-                ON rmp.permission_id = p.permission_id
-            WHERE u.user_id = ?
-            UNION
-            SELECT CONCAT(m.menu_name, ':', p.permission_name) AS scope
-            FROM user_permission up
-            JOIN menu m 
-                ON up.menu_id = m.menu_id
-            JOIN permissions p 
-                ON up.permission_id = p.permission_id
-            WHERE up.user_id = ?
-        ) t
-    `, userId, userId).Pluck("scope", &authorities).Error
+        SELECT DISTINCT CONCAT(m.menu_name, ':', p.permission_name) AS scope
+        FROM user u
+        JOIN position_role pr 
+            ON u.position_id = pr.position_id
+        JOIN role_menu_permission rmp 
+            ON pr.role_id = rmp.role_id
+        JOIN menu m 
+            ON rmp.menu_id = m.menu_id
+        JOIN permissions p 
+            ON rmp.permission_id = p.permission_id
+        WHERE u.user_id = ?
+    `, userId).Pluck("scope", &authorities).Error
 
 	return authorities, err
 }
+
 func (u *UserRepository) GetById(id int) (*model.User, error) {
-	var user *model.User
-	err := u.Instance.Where("user_id = ?", id).First(&user).Error
-	return user, err
+	var user model.User
+
+	err := u.DB.
+		Joins("LEFT JOIN position p ON p.position_id = user.position_id").
+		Where("user.user_id = ?", id).
+		Select("user.*, p.position_name, p.position_level").
+		First(&user).Error
+
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return &user, err
 }
 
 func (u *UserRepository) Save(user *model.User) error {
@@ -121,4 +124,23 @@ func (u *UserRepository) WithTx(tx *gorm.DB) *UserRepository {
 		BaseRepository: BaseRepository[model.User, int]{Instance: tx},
 		DB:             tx,
 	}
+}
+
+func (u *UserRepository) GetUserPermissionScopes(userId int) ([]model.UserPermissionScope, error) {
+
+	var result []model.UserPermissionScope
+
+	err := u.DB.Raw(`
+        SELECT 
+            CONCAT(m.menu_name, ':', p.permission_name) AS scope,
+            UNIX_TIMESTAMP(up.expired_date) AS expired_date
+        FROM user_permission up
+        JOIN menu m 
+            ON up.menu_id = m.menu_id
+        JOIN permissions p 
+            ON up.permission_id = p.permission_id
+        WHERE up.user_id = ? AND up.expired_date >= NOW()
+    `, userId).Scan(&result).Error
+
+	return result, err
 }

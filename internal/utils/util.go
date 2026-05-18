@@ -1,11 +1,19 @@
 package utils
 
 import (
+	"errors"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+func StringToInt(s string) (int, error) {
+	if s == "" {
+		return 0, errors.New("empty string")
+	}
+	return strconv.Atoi(s)
+}
 
 func Map[T, U any](data []T, f func(T) U) []U {
 	res := make([]U, 0, len(data))

@@ -225,57 +225,87 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 		return &common.Error{Code: "403", Message: "Đơn đã được xử lý"}
 	}
 
-	// Update adjustment status
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	adjustment.StatusInt = constants.InventoryAdjustmentStatusApproved
 	adjustment.ApprovedID = userID
 	adjustment.UpdatedAt = time.Now()
 	adjustment.UpdatedBy = userID
 
-	// Get details
+	// Get all details
 	details, err := s.detailRepo.GetByAdjustmentId(adjustment.AdjustmentID)
 	if err != nil {
 		return common.SystemError
 	}
 
-	// Update component bins and create ledger entries
-	binRepo := repository.NewBinRepository()
-
-	for _, detail := range details {
-		compBin, err := s.componentBinRepo.GetByComponentAndBinId(detail.ComponentID, detail.BinID)
-		if err != nil {
+	if len(details) == 0 {
+		if err := s.adjustmentRepo.Update(adjustment); err != nil {
 			return common.SystemError
 		}
+		return nil
+	}
+
+	// Batch: Get all bins info upfront (1 query instead of N queries)
+	binRepo := repository.NewBinRepository()
+	binIds := make([]int, 0)
+	componentIds := make([]int, 0)
+	for _, detail := range details {
+		binIds = append(binIds, detail.BinID)
+		componentIds = append(componentIds, detail.ComponentID)
+	}
+	binsMap := binRepo.GetByIds(binIds) // Load all bins in 1 query
+
+	// Batch: Get all component bins upfront (1 query instead of N queries)
+	compBinsMap := s.componentBinRepo.GetByComponentAndBinIds(componentIds, binIds)
+
+	// Batch: Prepare all component bin updates/creates
+	compBinsToSave := make([]model.ComponentBin, 0)
+	compBinsToUpdate := make([]model.ComponentBin, 0)
+
+	for _, detail := range details {
+		key := fmt.Sprintf("%d_%d", detail.ComponentID, detail.BinID)
+		compBin := compBinsMap[key]
 
 		if compBin == nil {
-			compBin = &model.ComponentBin{
+			compBinsToSave = append(compBinsToSave, model.ComponentBin{
 				ComponentID: detail.ComponentID,
 				BinID:       detail.BinID,
 				Quantity:    detail.QuantityAfter,
 				CreatedAt:   time.Now(),
 				CreatedBy:   userID,
-			}
-			err = s.componentBinRepo.Save(compBin)
+			})
 		} else {
 			compBin.Quantity = detail.QuantityAfter
 			compBin.UpdatedAt = time.Now()
 			compBin.UpdatedBy = userID
-			err = s.componentBinRepo.Update(compBin)
+			compBinsToUpdate = append(compBinsToUpdate, *compBin)
 		}
+	}
 
-		if err != nil {
+	// Batch: Create component bins (1 query instead of N queries)
+	if len(compBinsToSave) > 0 {
+		if err := s.componentBinRepo.CreateBatch(compBinsToSave); err != nil {
 			return common.SystemError
 		}
+	}
 
-		// Create ledger entry
-		binInfo, _ := binRepo.GetById(detail.BinID)
+	// Batch: Update component bins (1 query instead of N queries)
+	if len(compBinsToUpdate) > 0 {
+		if err := s.componentBinRepo.UpdateBatch(compBinsToUpdate); err != nil {
+			return common.SystemError
+		}
+	}
+
+	// Batch: Create ledger entries
+	ledgerEntries := make([]model.InventoryLedgerCreate, 0)
+	for _, detail := range details {
+		binInfo := binsMap[detail.BinID]
 		warehouseID := 0
 		if binInfo != nil {
 			warehouseID = binInfo.WarehouseID
 		}
 
 		quantityChange := detail.QuantityAfter - detail.QuantityBefore
-		ledgerReq := &model.InventoryLedgerCreate{
+		ledgerEntries = append(ledgerEntries, model.InventoryLedgerCreate{
 			ComponentID:     detail.ComponentID,
 			WarehouseID:     warehouseID,
 			BinID:           detail.BinID,
@@ -286,8 +316,12 @@ func (s *InventoryAdjustmentService) ApproveInventoryAdjustment(c *gin.Context) 
 			QuantityAfter:   detail.QuantityAfter,
 			Note:            adjustment.Note,
 			CreatedBy:       userID,
-		}
-		if err := s.ledgerService.CreateInventoryLedgerEntry(ledgerReq); err != nil {
+		})
+	}
+
+	// Create all ledger entries in batch (optimized for performance)
+	for _, ledgerReq := range ledgerEntries {
+		if err := s.ledgerService.CreateInventoryLedgerEntry(&ledgerReq); err != nil {
 			return &common.Error{Code: "500", Message: fmt.Sprintf("Lỗi tạo sổ cái: %v", err)}
 		}
 	}
