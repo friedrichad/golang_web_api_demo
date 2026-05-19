@@ -98,9 +98,19 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	response.Username = user.Username
 	response.Active = true
 	response.PositionID = user.PositionID
-	response.PositionName = user.PositionName
-	response.IsOP = user.IsOP
-	response.Level = user.PositionLevel
+	response.IsOP = user.IsOp
+
+	// Fetch Position
+	positionRepo := repository.NewPositionRepository()
+	position, err := positionRepo.GetPositionById(user.PositionID)
+	if err == nil && position != nil {
+		response.PositionName = position.PositionName
+		response.Level = position.PositionLevel
+	} else {
+		response.PositionName = ""
+		response.Level = 999
+	}
+
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)
 	authorities, err := a.repository.GetAuthorities(user.UserID)

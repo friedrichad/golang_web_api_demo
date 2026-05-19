@@ -119,9 +119,8 @@ func CheckPermissionRedis(rdb *redis.Client, userId int, authorities []string) b
 		return false
 	}
 
-	// Debug: log all cached permissions for this user
-	allPerms, _ := rdb.HGetAll(Ctx, key).Result()
-	log.Printf("User %d cached permissions: %v, checking for: %v, results: %v", userId, allPerms, authorities, results)
+	// Debug: log cached permissions if needed (removed HGetAll to save network latency)
+	log.Printf("User %d checking for: %v, results: %v", userId, authorities, results)
 
 	now := time.Now().Unix()
 	for i, val := range results {

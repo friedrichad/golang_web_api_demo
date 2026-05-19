@@ -101,8 +101,15 @@ func getTargetUserLevel(c *gin.Context, userIDStr string) (int, error) {
 		return 0, errors.New("user not found")
 	}
 
-	manager.CacheLevel(ctx, userID, user.PositionLevel, user.PositionName)
+	manager.CacheLevel(ctx, userID, 999, "")
 
-	return user.PositionLevel, nil
+	positionRepo := repository.NewPositionRepository()
+	position, err := positionRepo.GetPositionById(user.PositionID)
+	if err == nil && position != nil {
+		manager.CacheLevel(ctx, userID, position.PositionLevel, position.PositionName)
+		return position.PositionLevel, nil
+	}
+
+	return 999, nil
 }
 

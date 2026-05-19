@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"time"
+
+	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 )
 
 type DateRequest struct {

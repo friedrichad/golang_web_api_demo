@@ -1,14 +1,15 @@
 package constants
 
 // Inventory Adjustment Status
-const(
-	InventoryAdjustmentStatusUnknown = 0
-	InventoryAdjustmentStatusPending  = 1
-	InventoryAdjustmentStatusApproved = 2
-	InventoryAdjustmentStatusRejected = 3
-	InventoryAdjustmentStatusApplied = 4
+const (
+	InventoryAdjustmentStatusUnknown   = 0
+	InventoryAdjustmentStatusPending   = 1
+	InventoryAdjustmentStatusApproved  = 2
+	InventoryAdjustmentStatusRejected  = 3
+	InventoryAdjustmentStatusApplied   = 4
 	InventoryAdjustmentStatusCancelled = 5
 )
+
 func IsValidInventoryAdjustmentStatus(status int) bool {
 	switch status {
 	case InventoryAdjustmentStatusUnknown, InventoryAdjustmentStatusPending, InventoryAdjustmentStatusApproved, InventoryAdjustmentStatusRejected, InventoryAdjustmentStatusApplied, InventoryAdjustmentStatusCancelled:
@@ -17,4 +18,3 @@ func IsValidInventoryAdjustmentStatus(status int) bool {
 		return false
 	}
 }
-

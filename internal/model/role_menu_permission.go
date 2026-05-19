@@ -8,9 +8,8 @@ const TableNameRoleMenuPermission = "role_menu_permission"
 
 // RoleMenuPermission mapped from table <role_menu_permission>
 type RoleMenuPermission struct {
-	RoleID       int `gorm:"column:role_id;primaryKey" json:"role_id"`
-	MenuID       int `gorm:"column:menu_id;primaryKey" json:"menu_id"`
-	PermissionID int `gorm:"column:permission_id;primaryKey" json:"permission_id"`
+	RoleID           int `gorm:"column:role_id;not null" json:"role_id"`
+	MenuPermissionID int `gorm:"column:menu_permission_id;not null" json:"menu_permission_id"`
 }
 
 // TableName RoleMenuPermission's table name

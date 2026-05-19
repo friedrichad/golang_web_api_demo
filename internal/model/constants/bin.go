@@ -6,6 +6,7 @@ const (
 	BinStatusOccupied  = 1
 	BinStatusReserved  = 2
 )
+
 func IsValidBinStatus(status int) bool {
 	switch status {
 	case BinStatusAvailable, BinStatusOccupied, BinStatusReserved:

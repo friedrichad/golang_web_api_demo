@@ -12,14 +12,13 @@ const TableNameUserPermission = "user_permission"
 
 // UserPermission mapped from table <user_permission>
 type UserPermission struct {
-	UserID       int       `gorm:"column:user_id;primaryKey" json:"user_id"`
-	MenuID       int       `gorm:"column:menu_id;primaryKey" json:"menu_id"`
-	PermissionID int       `gorm:"column:permission_id;primaryKey" json:"permission_id"`
-	ExpiredDate  time.Time `gorm:"column:expired_date" json:"expired_date"`
-	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
-	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedBy    int       `gorm:"column:updated_by" json:"updated_by"`
-	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
+	UserID           int       `gorm:"column:user_id;not null" json:"user_id"`
+	MenuPermissionID int       `gorm:"column:menu_permission_id;not null" json:"menu_permission_id"`
+	ExpiredDate      time.Time `gorm:"column:expired_date" json:"expired_date"`
+	CreatedBy        int       `gorm:"column:created_by" json:"created_by"`
+	CreatedAt        time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedBy        int       `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedAt        time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
 // TableName UserPermission's table name

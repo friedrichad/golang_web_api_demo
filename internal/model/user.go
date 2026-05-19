@@ -18,15 +18,13 @@ type User struct {
 	Email        string    `gorm:"column:email" json:"email"`
 	PasswordHash string    `gorm:"column:password_hash" json:"password_hash"`
 	StatusInt    int       `gorm:"column:status_int" json:"status_int"`
-	IsOP         int       `gorm:"column:is_op" json:"is_op"`
+	IsOp         int       `gorm:"column:is_op" json:"is_op"`
 	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy    int       `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
 	DepartmentID int       `gorm:"column:department_id" json:"department_id"`
 	PositionID   int       `gorm:"column:position_id" json:"position_id"`
-	PositionName  string `json:"position_name"`
-	PositionLevel int    `json:"position_level"`
 }
 
 // TableName User's table name
@@ -35,18 +33,18 @@ func (*User) TableName() string {
 }
 
 type UserResponse struct {
-	UserID      int       `json:"user_id"`
-	Username    string    `json:"username"`
-	DisplayName string    `json:"display_name"`
-	Email       string    `json:"email"`
-	StatusInt   int       `json:"status_int"`
-	UserRole    []int     `json:"user_role"`
-	CreatedBy   int       `json:"created_by"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedBy   int       `json:"updated_by"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	PositionName  string `json:"position_name"`
-	PositionLevel int    `json:"position_level"`
+	UserID        int       `json:"user_id"`
+	Username      string    `json:"username"`
+	DisplayName   string    `json:"display_name"`
+	Email         string    `json:"email"`
+	StatusInt     int       `json:"status_int"`
+	UserRole      []int     `json:"user_role"`
+	CreatedBy     int       `json:"created_by"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedBy     int       `json:"updated_by"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	PositionName  string    `json:"position_name"`
+	PositionLevel int       `json:"position_level"`
 }
 
 // UserFilter - GET request with query parameters
@@ -69,15 +67,15 @@ type UserCreate struct {
 
 // UserUpdate - PUT request body
 type UserUpdate struct {
-	UserID      int    `json:"user_id" binding:"required"`
-	Username    string `json:"username" binding:"min=3,max=50"`
-	DisplayName string `json:"display_name" binding:"min=1,max=100"`
-	Email       string `json:"email" binding:"email"`
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password" binding:"min=6"`
-	StatusInt   int    `json:"status_int"`
-	UpdatedBy   int    `json:"updated_by"`
-	PositionID   int       `json:"position_id"`
+	UserID        int    `json:"user_id" binding:"required"`
+	Username      string `json:"username" binding:"min=3,max=50"`
+	DisplayName   string `json:"display_name" binding:"min=1,max=100"`
+	Email         string `json:"email" binding:"email"`
+	OldPassword   string `json:"old_password"`
+	NewPassword   string `json:"new_password" binding:"min=6"`
+	StatusInt     int    `json:"status_int"`
+	UpdatedBy     int    `json:"updated_by"`
+	PositionID    int    `json:"position_id"`
 	PositionName  string `json:"position_name"`
 	PositionLevel int    `json:"position_level"`
 }

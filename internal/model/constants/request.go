@@ -8,7 +8,7 @@ const (
 	RequestStatusRejected  = 3
 	RequestStatusCompleted = 4
 	RequestStatusCancelled = 5
-	RequestStatusExpired = 6
+	RequestStatusExpired   = 6
 )
 
 func IsValidRequestStatus(status int) bool {
@@ -29,17 +29,16 @@ func IsValidApprovalStatus(status int) bool {
 	}
 }
 
-
 const (
-	RequestTypeImport   = 1
-	RequestTypeExport   = 2
-	RequestTypeTransfer = 3
+	RequestTypeImport           = 1
+	RequestTypeExport           = 2
+	RequestTypeTransfer         = 3
 	RequestTypeAccessPermission = 4
 )
 
 func IsValidWarehouseRequestType(requestType int) bool {
 	switch requestType {
-	case RequestTypeImport, RequestTypeExport, RequestTypeTransfer,RequestTypeAccessPermission:
+	case RequestTypeImport, RequestTypeExport, RequestTypeTransfer, RequestTypeAccessPermission:
 		return true
 	default:
 		return false

@@ -12,6 +12,7 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
+	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -214,10 +215,15 @@ func (s *RequestPermissionService) Confirm(c *gin.Context,requestId int,approver
 
 	for _, rp := range requestPermissions {
 
+		var mp model.MenuPermission
+		if err := db.Instance.Where("menu_id = ? AND permission_id = ?", rp.MenuID, rp.PermissionID).First(&mp).Error; err != nil {
+			log.Printf("Không tìm thấy MenuPermission cho MenuID=%d, PermissionID=%d: %v", rp.MenuID, rp.PermissionID, err)
+			continue
+		}
+
 		userPermissions = append(userPermissions, model.UserPermission{
-			UserID:       requesterId,
-			MenuID:       rp.MenuID,
-			PermissionID: rp.PermissionID,
+			UserID:           requesterId,
+			MenuPermissionID: mp.MenuPermissionID,
 			ExpiredDate:  expiredDate,
 			CreatedBy:    approverId,
 			CreatedAt:    time.Now(),
