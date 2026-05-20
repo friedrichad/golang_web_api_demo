@@ -5,6 +5,7 @@ import (
 
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/shared"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +19,7 @@ type IUserRepository interface {
 	Save(user *model.User) error
 	Update(user *model.User) error
 	AddUserRole(userId int, roleId int) error
-	GetUserPermissionScopes(userId int) ([]model.UserPermissionScope, error)
+	GetUserPermissionScopes(userId int) ([]shared.UserPermissionScope, error)
 }
 
 type UserRepository struct {
@@ -128,9 +129,9 @@ func (u *UserRepository) WithTx(tx *gorm.DB) *UserRepository {
 	}
 }
 
-func (u *UserRepository) GetUserPermissionScopes(userId int) ([]model.UserPermissionScope, error) {
+func (u *UserRepository) GetUserPermissionScopes(userId int) ([]shared.UserPermissionScope, error) {
 
-	var result []model.UserPermissionScope
+	var result []shared.UserPermissionScope
 
 	err := u.DB.Raw(`
         SELECT 

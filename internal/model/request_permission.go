@@ -57,8 +57,3 @@ type RequestPermissionResponse struct {
 	Reason              string    `json:"reason"`
 	CreatedAt           time.Time `json:"created_at"`
 }
-
-type UserPermissionScope struct {
-	Scope       string `gorm:"column:scope" json:"scope"`
-	ExpiredDate int64  `gorm:"column:expired_date" json:"expired_date"`
-}

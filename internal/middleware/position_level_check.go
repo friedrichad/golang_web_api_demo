@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -112,4 +112,3 @@ func getTargetUserLevel(c *gin.Context, userIDStr string) (int, error) {
 
 	return 999, nil
 }
-

@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
+	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 )
 

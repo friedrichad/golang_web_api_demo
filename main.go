@@ -4,12 +4,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
-	"github.com/friedrichad/golang_web_api_demo/internal/router"
-	"github.com/spf13/viper"
 	"github.com/friedrichad/golang_web_api_demo/internal/cron"
+	"github.com/friedrichad/golang_web_api_demo/internal/redis"
+	"github.com/friedrichad/golang_web_api_demo/internal/router"
 	"github.com/friedrichad/golang_web_api_demo/internal/service"
+	"github.com/spf13/viper"
 )
 
 // @title Auth Server API
@@ -18,7 +18,7 @@ import (
 // @host localhost:8080
 // @BasePath /
 
-func main() {	
+func main() {
 	viper.SetConfigFile("internal/configs/config.yaml")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -26,7 +26,7 @@ func main() {
 	}
 	db.InitMysql()
 	log.SetOutput(os.Stdout)
-	redis.InitRedis() 
+	redis.InitRedis()
 
 	requestService := service.NewRequestService()
 

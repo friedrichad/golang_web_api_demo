@@ -2,7 +2,8 @@ package utils
 
 import (
 	"time"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
+
+	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -41,7 +42,7 @@ func ClearSessionCookie(c *gin.Context) {
 	c.SetCookie(
 		"session_id",
 		"",
-		-1,   // MaxAge < 0 -> delete cookie
+		-1, // MaxAge < 0 -> delete cookie
 		"/",
 		"",
 		false,

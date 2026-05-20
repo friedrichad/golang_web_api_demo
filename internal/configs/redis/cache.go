@@ -107,26 +107,18 @@ func CheckPermissionRedis(rdb *redis.Client, userId int, authorities []string) b
 	return false
 }
 
-// CheckRestrictedMenuPermission checks if a user has permission for a restricted menu
-// Returns true only if:
-// 1. The scope is in the restricted permissions list
-// 2. The user has that scope in their user_permission hash
 func CheckRestrictedMenuPermission(rdb *redis.Client, userId int, scope string) bool {
-	// Get restricted permissions list
 	restrictedListKey := "restricted_permissions:list"
 	restrictedListData, err := Get(rdb, restrictedListKey)
 	if err != nil || restrictedListData == "" {
 		log.Printf("[AUTH] Failed to get restricted permissions list: %v", err)
 		return false
 	}
-
-	// Check if scope is in restricted list
 	var restrictedScopes []string
 	if err := json.Unmarshal([]byte(restrictedListData), &restrictedScopes); err != nil {
 		log.Printf("[AUTH] Failed to parse restricted scopes: %v", err)
 		return false
 	}
-
 	isRestricted := false
 	for _, r := range restrictedScopes {
 		if r == scope {
@@ -134,13 +126,10 @@ func CheckRestrictedMenuPermission(rdb *redis.Client, userId int, scope string) 
 			break
 		}
 	}
-
 	if !isRestricted {
 		log.Printf("[AUTH] Scope '%s' is not in restricted list", scope)
 		return false
 	}
-
-	// Check if user has this permission in their hash
 	userPermKey := fmt.Sprintf("user_permission:%d", userId)
 	hasPermission, err := rdb.HExists(Ctx, userPermKey, scope).Result()
 	if err != nil {

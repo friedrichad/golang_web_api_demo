@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/internal/common"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -233,11 +233,9 @@ func hasRestrictedAuthority(authorities []string) bool {
 	return false
 }
 
-// checkRestrictedPermissions validates user has sufficient level and required restricted authority
 func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string) bool {
 	log.Printf("[AUTH] RESTRICTED: Checking for user_id %d", userId)
 
-	// Verify position_level
 	positionLevel := c.GetInt("position_level")
 	if positionLevel <= 0 {
 		log.Printf("[AUTH] RESTRICTED: ✗ User position_level %d insufficient", positionLevel)
@@ -245,7 +243,12 @@ func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string
 	}
 	log.Printf("[AUTH] RESTRICTED: ✓ User position_level %d valid", positionLevel)
 
-	// Load and verify permissions
+	// Tối ưu: Kiểm tra quyền trong Redis Cache trước khi gọi Database
+	if checkRedisPermission(userId, authorities) {
+		log.Printf("[AUTH] RESTRICTED: ✓ User %d authorized from cache", userId)
+		return true
+	}
+
 	userRepo := repository.NewUserRepository()
 	perms, err := userRepo.GetUserPermissionScopes(userId)
 	if err != nil {
@@ -271,18 +274,17 @@ func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string
 	}
 
 	// Cache permissions
-	err = redis.SaveUserPermissionCache(redis.Rdb, userId, scopes, UserPermissionCacheTTL)
+	err = redis.SaveUserPermissionCache(redis.Rdb, userId, perms, UserPermissionCacheTTL)
 	if err != nil {
 		log.Printf("[AUTH-CACHE] ⚠ Failed to cache: %v", err)
 	} else {
-		log.Printf("[AUTH-CACHE] ✓ Cached %d permissions (TTL: %v)", len(scopes), UserPermissionCacheTTL)
+		log.Printf("[AUTH-CACHE] ✓ Cached %d permissions (TTL: %v)", len(perms), UserPermissionCacheTTL)
 	}
 
 	log.Printf("[AUTH] RESTRICTED: ✓ User %d authorized", userId)
 	return true
 }
 
-// loadAndCheckUserPermissions loads user permissions from DB and verifies authorities
 func loadAndCheckUserPermissions(userId int, authorities []string) bool {
 	log.Printf("[AUTH] DB: Loading permissions for user_id %d", userId)
 
@@ -311,18 +313,17 @@ func loadAndCheckUserPermissions(userId int, authorities []string) bool {
 	}
 
 	// Cache for future use
-	err = redis.SaveUserPermissionCache(redis.Rdb, userId, scopes, UserPermissionCacheTTL)
+	err = redis.SaveUserPermissionCache(redis.Rdb, userId, perms, UserPermissionCacheTTL)
 	if err != nil {
 		log.Printf("[AUTH-CACHE] ⚠ Failed to cache for user %d: %v", userId, err)
 	} else {
-		log.Printf("[AUTH-CACHE] ✓ Cached %d permissions for user %d (TTL: %v)", len(scopes), userId, UserPermissionCacheTTL)
+		log.Printf("[AUTH-CACHE] ✓ Cached %d permissions for user %d (TTL: %v)", len(perms), userId, UserPermissionCacheTTL)
 	}
 
 	log.Printf("[AUTH] DB: ✓ User %d has required authority", userId)
 	return true
 }
 
-// checkUserHasAuthority checks if user's scopes contain at least one required authority
 func checkUserHasAuthority(userScopes []string, requiredAuthorities []string) bool {
 	for _, required := range requiredAuthorities {
 		for _, userScope := range userScopes {
@@ -352,12 +353,12 @@ func InitUserPermissionCache(userID int) bool {
 	}
 
 	// Cache entire list first
-	err = redis.SaveUserPermissionCache(redis.Rdb, userID, scopes, UserPermissionCacheTTL)
+	err = redis.SaveUserPermissionCache(redis.Rdb, userID, perms, UserPermissionCacheTTL)
 	if err != nil {
 		log.Printf("[AUTH-CACHE] ✗ Failed to cache user permission list for user_id %d (TTL: %v): %v", userID, UserPermissionCacheTTL, err)
 		return false
 	}
-	log.Printf("[AUTH-CACHE] ✓ Cached %d permissions for user %d (TTL: %v)", len(scopes), userID, UserPermissionCacheTTL)
+	log.Printf("[AUTH-CACHE] ✓ Cached %d permissions for user %d (TTL: %v)", len(perms), userID, UserPermissionCacheTTL)
 
 	return true
 }
@@ -375,7 +376,6 @@ func getRestrictedPermissionsList() ([]string, error) {
 		}
 	}
 
-	// Load from DB and cache
 	return loadRestrictedPermissionsFromDB(cacheKey)
 }
 
