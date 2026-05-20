@@ -216,42 +216,6 @@ func checkRedisPermission(userId int, authority []string) bool {
 	return true
 }
 
-func loadPermissionFromDB(userId int, authorities []string) bool {
-	if !InitUserPermissionCache(userId) {
-		return false
-	}
-	// Check again using Redis after caching
-	return redis.CheckPermissionRedis(redis.Rdb, userId, authorities)
-}
-
-func initAndCheckUserPermissions(userId int, authorities []string) bool {
-	userRepo := repository.NewUserRepository()
-	perms, err := userRepo.GetUserPermissionScopes(userId)
-	if err != nil {
-		log.Printf("Failed to get user permissions from DB: %v", err)
-		return false
-	}
-
-	if len(perms) == 0 {
-		log.Printf("User %d has no permissions", userId)
-		return false
-	}
-
-	// Convert to scopes
-	scopes := make([]string, len(perms))
-	for i, p := range perms {
-		scopes[i] = p.Scope
-	}
-
-	err = redis.SaveUserPermissionCache(redis.Rdb, userId, scopes, UserPermissionCacheTTL)
-	if err != nil {
-		log.Printf("[AUTH-CACHE] Failed to cache user permissions for user_id %d, TTL: %v, Error: %v", userId, UserPermissionCacheTTL, err)
-	} else {
-		log.Printf("[AUTH-CACHE] Successfully cached %d permissions for user_id %d with TTL: %v", len(scopes), userId, UserPermissionCacheTTL)
-	}
-	return checkUserHasAuthority(scopes, authorities)
-}
-
 // hasRestrictedAuthority checks if any requested authority is a restricted permission
 func hasRestrictedAuthority(authorities []string) bool {
 	restrictedPerms, err := getRestrictedPermissionsList()
@@ -358,20 +322,6 @@ func loadAndCheckUserPermissions(userId int, authorities []string) bool {
 	return true
 }
 
-func initAndCheckUserPermissionsWithContext(c *gin.Context, userId int, authorities []string) bool {
-	return loadAndCheckUserPermissions(userId, authorities)
-}
-
-func checkUserLevelFromContext(c *gin.Context) bool {
-	positionLevel := c.GetInt("position_level")
-	log.Printf("[AUTH] Checking restricted permission access - user position_level: %d", positionLevel)
-	if positionLevel <= 0 {
-		log.Printf("[AUTH] User position_level %d insufficient for restricted permission access", positionLevel)
-		return false
-	}
-	return true
-}
-
 // checkUserHasAuthority checks if user's scopes contain at least one required authority
 func checkUserHasAuthority(userScopes []string, requiredAuthorities []string) bool {
 	for _, required := range requiredAuthorities {
@@ -462,13 +412,4 @@ func isPermissionRestricted(scope string, restrictedScopes []string) bool {
 		}
 	}
 	return false
-}
-
-func BuildPermissionMap(perms []model.UserPermissionScope) map[string]interface{} {
-	result := make(map[string]interface{})
-
-	for _, p := range perms {
-		result[p.Scope] = p.ExpiredDate
-	}
-	return result
 }
