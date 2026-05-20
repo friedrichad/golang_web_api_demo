@@ -10,11 +10,56 @@ const TableNameMenuPermission = "menu_permission"
 type MenuPermission struct {
 	MenuPermissionID int `gorm:"column:menu_permission_id;primaryKey;autoIncrement:true" json:"menu_permission_id"`
 	MenuID           int `gorm:"column:menu_id;not null" json:"menu_id"`
+	MenuPermissionName string `gorm:"column:menu_permission_name" json:"menu_permission_name"`
 	PermissionID     int `gorm:"column:permission_id;not null" json:"permission_id"`
+	PermissionName   string `gorm:"column:permission_name" json:"permission_name"`
 	IsRestricted     int `gorm:"column:is_restricted" json:"is_restricted"`
+	CreatedBy        int `gorm:"column:created_by" json:"created_by"`
+	CreatedAt        int64 `gorm:"column:created_at" json:"created_at"`
+	UpdatedBy        int `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedAt        int64 `gorm:"column:updated_at" json:"updated_at"`
 }
 
 // TableName MenuPermission's table name
 func (*MenuPermission) TableName() string {
 	return TableNameMenuPermission
+}
+
+
+type MenuPermissionFilter struct {
+	MenuPermissionID *int    `form:"menu_permission_id"`
+	MenuID           *int    `form:"menu_id"`
+	MenuPermissionName *string `form:"menu_permission_name"`
+	PermissionID     *int    `form:"permission_id"`
+	PermissionName   *string `form:"permission_name"`
+	IsRestricted     *int    `form:"is_restricted"`
+	PageSize
+	DateRequest
+}
+
+type MenuPermissionCreate struct {
+	MenuID           int    `json:"menu_id" binding:"required"`
+	MenuPermissionName string `json:"menu_permission_name" binding:"required"`
+	PermissionID     int    `json:"permission_id" binding:"required"`
+	IsRestricted     int    `json:"is_restricted" binding:"required"`
+}
+
+type MenuPermissionUpdate struct {
+	MenuPermissionID int    `json:"menu_permission_id" binding:"required"`
+	MenuID           int    `json:"menu_id" binding:"required"`
+	PermissionID     int    `json:"permission_id" binding:"required"`
+	IsRestricted     int    `json:"is_restricted" binding:"required"`
+}
+
+type MenuPermissionResponse struct {
+	MenuPermissionID int    `json:"menu_permission_id"`
+	MenuID           int    `json:"menu_id"`
+	MenuPermissionName string `json:"menu_permission_name"`
+	PermissionID     int    `json:"permission_id"`
+	PermissionName   string `json:"permission_name"`
+	IsRestricted     int    `json:"is_restricted"`
+	CreatedBy        int    `json:"created_by"`
+	CreatedAt        int64  `json:"created_at"`
+	UpdatedBy        int    `json:"updated_by"`
+	UpdatedAt        int64  `json:"updated_at"`
 }

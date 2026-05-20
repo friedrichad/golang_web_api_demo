@@ -338,26 +338,3 @@ func IsLockedAccount(userID int, attempt int) bool {
 	}
 	return false
 }
-
-func InitUserPermissionCache(userID int) {
-	var perms []model.UserPermissionScope
-	perms, err := repository.NewUserRepository().GetUserPermissionScopes(userID)
-	if err != nil {
-		log.Printf("Failed to get user permissions: %v", err)
-		return
-	}
-	permMap := BuildPermissionMap(perms)
-	err = redis.SaveUserPermissionCache(redis.Rdb, userID, permMap, 24*time.Hour)
-	if err != nil {
-		log.Printf("Failed to save user permission cache: %v", err)
-	}
-}
-
-func BuildPermissionMap(perms []model.UserPermissionScope) map[string]interface{} {
-	result := make(map[string]interface{})
-
-	for _, p := range perms {
-		result[p.Scope] = p.ExpiredDate
-	}
-	return result
-}

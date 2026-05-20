@@ -66,16 +66,18 @@ func (u *UserRepository) GetAuthorities(userId int) ([]string, error) {
 
 	err := u.DB.Raw(`
         SELECT DISTINCT CONCAT(m.menu_name, ':', p.permission_name) AS scope
-        FROM user u
-        JOIN position_role pr 
-            ON u.position_id = pr.position_id
-        JOIN role_menu_permission rmp 
-            ON pr.role_id = rmp.role_id
-        JOIN menu m 
-            ON rmp.menu_id = m.menu_id
-        JOIN permissions p 
-            ON rmp.permission_id = p.permission_id
-        WHERE u.user_id = ?
+		FROM user u
+		JOIN position_role pr 
+			ON u.position_id = pr.position_id
+		JOIN role_menu_permission rmp 
+			ON pr.role_id = rmp.role_id
+		JOIN menu_permission mp 
+			ON rmp.menu_permission_id = mp.menu_permission_id
+		JOIN menu m 
+			ON mp.menu_id = m.menu_id
+		JOIN permissions p 
+			ON mp.permission_id = p.permission_id
+		WHERE u.user_id = ?;
     `, userId).Pluck("scope", &authorities).Error
 
 	return authorities, err
@@ -135,11 +137,14 @@ func (u *UserRepository) GetUserPermissionScopes(userId int) ([]model.UserPermis
             CONCAT(m.menu_name, ':', p.permission_name) AS scope,
             UNIX_TIMESTAMP(up.expired_date) AS expired_date
         FROM user_permission up
+        JOIN menu_permission mp
+            ON up.menu_permission_id = mp.menu_permission_id
         JOIN menu m 
-            ON up.menu_id = m.menu_id
+            ON mp.menu_id = m.menu_id
         JOIN permissions p 
-            ON up.permission_id = p.permission_id
-        WHERE up.user_id = ? AND up.expired_date >= NOW()
+            ON mp.permission_id = p.permission_id
+        WHERE up.user_id = ? 
+        AND (up.expired_date IS NULL OR up.expired_date >= NOW())
     `, userId).Scan(&result).Error
 
 	return result, err

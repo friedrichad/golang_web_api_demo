@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,6 +17,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
+)
+
+// TTL constants for Redis cache
+const (
+	UserPermissionCacheTTL       = 24 * time.Hour // User permissions cache TTL
+	RestrictedPermissionCacheTTL = 1 * time.Hour  // Restricted permissions cache TTL
 )
 
 // BasicAuthenticator validates client credentials (client_id and client_secret)
@@ -41,11 +48,7 @@ func BearerAuthenticator() gin.HandlerFunc {
 	hmacSecret := []byte(viper.GetString("oauth.jwt-secret"))
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-
-		// Extract raw token without "Bearer " prefix for blacklist check
 		rawToken := strings.Replace(authHeader, "Bearer ", "", 1)
-
-		// Check if token is blacklisted (logout)
 		isBlacklisted, err := redis.IsBlacklisted(rawToken)
 		if err != nil {
 			log.Printf("Error checking blacklist: %v", err)
@@ -78,57 +81,51 @@ func BearerAuthenticator() gin.HandlerFunc {
 }
 
 // Authorizator checks if user has required authorities/permissions
-// Check flow: JWT authorities -> Redis cache -> Database (lazy load + cache)
-// Can be called with multiple authorities - user needs at least one of them
+// Check flow:
+// 1. Check if operator -> bypass all checks
+// 2. Check restricted permissions first (user must have sufficient position_level)
+// 3. Check JWT authorities
+// 4. Check Redis cache
+// 5. Load from DB and verify (lazy load + cache)
 func Authorizator(authority ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetInt("is_op") == 1 {
+		if isOperator(c) {
 			c.Next()
 			return
 		}
-		jwtAuthorities := c.GetStringSlice("authorities")
-		if len(jwtAuthorities) > 0 && utils.AnyContains(jwtAuthorities, authority) {
-			c.Next()
-			return
-		}
-		userIdStr := GetUserID(c)
-		userId, _ := strconv.Atoi(userIdStr)
 
-		// Check Redis cache first
-		if userId > 0 && redis.CheckPermissionRedis(redis.Rdb, userId, authority) {
+		userId, err := strconv.Atoi(GetUserID(c))
+		if err != nil {
+			forbidden(c)
+			return
+		}
+		if hasRestrictedAuthority(authority) {
+			if !checkRestrictedPermissions(c, userId, authority) {
+				forbidden(c)
+				return
+			}
 			c.Next()
 			return
 		}
-		// If not in Redis, try to load from database and cache
-		if userId > 0 {
-			userRepo := repository.NewUserRepository()
-			perms, err := userRepo.GetUserPermissionScopes(userId)
-			if err != nil {
-				log.Printf("Error fetching permissions from DB for user %d: %v", userId, err)
-			} else if len(perms) > 0 {
-				// Build permission map for Redis cache (scope -> expiredDate)
-				permMap := make(map[string]interface{})
-				for _, perm := range perms {
-					permMap[perm.Scope] = perm.ExpiredDate
-				}
-				// Save to Redis cache (24 hour TTL)
-				cacheErr := redis.SaveUserPermissionCache(redis.Rdb, userId, permMap, 24*time.Hour)
-				if cacheErr != nil {
-					log.Printf("Error saving permissions to Redis cache for user %d: %v", userId, cacheErr)
-				}
-				// Now check if requested authority exists in cached permissions
-				if redis.CheckPermissionRedis(redis.Rdb, userId, authority) {
-					c.Next()
-					return
-				}
-			}
+		allowed :=
+			checkJWTAuthorities(c, authority) ||
+				checkRedisPermission(userId, authority) ||
+				loadAndCheckUserPermissions(userId, authority)
+
+		if allowed {
+			c.Next()
+			return
 		}
-		c.JSON(http.StatusForbidden, model.ResponseWrapper{
-			Code:    "403",
-			Message: "Không có quyền truy cập",
-		})
-		c.Abort()
+
+		forbidden(c)
 	}
+}
+func forbidden(c *gin.Context) {
+	c.JSON(http.StatusForbidden, model.ResponseWrapper{
+		Code:    "403",
+		Message: "Không có quyền truy cập, vui lòng liên hệ quản trị viên",
+	})
+	c.Abort()
 }
 
 // GetUserID extracts user ID from context (set by BearerAuthenticator)
@@ -168,7 +165,6 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 		log.Printf("Invalid JWT Token: %v", err)
 		return nil, false
 	}
-	// Check if token matches the latest token stored in Redis (ensure it's the current valid token)
 	storedToken, err := redis.Get(redis.Rdb, "auth:token:"+claims.Id)
 	if err != nil {
 		log.Printf("Error getting token from Redis: %v", err)
@@ -179,4 +175,300 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 		return nil, false
 	}
 	return claims, true
+}
+
+func IsRestrictedMenu(userId int, scope string) (bool, error) {
+	return false, nil
+}
+func isOperator(c *gin.Context) bool {
+	isOp := c.GetInt("is_op") == 1
+	if isOp {
+		log.Printf("[AUTH] User is operator - bypassing permission checks")
+	}
+	return isOp
+}
+
+// checkJWTAuthorities checks if user has required authorities in JWT claims
+func checkJWTAuthorities(c *gin.Context, authority []string) bool {
+	jwtAuthorities := c.GetStringSlice("authorities")
+	if len(jwtAuthorities) == 0 {
+		log.Printf("[AUTH] JWT: No authorities in token claims")
+		return false
+	}
+
+	if !utils.AnyContains(jwtAuthorities, authority) {
+		log.Printf("[AUTH] JWT: Check failed - JWT: %v, Required: %v", jwtAuthorities, authority)
+		return false
+	}
+
+	log.Printf("[AUTH] JWT: ✓ User has required authority")
+	return true
+}
+
+// checkRedisPermission checks if user has required authorities in Redis cache
+func checkRedisPermission(userId int, authority []string) bool {
+	if !redis.CheckPermissionRedis(redis.Rdb, userId, authority) {
+		log.Printf("[AUTH] Redis: ✗ User %d - authorities %v not in cache", userId, authority)
+		return false
+	}
+
+	log.Printf("[AUTH] Redis: ✓ User %d has required authority from cache", userId)
+	return true
+}
+
+func loadPermissionFromDB(userId int, authorities []string) bool {
+	if !InitUserPermissionCache(userId) {
+		return false
+	}
+	// Check again using Redis after caching
+	return redis.CheckPermissionRedis(redis.Rdb, userId, authorities)
+}
+
+func initAndCheckUserPermissions(userId int, authorities []string) bool {
+	userRepo := repository.NewUserRepository()
+	perms, err := userRepo.GetUserPermissionScopes(userId)
+	if err != nil {
+		log.Printf("Failed to get user permissions from DB: %v", err)
+		return false
+	}
+
+	if len(perms) == 0 {
+		log.Printf("User %d has no permissions", userId)
+		return false
+	}
+
+	// Convert to scopes
+	scopes := make([]string, len(perms))
+	for i, p := range perms {
+		scopes[i] = p.Scope
+	}
+
+	err = redis.SaveUserPermissionCache(redis.Rdb, userId, scopes, UserPermissionCacheTTL)
+	if err != nil {
+		log.Printf("[AUTH-CACHE] Failed to cache user permissions for user_id %d, TTL: %v, Error: %v", userId, UserPermissionCacheTTL, err)
+	} else {
+		log.Printf("[AUTH-CACHE] Successfully cached %d permissions for user_id %d with TTL: %v", len(scopes), userId, UserPermissionCacheTTL)
+	}
+	return checkUserHasAuthority(scopes, authorities)
+}
+
+// hasRestrictedAuthority checks if any requested authority is a restricted permission
+func hasRestrictedAuthority(authorities []string) bool {
+	restrictedPerms, err := getRestrictedPermissionsList()
+	if err != nil {
+		log.Printf("[AUTH] ⚠ Cannot load restricted permissions list: %v", err)
+		return false
+	}
+
+	for _, auth := range authorities {
+		if isPermissionRestricted(auth, restrictedPerms) {
+			log.Printf("[AUTH] Detected restricted authority: %s", auth)
+			return true
+		}
+	}
+	return false
+}
+
+// checkRestrictedPermissions validates user has sufficient level and required restricted authority
+func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string) bool {
+	log.Printf("[AUTH] RESTRICTED: Checking for user_id %d", userId)
+
+	// Verify position_level
+	positionLevel := c.GetInt("position_level")
+	if positionLevel <= 0 {
+		log.Printf("[AUTH] RESTRICTED: ✗ User position_level %d insufficient", positionLevel)
+		return false
+	}
+	log.Printf("[AUTH] RESTRICTED: ✓ User position_level %d valid", positionLevel)
+
+	// Load and verify permissions
+	userRepo := repository.NewUserRepository()
+	perms, err := userRepo.GetUserPermissionScopes(userId)
+	if err != nil {
+		log.Printf("[AUTH] RESTRICTED: ✗ Failed to load permissions: %v", err)
+		return false
+	}
+
+	if len(perms) == 0 {
+		log.Printf("[AUTH] RESTRICTED: ✗ User %d has no permissions", userId)
+		return false
+	}
+
+	// Convert to scopes
+	scopes := make([]string, len(perms))
+	for i, p := range perms {
+		scopes[i] = p.Scope
+	}
+
+	// Verify authority
+	if !checkUserHasAuthority(scopes, authorities) {
+		log.Printf("[AUTH] RESTRICTED: ✗ User %d - Required: %v, Has: %v", userId, authorities, scopes)
+		return false
+	}
+
+	// Cache permissions
+	err = redis.SaveUserPermissionCache(redis.Rdb, userId, scopes, UserPermissionCacheTTL)
+	if err != nil {
+		log.Printf("[AUTH-CACHE] ⚠ Failed to cache: %v", err)
+	} else {
+		log.Printf("[AUTH-CACHE] ✓ Cached %d permissions (TTL: %v)", len(scopes), UserPermissionCacheTTL)
+	}
+
+	log.Printf("[AUTH] RESTRICTED: ✓ User %d authorized", userId)
+	return true
+}
+
+// loadAndCheckUserPermissions loads user permissions from DB and verifies authorities
+func loadAndCheckUserPermissions(userId int, authorities []string) bool {
+	log.Printf("[AUTH] DB: Loading permissions for user_id %d", userId)
+
+	userRepo := repository.NewUserRepository()
+	perms, err := userRepo.GetUserPermissionScopes(userId)
+	if err != nil {
+		log.Printf("[AUTH] DB: ✗ Failed to load - %v", err)
+		return false
+	}
+
+	if len(perms) == 0 {
+		log.Printf("[AUTH] DB: ✗ User %d has no permissions", userId)
+		return false
+	}
+
+	// Convert to scopes
+	scopes := make([]string, len(perms))
+	for i, p := range perms {
+		scopes[i] = p.Scope
+	}
+
+	// Check authority
+	if !checkUserHasAuthority(scopes, authorities) {
+		log.Printf("[AUTH] DB: ✗ User %d - Required: %v, Has: %v", userId, authorities, scopes)
+		return false
+	}
+
+	// Cache for future use
+	err = redis.SaveUserPermissionCache(redis.Rdb, userId, scopes, UserPermissionCacheTTL)
+	if err != nil {
+		log.Printf("[AUTH-CACHE] ⚠ Failed to cache for user %d: %v", userId, err)
+	} else {
+		log.Printf("[AUTH-CACHE] ✓ Cached %d permissions for user %d (TTL: %v)", len(scopes), userId, UserPermissionCacheTTL)
+	}
+
+	log.Printf("[AUTH] DB: ✓ User %d has required authority", userId)
+	return true
+}
+
+func initAndCheckUserPermissionsWithContext(c *gin.Context, userId int, authorities []string) bool {
+	return loadAndCheckUserPermissions(userId, authorities)
+}
+
+func checkUserLevelFromContext(c *gin.Context) bool {
+	positionLevel := c.GetInt("position_level")
+	log.Printf("[AUTH] Checking restricted permission access - user position_level: %d", positionLevel)
+	if positionLevel <= 0 {
+		log.Printf("[AUTH] User position_level %d insufficient for restricted permission access", positionLevel)
+		return false
+	}
+	return true
+}
+
+// checkUserHasAuthority checks if user's scopes contain at least one required authority
+func checkUserHasAuthority(userScopes []string, requiredAuthorities []string) bool {
+	for _, required := range requiredAuthorities {
+		for _, userScope := range userScopes {
+			if userScope == required {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func InitUserPermissionCache(userID int) bool {
+	userRepo := repository.NewUserRepository()
+	perms, err := userRepo.GetUserPermissionScopes(userID)
+	if err != nil {
+		log.Printf("Failed to get user permissions: %v", err)
+		return false
+	}
+	if len(perms) == 0 {
+		log.Printf("User %d has no permissions to cache", userID)
+		return false
+	}
+
+	scopes := make([]string, len(perms))
+	for i, p := range perms {
+		scopes[i] = p.Scope
+	}
+
+	// Cache entire list first
+	err = redis.SaveUserPermissionCache(redis.Rdb, userID, scopes, UserPermissionCacheTTL)
+	if err != nil {
+		log.Printf("[AUTH-CACHE] ✗ Failed to cache user permission list for user_id %d (TTL: %v): %v", userID, UserPermissionCacheTTL, err)
+		return false
+	}
+	log.Printf("[AUTH-CACHE] ✓ Cached %d permissions for user %d (TTL: %v)", len(scopes), userID, UserPermissionCacheTTL)
+
+	return true
+}
+
+func getRestrictedPermissionsList() ([]string, error) {
+	cacheKey := "restricted_permissions:list"
+
+	// Try to get from Redis cache first
+	cachedData, err := redis.Get(redis.Rdb, cacheKey)
+	if err == nil && cachedData != "" {
+		var scopes []string
+		if err := json.Unmarshal([]byte(cachedData), &scopes); err == nil {
+			log.Printf("[AUTH-CACHE] ✓ Loaded %d restricted permissions from cache (TTL: %v)", len(scopes), RestrictedPermissionCacheTTL)
+			return scopes, nil
+		}
+	}
+
+	// Load from DB and cache
+	return loadRestrictedPermissionsFromDB(cacheKey)
+}
+
+func loadRestrictedPermissionsFromDB(cacheKey string) ([]string, error) {
+	menuPermRepo := repository.NewMenuPermissionRepository()
+
+	scopes, err := menuPermRepo.GetAllMenuPermissionsByRestricted(1)
+	if err != nil {
+		log.Printf("[AUTH-CACHE] ✗ Failed to load restricted permissions from DB: %v", err)
+		return []string{}, err
+	}
+
+	if len(scopes) == 0 {
+		log.Printf("[AUTH-CACHE] No restricted permissions found in database")
+		return []string{}, nil
+	}
+
+	// Store list in Redis for quick access
+	cacheData, _ := json.Marshal(scopes)
+	err = redis.Save(redis.Rdb, cacheKey, string(cacheData), RestrictedPermissionCacheTTL)
+	if err != nil {
+		log.Printf("[AUTH-CACHE] ⚠ Failed to cache permission list (TTL: %v): %v", RestrictedPermissionCacheTTL, err)
+	} else {
+		log.Printf("[AUTH-CACHE] ✓ Cached %d restricted permissions with TTL: %v", len(scopes), RestrictedPermissionCacheTTL)
+	}
+
+	return scopes, nil
+}
+
+func isPermissionRestricted(scope string, restrictedScopes []string) bool {
+	for _, restricted := range restrictedScopes {
+		if restricted == scope {
+			return true
+		}
+	}
+	return false
+}
+
+func BuildPermissionMap(perms []model.UserPermissionScope) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	for _, p := range perms {
+		result[p.Scope] = p.ExpiredDate
+	}
+	return result
 }

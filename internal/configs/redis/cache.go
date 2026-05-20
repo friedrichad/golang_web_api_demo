@@ -2,9 +2,9 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -83,55 +83,87 @@ func IsBlacklisted(token string) (bool, error) {
 	return n > 0, err
 }
 
-func SaveUserPermissionCache(rdb *redis.Client, userId int, data map[string]interface{}, ttl time.Duration) error {
-	if len(data) == 0 {
+func SaveUserPermissionCache(rdb *redis.Client, userId int, scopes []string, ttl time.Duration) error {
+	if len(scopes) == 0 {
 		return nil
 	}
-
 	key := fmt.Sprintf("user_permission:%d", userId)
-
-	// Convert to strings for Redis and save all at once
-	stringData := make(map[string]interface{}, len(data))
-	for scope, exp := range data {
-		log.Printf("Caching permission for user %d: %s with expiration %v", userId, scope, exp)
-		stringData[scope] = fmt.Sprint(exp)
+	pipe := rdb.Pipeline()
+	ttlSec := int(ttl.Seconds())
+	for _, scope := range scopes {
+		pipe.HSet(Ctx, key, scope, 1)
+		pipe.Do(Ctx, "HEXPIRE", key, ttlSec, "FIELDS", 1, scope)
 	}
-
-	if err := rdb.HSet(Ctx, key, stringData).Err(); err != nil {
-		return err
-	}
-
-	return rdb.Expire(Ctx, key, ttl).Err()
+	_, err := pipe.Exec(Ctx)
+	return err
 }
 
 func CheckPermissionRedis(rdb *redis.Client, userId int, authorities []string) bool {
-	key := "user_permission:" + strconv.Itoa(userId)
-
-	// Get only the specific permissions we need to check
-	results, err := rdb.HMGet(Ctx, key, authorities...).Result()
+	key := fmt.Sprintf("user_permission:%d", userId)
+	pipe := rdb.Pipeline()
+	cmds := make([]*redis.BoolCmd, len(authorities))
+	for i, scope := range authorities {
+		cmds[i] = pipe.HExists(Ctx, key, scope)
+	}
+	_, err := pipe.Exec(Ctx)
 	if err != nil {
-		log.Printf("Redis HMGET error for user %d: %v", userId, err)
+		log.Printf("Redis pipeline error: %v", err)
 		return false
 	}
-
-	if len(results) == 0 {
-		log.Printf("No permissions in Redis for user %d, searching for: %v", userId, authorities)
-		return false
-	}
-
-	// Debug: log cached permissions if needed (removed HGetAll to save network latency)
-	log.Printf("User %d checking for: %v, results: %v", userId, authorities, results)
-
-	now := time.Now().Unix()
-	for i, val := range results {
-		if val != nil {
-			if exp, err := strconv.ParseInt(val.(string), 10, 64); err == nil {
-				if exp == 0 || exp > now {
-					log.Printf("User %d permission '%s' valid (exp: %d, now: %d)", userId, authorities[i], exp, now)
-					return true
-				}
-			}
+	for _, cmd := range cmds {
+		if ok, _ := cmd.Result(); ok {
+			return true
 		}
 	}
 	return false
+}
+
+// CheckRestrictedMenuPermission checks if a user has permission for a restricted menu
+// Returns true only if:
+// 1. The scope is in the restricted permissions list
+// 2. The user has that scope in their user_permission hash
+func CheckRestrictedMenuPermission(rdb *redis.Client, userId int, scope string) bool {
+	// Get restricted permissions list
+	restrictedListKey := "restricted_permissions:list"
+	restrictedListData, err := Get(rdb, restrictedListKey)
+	if err != nil || restrictedListData == "" {
+		log.Printf("[AUTH] Failed to get restricted permissions list: %v", err)
+		return false
+	}
+
+	// Check if scope is in restricted list
+	var restrictedScopes []string
+	if err := json.Unmarshal([]byte(restrictedListData), &restrictedScopes); err != nil {
+		log.Printf("[AUTH] Failed to parse restricted scopes: %v", err)
+		return false
+	}
+
+	isRestricted := false
+	for _, r := range restrictedScopes {
+		if r == scope {
+			isRestricted = true
+			break
+		}
+	}
+
+	if !isRestricted {
+		log.Printf("[AUTH] Scope '%s' is not in restricted list", scope)
+		return false
+	}
+
+	// Check if user has this permission in their hash
+	userPermKey := fmt.Sprintf("user_permission:%d", userId)
+	hasPermission, err := rdb.HExists(Ctx, userPermKey, scope).Result()
+	if err != nil {
+		log.Printf("[AUTH] Error checking user permission hash: %v", err)
+		return false
+	}
+
+	if !hasPermission {
+		log.Printf("[AUTH] User %d does not have permission '%s'", userId, scope)
+		return false
+	}
+
+	log.Printf("[AUTH] ✓ User %d has restricted menu permission '%s'", userId, scope)
+	return true
 }
