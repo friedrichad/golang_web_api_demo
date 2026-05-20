@@ -11,7 +11,7 @@ import (
 type IUserPermissionRepository interface {
 	Save(userPermission *model.UserPermission) error
 	SaveBatch(userPermissions []model.UserPermission) error
-	Delete(userID int, menuID int, permissionID int) error
+	Delete(userPermissionIds []int) error
 }
 
 type UserPermissionRepository struct {
@@ -49,8 +49,8 @@ func (r *UserPermissionRepository) SaveBatch(userPermissions []model.UserPermiss
 	return nil
 }
 
-func (r *UserPermissionRepository) Delete(userID int, menuID int, permissionID int) error {
-	err := r.DB.Where("user_id = ? AND menu_id = ? AND permission_id = ?", userID, menuID, permissionID).Delete(&model.UserPermission{}).Error
+func (r *UserPermissionRepository) Delete(userPermissionIds []int) error {
+	err := r.DB.Where("user_permission_id IN ?", userPermissionIds).Delete(&model.UserPermission{}).Error
 	if err != nil {
 		log.Print("Lỗi khi xóa user permission: ", err)
 		return err

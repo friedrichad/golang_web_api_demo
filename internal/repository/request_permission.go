@@ -50,10 +50,9 @@ func (r *RequestPermissionRepository) GetAllByCondition(query model.RequestPermi
 	return r.GetPage("Select * from RequestPermission"+
 		" where (? is null or request_permission_id = ?)"+
 		" and (? is null or request_id = ?)"+
-		" and (? is null or menu_id =?)"+
-		" and (? is null or permission_id = ?)"+
+		" and (? is null or menu_permission = ?)"+
 		" and (? is null or created_at >= ?)"+
-		" and (? is null or created_at < ?)", query.Page, query.Size, query.RequestPermissionID, query.RequestPermissionID, query.RequestID, query.RequestID, query.MenuID, query.MenuID, query.PermissionID, query.PermissionID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+		" and (? is null or created_at < ?)", query.Page, query.Size, query.RequestPermissionID, query.RequestPermissionID, query.RequestID, query.RequestID, query.MenuPermission, query.MenuPermission, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
 }
 
 func (r *RequestPermissionRepository) Delete(ids []int) error {

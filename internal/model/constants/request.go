@@ -9,6 +9,7 @@ const (
 	RequestStatusCompleted = 4
 	RequestStatusCancelled = 5
 	RequestStatusExpired   = 6
+	RequestStatusRevoked   = 7
 )
 
 func IsValidRequestStatus(status int) bool {

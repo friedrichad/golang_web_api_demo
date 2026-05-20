@@ -9,6 +9,7 @@ import (
 type IMenuPermissionRepository interface {
 	GetAllMenuPermissions(query *model.MenuPermissionFilter) ([]model.MenuPermission, int, error)
 	GetAllMenuPermissionsByRestricted(isRestricted int) ([]string, error)
+	GetMenuPermissionById(id int) (*model.MenuPermission, error)
 	AddMenuPermission(menuPermission *model.MenuPermission) error
 	UpdateMenuPermission(menuPermission *model.MenuPermission) error
 	DeleteMenuPermissions(menuPermissionId int) error
@@ -47,6 +48,10 @@ func (m *MenuPermissionRepository) GetAllMenuPermissions(query *model.MenuPermis
 	)
 }
 
+func (m *MenuPermissionRepository) GetMenuPermissionById(id int) (*model.MenuPermission, error) {
+	return m.GetById(id)
+}
+
 func (m *MenuPermissionRepository) AddMenuPermission(menuPermission *model.MenuPermission) error {
 	return m.BaseRepository.Create(menuPermission)
 }
@@ -63,13 +68,13 @@ func (m *MenuPermissionRepository) GetAllMenuPermissionsByRestricted(isRestricte
 	var scopes []string
 	err := m.DB.Raw(
 		"SELECT CONCAT(m.menu_name, ':', p.permission_name) AS scope "+
-	    "FROM menu_permission mp "+
-		"JOIN menu m "+
-		"ON mp.menu_id = m.menu_id "+
-		"JOIN permissions p "+
-		"ON mp.permission_id = p.permission_id "+
-		"WHERE ? IS NULL OR mp.is_restricted = ? "+
-		"ORDER BY mp.menu_permission_id DESC",
+			"FROM menu_permission mp "+
+			"JOIN menu m "+
+			"ON mp.menu_id = m.menu_id "+
+			"JOIN permissions p "+
+			"ON mp.permission_id = p.permission_id "+
+			"WHERE ? IS NULL OR mp.is_restricted = ? "+
+			"ORDER BY mp.menu_permission_id DESC",
 		isRestricted, isRestricted,
 	).Scan(&scopes).Error
 	return scopes, err

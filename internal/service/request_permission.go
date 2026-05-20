@@ -12,7 +12,6 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
-	"github.com/friedrichad/golang_web_api_demo/internal/configs/db"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -29,6 +28,7 @@ type RequestPermissionService struct {
 	repoRequestPermission repository.IRequestPermissionRepository
 	repoRequest           repository.IRequestRepository
 	repoUserPermission    repository.IUserPermissionRepository
+	repoMenuPermission    repository.IMenuPermissionRepository
 }
 
 var requestPermissionService IRequestPermissionService
@@ -39,6 +39,7 @@ func NewRequestPermissionService() IRequestPermissionService {
 			repoRequestPermission: repository.NewRequestPermissionRepository(),
 			repoRequest:           repository.NewRequestRepository(),
 			repoUserPermission:    repository.NewUserPermissionRepository(),
+			repoMenuPermission:    repository.NewMenuPermissionRepository(),
 		}
 	}
 	return requestPermissionService
@@ -60,8 +61,7 @@ func (s *RequestPermissionService) GetAllPermissionByCondition(c *gin.Context) (
 		requestPermissionResponses[i] = model.RequestPermissionResponse{
 			RequestPermissionID: requestPermissions[i].RequestPermissionID,
 			RequestID:           requestPermissions[i].RequestID,
-			MenuID:              requestPermissions[i].MenuID,
-			PermissionID:        requestPermissions[i].PermissionID,
+			MenuPermission:      requestPermissions[i].MenuPermission,
 			Reason:              requestPermissions[i].Reason,
 			CreatedAt:           requestPermissions[i].CreatedAt,
 		}
@@ -76,11 +76,10 @@ func (s *RequestPermissionService) Save(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 	requestPermission := model.RequestPermission{
-		RequestID:    requestPermissionCreate.RequestID,
-		MenuID:       requestPermissionCreate.MenuID,
-		PermissionID: requestPermissionCreate.PermissionID,
-		Reason:       requestPermissionCreate.Reason,
-		CreatedAt:    time.Now(),
+		RequestID:      requestPermissionCreate.RequestID,
+		MenuPermission: requestPermissionCreate.MenuPermission,
+		Reason:         requestPermissionCreate.Reason,
+		CreatedAt:      time.Now(),
 	}
 	err := s.repoRequestPermission.Save(&requestPermission)
 	if err != nil {
@@ -107,8 +106,7 @@ func (s *RequestPermissionService) Update(c *gin.Context) *common.Error {
 		log.Print("Lỗi khi lấy request permission: ", err)
 		return common.SystemError
 	}
-	request.MenuID = requestPermissionUpdate.MenuID
-	request.PermissionID = requestPermissionUpdate.PermissionID
+	request.MenuPermission = requestPermissionUpdate.MenuPermission
 	request.Reason = requestPermissionUpdate.Reason
 	err = s.repoRequestPermission.Update(request)
 	if err != nil {
@@ -141,41 +139,35 @@ func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
 		log.Print("Lỗi khi bind json: ", err)
 		return common.RequestInvalid
 	}
-
 	if req.StatusInt != constants.RequestStatusApproved &&
-		req.StatusInt != constants.RequestStatusRejected {
+		req.StatusInt != constants.RequestStatusRejected &&
+		req.StatusInt != constants.RequestStatusRevoked {
 		log.Print("Trạng thái phê duyệt không hợp lệ: ", req.StatusInt)
 		return common.RequestInvalid
 	}
-
 	if req.Reason == "" {
 		log.Print("Lý do phê duyệt không được để trống")
 		return common.RequestInvalid
 	}
-
 	request, err := s.repoRequest.GetByRequestId(req.RequestID)
 	if err != nil {
 		log.Print("Không tìm thấy request: ", err)
 		return common.NotFound
 	}
-
 	if request.StatusInt == constants.RequestStatusApproved ||
-		request.StatusInt == constants.RequestStatusRejected {
+		request.StatusInt == constants.RequestStatusRejected ||
+		request.StatusInt == constants.RequestStatusRevoked {
 		log.Print("Request đã được xử lý trước đó")
 		return common.RequestInvalid
 	}
-
 	userID, err := strconv.Atoi(middleware.GetUserID(c))
 	if err != nil {
 		log.Print("Lỗi parse userID: ", err)
 		return common.RequestInvalid
 	}
-
 	switch req.StatusInt {
-
 	case constants.RequestStatusApproved:
-		if err := s.Confirm(c, req.RequestID, userID, request.PerformedByID, request.ExpiredDate); 
-		err != nil {
+		if err := s.Confirm(c, req.RequestID, userID, request.PerformedByID, request.ExpiredDate); err != nil {
 			log.Print("Lỗi confirm request: ", err)
 			return common.SystemError
 		}
@@ -185,6 +177,14 @@ func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
 	case constants.RequestStatusRejected:
 		request.ApproverID = userID
 		request.StatusInt = constants.RequestStatusRejected
+
+	case constants.RequestStatusRevoked:
+		if err := s.RevokePermission(c, req.RequestID); err != nil {
+			log.Print("Lỗi revoke permission: ", err)
+			return common.SystemError
+		}
+		request.ApproverID = userID
+		request.StatusInt = constants.RequestStatusRevoked
 	}
 
 	if err := s.repoRequest.Update(request); err != nil {
@@ -195,7 +195,7 @@ func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
 	return nil
 }
 
-func (s *RequestPermissionService) Confirm(c *gin.Context,requestId int,approverId int,requesterId int,expiredDate time.Time,) error {
+func (s *RequestPermissionService) Confirm(c *gin.Context, requestId int, approverId int, requesterId int, expiredDate time.Time) error {
 
 	requestPermissions, err := s.repoRequestPermission.GetRequestPermissionByRequestId(requestId)
 	if err != nil {
@@ -214,24 +214,23 @@ func (s *RequestPermissionService) Confirm(c *gin.Context,requestId int,approver
 	redisData := make(map[string]interface{})
 
 	for _, rp := range requestPermissions {
-
-		var mp model.MenuPermission
-		if err := db.Instance.Where("menu_id = ? AND permission_id = ?", rp.MenuID, rp.PermissionID).First(&mp).Error; err != nil {
-			log.Printf("Không tìm thấy MenuPermission cho MenuID=%d, PermissionID=%d: %v", rp.MenuID, rp.PermissionID, err)
+		mp, err := s.repoMenuPermission.GetMenuPermissionById(rp.MenuPermission)
+		if err != nil {
+			log.Printf("Không tìm thấy MenuPermission với ID=%d: %v", rp.MenuPermission, err)
 			continue
 		}
 
 		userPermissions = append(userPermissions, model.UserPermission{
 			UserID:           requesterId,
 			MenuPermissionID: mp.MenuPermissionID,
-			ExpiredDate:  expiredDate,
-			CreatedBy:    approverId,
-			CreatedAt:    time.Now(),
-			UpdatedBy:    approverId,
-			UpdatedAt:    time.Now(),
+			ExpiredDate:      expiredDate,
+			CreatedBy:        approverId,
+			CreatedAt:        time.Now(),
+			UpdatedBy:        approverId,
+			UpdatedAt:        time.Now(),
 		})
 
-		field := fmt.Sprintf("%d:%d", rp.MenuID, rp.PermissionID)
+		field := fmt.Sprintf("%d:%d", mp.MenuID, mp.PermissionID)
 		value := expiredDate.Unix()
 
 		redisData[field] = value
@@ -239,6 +238,32 @@ func (s *RequestPermissionService) Confirm(c *gin.Context,requestId int,approver
 	err = s.repoUserPermission.SaveBatch(userPermissions)
 	if err != nil {
 		log.Print("Có lỗi xảy ra khi lưu batch user permissions: ", err)
+		return err
+	}
+	return nil
+}
+func (s *RequestPermissionService) RevokePermission(c *gin.Context, requestId int) error {
+	requestPermissions, err := s.repoRequestPermission.GetRequestPermissionByRequestId(requestId)
+	if err != nil {
+		log.Print("Có lỗi xảy ra khi truy vấn request: ", err)
+		return err
+	}
+	if len(requestPermissions) == 0 {
+		log.Print("Không tìm thấy request permissions cho request: ", requestId)
+		return nil
+	}
+	userPermissionIds := make([]int, 0, len(requestPermissions))
+	for _, rp := range requestPermissions {
+		mp, err := s.repoMenuPermission.GetMenuPermissionById(rp.MenuPermission)
+		if err != nil {
+			log.Printf("Không tìm thấy MenuPermission với ID=%d: %v", rp.MenuPermission, err)
+			continue
+		}
+		userPermissionIds = append(userPermissionIds, mp.MenuPermissionID)
+	}
+	err = s.repoUserPermission.Delete(userPermissionIds)
+	if err != nil {
+		log.Print("Có lỗi xảy ra khi xóa user permissions: ", err)
 		return err
 	}
 	return nil

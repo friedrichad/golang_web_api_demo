@@ -12,12 +12,14 @@ const TableNameRequestPermission = "request_permission"
 
 // RequestPermission mapped from table <request_permission>
 type RequestPermission struct {
-	RequestPermissionID int       `gorm:"column:request_permission_id;primaryKey;autoIncrement:true" json:"request_permission_id"`
-	RequestID           int       `gorm:"column:request_id;not null" json:"request_id"`
-	MenuID              int       `gorm:"column:menu_id;not null" json:"menu_id"`
-	PermissionID        int       `gorm:"column:permission_id;not null" json:"permission_id"`
+	RequestPermissionID int     `gorm:"column:request_permission_id;primaryKey;autoIncrement:true" json:"request_permission_id"`
+	RequestID           int     `gorm:"column:request_id;not null" json:"request_id"`
+	MenuPermission      int     `gorm:"column:menu_permission" json:"menu_permission"`
 	Reason              string    `gorm:"column:reason" json:"reason"`
 	CreatedAt           time.Time `gorm:"column:created_at" json:"created_at"`
+	CreatedBy           int     `gorm:"column:created_by" json:"created_by"`
+	UpdatedAt           time.Time `gorm:"column:updated_at" json:"updated_at"`
+	UpdatedBy           int     `gorm:"column:updated_by" json:"updated_by"`
 }
 
 // TableName RequestPermission's table name
@@ -28,32 +30,28 @@ func (*RequestPermission) TableName() string {
 type RequestPermissionFilter struct {
 	RequestPermissionID int `form:"request_permission_id"`
 	RequestID           int `form:"request_id"`
-	MenuID              int `form:"menu_id"`
-	PermissionID        int `form:"permission_id"`
+	MenuPermission      int `form:"menu_permission"`
 	PageSize
 	DateRequest
 }
 
 type RequestPermissionCreate struct {
 	RequestID    int    `json:"request_id", binding:"required"`
-	MenuID       int    `json:"menu_id", binding:"required"`
-	PermissionID int    `json:"permission_id", binding:"required"`
+	MenuPermission int    `json:"menu_permission", binding:"required"`
 	Reason       string `json:"reason", binding:"required"`
 }
 
 type RequestPermissionUpdate struct {
 	RequestPermissionID int    `json:"request_permission_id" binding:"required"`
 	RequestID           int    `json:"request_id" binding:"required"`
-	MenuID              int    `json:"menu_id" binding:"required"`
-	PermissionID        int    `json:"permission_id" binding:"required"`
+	MenuPermission      int    `json:"menu_permission" binding:"required"`
 	Reason              string `json:"reason"`
 }
 
 type RequestPermissionResponse struct {
 	RequestPermissionID int       `json:"request_permission_id"`
 	RequestID           int       `json:"request_id"`
-	MenuID              int       `json:"menu_id"`
-	PermissionID        int       `json:"permission_id"`
+	MenuPermission      int       `json:"menu_permission"`
 	Reason              string    `json:"reason"`
 	CreatedAt           time.Time `json:"created_at"`
 }

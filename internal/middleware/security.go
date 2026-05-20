@@ -93,7 +93,6 @@ func Authorizator(authority ...string) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-
 		userId, err := strconv.Atoi(GetUserID(c))
 		if err != nil {
 			forbidden(c)
@@ -177,9 +176,6 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 	return claims, true
 }
 
-func IsRestrictedMenu(userId int, scope string) (bool, error) {
-	return false, nil
-}
 func isOperator(c *gin.Context) bool {
 	isOp := c.GetInt("is_op") == 1
 	if isOp {
@@ -188,7 +184,6 @@ func isOperator(c *gin.Context) bool {
 	return isOp
 }
 
-// checkJWTAuthorities checks if user has required authorities in JWT claims
 func checkJWTAuthorities(c *gin.Context, authority []string) bool {
 	jwtAuthorities := c.GetStringSlice("authorities")
 	if len(jwtAuthorities) == 0 {
@@ -392,8 +387,6 @@ func loadRestrictedPermissionsFromDB(cacheKey string) ([]string, error) {
 		log.Printf("[AUTH-CACHE] No restricted permissions found in database")
 		return []string{}, nil
 	}
-
-	// Store list in Redis for quick access
 	cacheData, _ := json.Marshal(scopes)
 	err = redis.Save(redis.Rdb, cacheKey, string(cacheData), RestrictedPermissionCacheTTL)
 	if err != nil {
