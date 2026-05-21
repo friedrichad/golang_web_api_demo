@@ -42,8 +42,6 @@ func BasicAuthenticator() gin.HandlerFunc {
 	}
 }
 
-// BearerAuthenticator validates JWT bearer token
-// Extracts user information and sets it in context for downstream handlers
 func BearerAuthenticator() gin.HandlerFunc {
 	hmacSecret := []byte(viper.GetString("oauth.jwt-secret"))
 	return func(c *gin.Context) {
@@ -80,13 +78,6 @@ func BearerAuthenticator() gin.HandlerFunc {
 	}
 }
 
-// Authorizator checks if user has required authorities/permissions
-// Check flow:
-// 1. Check if operator -> bypass all checks
-// 2. Check restricted permissions first (user must have sufficient position_level)
-// 3. Check JWT authorities
-// 4. Check Redis cache
-// 5. Load from DB and verify (lazy load + cache)
 func Authorizator(authority ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if isOperator(c) {
@@ -200,7 +191,6 @@ func checkJWTAuthorities(c *gin.Context, authority []string) bool {
 	return true
 }
 
-// checkRedisPermission checks if user has required authorities in Redis cache
 func checkRedisPermission(userId int, authority []string) bool {
 	if !redis.CheckPermissionRedis(redis.Rdb, userId, authority) {
 		log.Printf("[AUTH] Redis: ✗ User %d - authorities %v not in cache", userId, authority)
@@ -211,7 +201,6 @@ func checkRedisPermission(userId int, authority []string) bool {
 	return true
 }
 
-// hasRestrictedAuthority checks if any requested authority is a restricted permission
 func hasRestrictedAuthority(authorities []string) bool {
 	restrictedPerms, err := getRestrictedPermissionsList()
 	if err != nil {
@@ -237,7 +226,6 @@ func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string
 	}
 	log.Printf("[AUTH] RESTRICTED: ✓ User position_level %d valid", positionLevel)
 
-	// Tối ưu: Kiểm tra quyền trong Redis Cache trước khi gọi Database
 	if checkRedisPermission(userId, authorities) {
 		log.Printf("[AUTH] RESTRICTED: ✓ User %d authorized from cache", userId)
 		return true
@@ -325,34 +313,6 @@ func checkUserHasAuthority(userScopes []string, requiredAuthorities []string) bo
 		}
 	}
 	return false
-}
-
-func InitUserPermissionCache(userID int) bool {
-	userRepo := repository.NewUserRepository()
-	perms, err := userRepo.GetUserPermissionScopes(userID)
-	if err != nil {
-		log.Printf("Failed to get user permissions: %v", err)
-		return false
-	}
-	if len(perms) == 0 {
-		log.Printf("User %d has no permissions to cache", userID)
-		return false
-	}
-
-	scopes := make([]string, len(perms))
-	for i, p := range perms {
-		scopes[i] = p.Scope
-	}
-
-	// Cache entire list first
-	err = redis.SaveUserPermissionCache(redis.Rdb, userID, perms)
-	if err != nil {
-		log.Printf("[AUTH-CACHE] ✗ Failed to cache user permission list for user_id %d (TTL: %v): %v", userID, UserPermissionCacheTTL, err)
-		return false
-	}
-	log.Printf("[AUTH-CACHE] ✓ Cached %d permissions for user %d (TTL: %v)", len(perms), userID, UserPermissionCacheTTL)
-
-	return true
 }
 
 func getRestrictedPermissionsList() ([]string, error) {

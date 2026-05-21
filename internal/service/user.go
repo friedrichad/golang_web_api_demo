@@ -252,7 +252,6 @@ func (s *UserService) GetUserInfoWithCache(userId int) (*shared.UserInfo, error)
 	if err != nil {
 		log.Printf("Failed to cache user info for user %d: %v", userId, err)
 	}
-
 	return userInfo, nil
 }
 
