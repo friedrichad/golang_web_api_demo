@@ -1,12 +1,17 @@
 package service
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
 	"strconv"
 	"time"
 
-	"github.com/friedrichad/golang_web_api_demo/internal/common"	
+	"github.com/friedrichad/golang_web_api_demo/internal/common"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
+	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
+	"github.com/friedrichad/golang_web_api_demo/internal/shared"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +23,7 @@ type IUserService interface {
 	UpdateUser(c *gin.Context) *common.Error
 	DeleteUser(c *gin.Context) *common.Error
 	GetUserAuthorities(c *gin.Context) ([]string, *common.Error)
+	GetUserInfoWithCache(userId int) (*shared.UserInfo, error)
 }
 
 type UserService struct {
@@ -213,6 +219,41 @@ func (s *UserService) GetUserAuthorities(c *gin.Context) ([]string, *common.Erro
 	}
 
 	return authorities, nil
+}
+
+func (s *UserService) GetUserInfoWithCache(userId int) (*shared.UserInfo, error) {
+	key := fmt.Sprintf("user_info:%d", userId)
+	data, err := redis.Get(redis.Rdb, key)
+
+	if err == nil && data != "" {
+		var userInfo shared.UserInfo
+		if err := json.Unmarshal([]byte(data), &userInfo); err != nil {
+			log.Printf("Failed to unmarshal cached user info for user %d: %v", userId, err)
+		} else {
+			return &userInfo, nil
+		}
+	}
+	user, err := s.userRepo.GetById(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	userInfo := &shared.UserInfo{
+		UserId:   user.UserID,
+		UserName: user.Username,
+		PositionInfo: shared.PositionInfo{
+			PositionId:    user.PositionID,
+			PositionLevel: user.PositionLevel,
+			PositionName:  user.PositionName,
+		},
+		IsOP: user.IsOp,
+	}
+	err = redis.SaveUserInfoCache(redis.Rdb, *userInfo, time.Hour)
+	if err != nil {
+		log.Printf("Failed to cache user info for user %d: %v", userId, err)
+	}
+
+	return userInfo, nil
 }
 
 // Helper function to convert User model to UserResponse DTO

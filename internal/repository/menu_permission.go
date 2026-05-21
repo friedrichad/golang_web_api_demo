@@ -49,7 +49,9 @@ func (m *MenuPermissionRepository) GetAllMenuPermissions(query *model.MenuPermis
 }
 
 func (m *MenuPermissionRepository) GetMenuPermissionById(id int) (*model.MenuPermission, error) {
-	return m.GetById(id)
+	var menuPermission *model.MenuPermission
+	err := m.DB.First(&menuPermission, "menu_permission_id = ?", id).Error
+	return menuPermission, err
 }
 
 func (m *MenuPermissionRepository) AddMenuPermission(menuPermission *model.MenuPermission) error {

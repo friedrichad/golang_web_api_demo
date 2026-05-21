@@ -14,7 +14,7 @@ const TableNameRequestPermission = "request_permission"
 type RequestPermission struct {
 	RequestPermissionID int     `gorm:"column:request_permission_id;primaryKey;autoIncrement:true" json:"request_permission_id"`
 	RequestID           int     `gorm:"column:request_id;not null" json:"request_id"`
-	MenuPermission      int     `gorm:"column:menu_permission" json:"menu_permission"`
+	MenuPermissionID    int     `gorm:"column:menu_permission_id" json:"menu_permission_id"`
 	Reason              string    `gorm:"column:reason" json:"reason"`
 	CreatedAt           time.Time `gorm:"column:created_at" json:"created_at"`
 	CreatedBy           int     `gorm:"column:created_by" json:"created_by"`

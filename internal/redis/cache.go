@@ -73,7 +73,7 @@ func IsBlacklisted(token string) (bool, error) {
 	return n > 0, err
 }
 
-func SaveUserPermissionCache(rdb *redis.Client, userId int, scopes []shared.UserPermissionScope, ttl time.Duration) error {
+func SaveUserPermissionCache(rdb *redis.Client, userId int, scopes []shared.UserPermissionScope) error {
 	if len(scopes) == 0 {
 		return nil
 	}
@@ -109,12 +109,9 @@ func CheckPermissionRedis(rdb *redis.Client, userId int, authorities []string) b
 	return false
 }
 
-// CheckRestrictedMenuPermission checks if a user has permission for a restricted menu
-// Returns true only if:
 // 1. The scope is in the restricted permissions list
 // 2. The user has that scope in their user_permission hash
 func CheckRestrictedMenuPermission(rdb *redis.Client, userId int, scope string) bool {
-	// Get restricted permissions list
 	restrictedListKey := "restricted_permissions:list"
 	restrictedListData, err := Get(rdb, restrictedListKey)
 	if err != nil || restrictedListData == "" {
@@ -122,13 +119,11 @@ func CheckRestrictedMenuPermission(rdb *redis.Client, userId int, scope string) 
 		return false
 	}
 
-	// Check if scope is in restricted list
 	var restrictedScopes []string
 	if err := json.Unmarshal([]byte(restrictedListData), &restrictedScopes); err != nil {
 		log.Printf("[AUTH] Failed to parse restricted scopes: %v", err)
 		return false
 	}
-
 	isRestricted := false
 	for _, r := range restrictedScopes {
 		if r == scope {
@@ -136,20 +131,16 @@ func CheckRestrictedMenuPermission(rdb *redis.Client, userId int, scope string) 
 			break
 		}
 	}
-
 	if !isRestricted {
 		log.Printf("[AUTH] Scope '%s' is not in restricted list", scope)
 		return false
 	}
-
-	// Check if user has this permission in their hash
 	userPermKey := fmt.Sprintf("user_permission:%d", userId)
 	hasPermission, err := rdb.HExists(Ctx, userPermKey, scope).Result()
 	if err != nil {
 		log.Printf("[AUTH] Error checking user permission hash: %v", err)
 		return false
 	}
-
 	if !hasPermission {
 		log.Printf("[AUTH] User %d does not have permission '%s'", userId, scope)
 		return false
@@ -157,4 +148,23 @@ func CheckRestrictedMenuPermission(rdb *redis.Client, userId int, scope string) 
 
 	log.Printf("[AUTH] ✓ User %d has restricted menu permission '%s'", userId, scope)
 	return true
+}
+
+func DeleteUserPermissionField(rdb *redis.Client, userId int) error {
+	key := fmt.Sprintf("user_permission:%d", userId)
+	return rdb.Del(Ctx, key).Err()
+}
+
+func SaveUserInfoCache(rdb *redis.Client, userInfo shared.UserInfo, expiration time.Duration) error {
+	key := fmt.Sprintf("user_info:%d", userInfo.UserId)
+	data, err := json.Marshal(userInfo)
+	if err != nil {
+		return err
+	}
+	return Save(rdb, key, string(data), expiration)
+}
+
+func DeleteUserInfoCache(rdb *redis.Client, userId int) error {
+	key := fmt.Sprintf("user_info:%d", userId)
+	return rdb.Del(Ctx, key).Err()
 }

@@ -12,6 +12,8 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/friedrichad/golang_web_api_demo/internal/utils"
+	"github.com/friedrichad/golang_web_api_demo/internal/shared"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
@@ -97,9 +99,6 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	response.Id = strconv.FormatInt(int64(user.UserID), 10)
 	response.Username = user.Username
 	response.Active = true
-	response.PositionID = user.PositionID
-	response.IsOP = user.IsOp
-
 	// Fetch Position
 	positionRepo := repository.NewPositionRepository()
 	position, err := positionRepo.GetPositionById(user.PositionID)
@@ -110,7 +109,6 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 		response.PositionName = ""
 		response.Level = 999
 	}
-
 	response.Exp = getExpiredTime(a.accessTokenExpired)
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)
 	authorities, err := a.repository.GetAuthorities(user.UserID)
@@ -132,6 +130,17 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 	if err != nil {
 		return nil, common.SystemError
 	}
+	userInfo := shared.UserInfo{
+		UserId: user.UserID,
+		UserName: user.Username,
+		PositionInfo: shared.PositionInfo{
+			PositionId: user.PositionID,
+			PositionName: response.PositionName,
+			PositionLevel: response.Level,
+		},
+		IsOP: response.IsOP,
+	}
+	err = redis.SaveUserInfoCache(redis.Rdb, userInfo, ttl)
 	return response, nil
 }
 

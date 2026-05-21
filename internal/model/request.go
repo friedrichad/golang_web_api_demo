@@ -51,7 +51,7 @@ type RequestFilter struct {
 type RequestCreate struct {
 	RequestType *int      `json:"request_type" binding:"required"`
 	Description string    `json:"description"`
-	WarehouseID int       `json:"warehouse_id" binding:"required"`
+	WarehouseID int       `json:"warehouse_id"`
 	PartnerID   int       `json:"partner_id"`
 	Note        string    `json:"note"`
 	ExpiredDate time.Time `json:"expired_date"`

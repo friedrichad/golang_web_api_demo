@@ -230,7 +230,6 @@ func hasRestrictedAuthority(authorities []string) bool {
 
 func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string) bool {
 	log.Printf("[AUTH] RESTRICTED: Checking for user_id %d", userId)
-
 	positionLevel := c.GetInt("position_level")
 	if positionLevel <= 0 {
 		log.Printf("[AUTH] RESTRICTED: ✗ User position_level %d insufficient", positionLevel)
@@ -243,7 +242,6 @@ func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string
 		log.Printf("[AUTH] RESTRICTED: ✓ User %d authorized from cache", userId)
 		return true
 	}
-
 	userRepo := repository.NewUserRepository()
 	perms, err := userRepo.GetUserPermissionScopes(userId)
 	if err != nil {
@@ -256,7 +254,6 @@ func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string
 		return false
 	}
 
-	// Convert to scopes
 	scopes := make([]string, len(perms))
 	for i, p := range perms {
 		scopes[i] = p.Scope
@@ -269,11 +266,11 @@ func checkRestrictedPermissions(c *gin.Context, userId int, authorities []string
 	}
 
 	// Cache permissions
-	err = redis.SaveUserPermissionCache(redis.Rdb, userId, perms, UserPermissionCacheTTL)
+	err = redis.SaveUserPermissionCache(redis.Rdb, userId, perms)
 	if err != nil {
 		log.Printf("[AUTH-CACHE] ⚠ Failed to cache: %v", err)
 	} else {
-		log.Printf("[AUTH-CACHE] ✓ Cached %d permissions (TTL: %v)", len(perms), UserPermissionCacheTTL)
+		log.Printf("[AUTH-CACHE] ✓ Cached %d permissions", len(perms))
 	}
 
 	log.Printf("[AUTH] RESTRICTED: ✓ User %d authorized", userId)
@@ -308,7 +305,7 @@ func loadAndCheckUserPermissions(userId int, authorities []string) bool {
 	}
 
 	// Cache for future use
-	err = redis.SaveUserPermissionCache(redis.Rdb, userId, perms, UserPermissionCacheTTL)
+	err = redis.SaveUserPermissionCache(redis.Rdb, userId, perms)
 	if err != nil {
 		log.Printf("[AUTH-CACHE] ⚠ Failed to cache for user %d: %v", userId, err)
 	} else {
@@ -348,7 +345,7 @@ func InitUserPermissionCache(userID int) bool {
 	}
 
 	// Cache entire list first
-	err = redis.SaveUserPermissionCache(redis.Rdb, userID, perms, UserPermissionCacheTTL)
+	err = redis.SaveUserPermissionCache(redis.Rdb, userID, perms)
 	if err != nil {
 		log.Printf("[AUTH-CACHE] ✗ Failed to cache user permission list for user_id %d (TTL: %v): %v", userID, UserPermissionCacheTTL, err)
 		return false

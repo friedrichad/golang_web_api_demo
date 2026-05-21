@@ -50,7 +50,7 @@ func (r *UserPermissionRepository) SaveBatch(userPermissions []model.UserPermiss
 }
 
 func (r *UserPermissionRepository) Delete(userPermissionIds []int) error {
-	err := r.DB.Where("user_permission_id IN ?", userPermissionIds).Delete(&model.UserPermission{}).Error
+	err := r.DB.Where("menu_permission_id IN ?", userPermissionIds).Delete(&model.UserPermission{}).Error
 	if err != nil {
 		log.Print("Lỗi khi xóa user permission: ", err)
 		return err
