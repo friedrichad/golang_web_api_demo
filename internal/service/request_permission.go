@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-	// "encoding/json"
 	"log"
 	"strconv"
 	"time"
@@ -11,10 +9,10 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/middleware"
 	"github.com/friedrichad/golang_web_api_demo/internal/model"
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
+	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 )
 
 type IRequestPermissionService interface {
@@ -30,10 +28,11 @@ type RequestPermissionService struct {
 	repoRequest           repository.IRequestRepository
 	repoUserPermission    repository.IUserPermissionRepository
 	repoMenuPermission    repository.IMenuPermissionRepository
+	userService           IUserService
 }
 
-
 var requestPermissionService IRequestPermissionService
+
 func NewRequestPermissionService() IRequestPermissionService {
 	if requestPermissionService == nil {
 		requestPermissionService = &RequestPermissionService{
@@ -41,6 +40,7 @@ func NewRequestPermissionService() IRequestPermissionService {
 			repoRequest:           repository.NewRequestRepository(),
 			repoUserPermission:    repository.NewUserPermissionRepository(),
 			repoMenuPermission:    repository.NewMenuPermissionRepository(),
+			userService:           NewUserService(),
 		}
 	}
 	return requestPermissionService
@@ -77,10 +77,10 @@ func (s *RequestPermissionService) Save(c *gin.Context) *common.Error {
 		return common.RequestInvalid
 	}
 	requestPermission := model.RequestPermission{
-		RequestID:      requestPermissionCreate.RequestID,
+		RequestID:        requestPermissionCreate.RequestID,
 		MenuPermissionID: requestPermissionCreate.MenuPermission,
-		Reason:         requestPermissionCreate.Reason,
-		CreatedAt:      time.Now(),
+		Reason:           requestPermissionCreate.Reason,
+		CreatedAt:        time.Now(),
 	}
 	err := s.repoRequestPermission.Save(&requestPermission)
 	if err != nil {
@@ -165,6 +165,23 @@ func (s *RequestPermissionService) Approval(c *gin.Context) *common.Error {
 		log.Print("Lỗi parse userID: ", err)
 		return common.RequestInvalid
 	}
+
+	requesterInfo, err := s.userService.GetUserInfoWithCache(request.PerformedByID)
+	if err != nil {
+		log.Printf("Lỗi khi lấy thông tin requester ID=%d: %v", request.PerformedByID, err)
+		return common.SystemError
+	}
+	requesterPositionLevel := requesterInfo.PositionInfo.PositionLevel
+
+	check, err := redis.CanApproveRequest(redis.Rdb, userID, requesterPositionLevel)
+	if err != nil {
+		log.Print("Lỗi kiểm tra quyền phê duyệt: ", err)
+		return common.RequestInvalid
+	}
+	if !check {
+		log.Print("Người dùng không có quyền phê duyệt request này")
+		return common.RequestInvalid
+	}
 	switch req.StatusInt {
 	case constants.RequestStatusApproved:
 		if err := s.Confirm(c, req.RequestID, userID, request.PerformedByID, request.ExpiredDate); err != nil {
@@ -208,8 +225,6 @@ func (s *RequestPermissionService) Confirm(c *gin.Context, requestId int, approv
 		return nil
 	}
 	userPermissions := make([]model.UserPermission, 0, len(requestPermissions))
-	redisData := make(map[string]interface{})
-
 	for _, rp := range requestPermissions {
 		mp, err := s.repoMenuPermission.GetMenuPermissionById(rp.MenuPermissionID)
 		if err != nil {
@@ -226,11 +241,6 @@ func (s *RequestPermissionService) Confirm(c *gin.Context, requestId int, approv
 			UpdatedBy:        approverId,
 			UpdatedAt:        time.Now(),
 		})
-
-		field := fmt.Sprintf("%d:%d", mp.MenuID, mp.PermissionID)
-		value := expiredDate.Unix()
-
-		redisData[field] = value
 	}
 	err = s.repoUserPermission.SaveBatch(userPermissions)
 	if err != nil {

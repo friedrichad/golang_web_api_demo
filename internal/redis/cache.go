@@ -168,3 +168,38 @@ func DeleteUserInfoCache(rdb *redis.Client, userId int) error {
 	key := fmt.Sprintf("user_info:%d", userId)
 	return rdb.Del(Ctx, key).Err()
 }
+
+func CanApproveRequest(rdb *redis.Client, approverId int, requesterPositionLevel int) (bool, error) {
+	cacheKey := fmt.Sprintf("user_info:%d", approverId)
+	approverCacheData, err := Get(rdb, cacheKey)
+	if err != nil {
+		log.Printf("[APPROVAL] Failed to get approver cache: %v", err)
+		return false, err
+	}
+	var approverInfo shared.UserInfo
+	if approverCacheData == "" {
+		log.Printf("[APPROVAL] Approver ID=%d not in cache, must load from database", approverId)
+		return false, fmt.Errorf("approver not found in cache")
+	}
+	if err := json.Unmarshal([]byte(approverCacheData), &approverInfo); err != nil {
+		log.Printf("[APPROVAL] Failed to parse approver cache data: %v", err)
+		return false, err
+	}
+
+	approverLevel := approverInfo.PositionInfo.PositionLevel
+	canApprove := approverLevel >= requesterPositionLevel
+
+	if canApprove {
+		log.Printf("[APPROVAL] ✓ Approver ID=%d (Level=%d) CAN approve requester (Level=%d)",
+			approverId, approverLevel, requesterPositionLevel)
+	} else {
+		log.Printf("[APPROVAL] ✗ Approver ID=%d (Level=%d) CANNOT approve requester (Level=%d) - insufficient position level",
+			approverId, approverLevel, requesterPositionLevel)
+	}
+
+	return canApprove, nil
+}
+func CompareUserInfoCache(rdb *redis.Client, currentUserId int, targetUser shared.UserInfo) (bool, error) {
+	log.Printf("[DEPRECATION] CompareUserInfoCache is deprecated, use CanApproveRequest instead")
+	return CanApproveRequest(rdb, currentUserId, targetUser.PositionInfo.PositionLevel)
+}

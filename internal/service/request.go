@@ -12,6 +12,7 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/internal/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/internal/repository"
 	"github.com/gin-gonic/gin"
+	"github.com/friedrichad/golang_web_api_demo/internal/redis"
 )
 
 type IRequestService interface {
@@ -35,6 +36,7 @@ type RequestService struct {
 	requestRepo       repository.IRequestRepository
 	requestDetailRepo repository.IRequestDetailRepository
 	ledgerService     IInventoryLedgerService
+	userService       IUserService
 }
 
 var requestService IRequestService
@@ -211,6 +213,22 @@ func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
 	}
 
 	request, err := s.requestRepo.GetByRequestId(int(req.RequestID))
+	requesterInfo, err := s.userService.GetUserInfoWithCache(request.PerformedByID)
+	if err != nil {
+		log.Printf("Lỗi khi lấy thông tin requester ID=%d: %v", request.PerformedByID, err)
+		return common.SystemError
+	}
+	requesterPositionLevel := requesterInfo.PositionInfo.PositionLevel
+	userID, _ := strconv.Atoi(middleware.GetUserID(c))
+	check, err := redis.CanApproveRequest(redis.Rdb, userID, requesterPositionLevel)
+	if err != nil {
+		log.Print("Lỗi kiểm tra quyền phê duyệt: ", err)
+		return common.RequestInvalid
+	}
+	if !check {
+		log.Print("Người dùng không có quyền phê duyệt request này")
+		return common.RequestInvalid
+	}
 	if err != nil {
 		return common.SystemError
 	}
@@ -226,11 +244,9 @@ func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
 		return &common.Error{Code: "400", Message: "Yêu cầu chỉ có thể được phê duyệt (APPROVED) hoặc từ chối (REJECTED)!"}
 	}
 
-	userID, _ := strconv.Atoi(middleware.GetUserID(c))
-
 	request.ApproverID = userID
 	request.StatusInt = req.StatusInt
-	request.Reason = req.Reason // Use Reason field from ApprovalRequest DTO
+	request.Reason = req.Reason
 	request.UpdatedBy = userID
 	request.UpdatedAt = time.Now()
 
@@ -259,18 +275,14 @@ func (s *RequestService) ConfirmRequest(c *gin.Context) *common.Error {
 		return common.NotFound
 	}
 
-	// Validate: Only APPROVED requests can be confirmed
 	if request.StatusInt != constants.RequestStatusApproved {
 		return &common.Error{Code: "400", Message: "Chỉ yêu cầu APPROVED mới được xác nhận!"}
 	}
-
-	// If changing to COMPLETED status, apply inventory changes
 	if req.StatusInt == constants.RequestStatusCompleted {
 		if err := s.ApplyRequestDetails(c, req.RequestID); err != nil {
 			return &common.Error{Code: "400", Message: err.Error()}
 		}
 	}
-
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
 	request.StatusInt = req.StatusInt
 	request.UpdatedBy = userID
