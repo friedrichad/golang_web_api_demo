@@ -6,11 +6,15 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/friedrichad/golang_web_api_demo/docs"
 )
 
 func InitRouter() *gin.Engine {
 	router := gin.Default()
 	router.Static("/uploads", "./internal/upload")
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	configCors(router)
 	initAuthRouter(router)
 	initUserRouter(router)

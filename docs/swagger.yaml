@@ -1,0 +1,397 @@
+basePath: /
+definitions:
+  common.Error:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  model.ComponentCategoryDTO:
+    properties:
+      category_id:
+        type: integer
+      category_name:
+        type: string
+    type: object
+  model.ComponentCreate:
+    properties:
+      component_category:
+        items:
+          $ref: '#/definitions/model.ComponentCategoryDTO'
+        type: array
+      component_name:
+        type: string
+      description:
+        type: string
+      unit:
+        type: string
+      unit_price:
+        type: number
+    required:
+    - component_name
+    - unit
+    - unit_price
+    type: object
+  model.ComponentResponse:
+    properties:
+      component_category:
+        items:
+          $ref: '#/definitions/model.ComponentCategoryDTO'
+        type: array
+      component_id:
+        type: integer
+      component_name:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      quantity:
+        type: number
+      unit:
+        type: string
+      unit_price:
+        type: number
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  model.ComponentUpdate:
+    properties:
+      component_category:
+        items:
+          $ref: '#/definitions/model.ComponentCategoryDTO'
+        type: array
+      component_id:
+        type: integer
+      component_name:
+        type: string
+      description:
+        type: string
+      unit:
+        type: string
+      unit_price:
+        type: number
+      updated_by:
+        type: integer
+    required:
+    - component_id
+    type: object
+  model.RegisterRequest:
+    properties:
+      display_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      position_id:
+        type: integer
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - display_name
+    - email
+    - password
+    - username
+    type: object
+  model.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      active:
+        type: boolean
+      authorities:
+        items:
+          type: string
+        type: array
+      client_id:
+        type: string
+      exp:
+        type: integer
+      id:
+        type: string
+      is_op:
+        type: integer
+      position_id:
+        type: integer
+      position_level:
+        type: integer
+      position_name:
+        type: string
+      refresh_exp:
+        type: integer
+      token_type:
+        type: string
+      user_name:
+        type: string
+    type: object
+  model.UserResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      display_name:
+        type: string
+      email:
+        type: string
+      position_level:
+        type: integer
+      position_name:
+        type: string
+      status_int:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+      user_id:
+        type: integer
+      user_role:
+        items:
+          type: integer
+        type: array
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: JWT Auth Server
+  title: Auth Server API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: Grant Type (password or refresh_token)
+        in: formData
+        name: grant_type
+        required: true
+        type: string
+      - description: Username
+        in: formData
+        name: username
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        type: string
+      - description: Refresh Token
+        in: formData
+        name: refresh_token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TokenResponse'
+      summary: Get authentication token
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Invalidate the current JWT token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+      security:
+      - ApiKeyAuth: []
+      summary: Logout user
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: Registration Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /components:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple components by their IDs
+      parameters:
+      - description: Array of Component IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete components
+      tags:
+      - components
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all components with optional filtering and pagination
+      parameters:
+      - description: Component Name
+        in: query
+        name: component_name
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ComponentResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all components
+      tags:
+      - components
+    post:
+      consumes:
+      - application/json
+      description: Add a new component to the system
+      parameters:
+      - description: Component Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ComponentCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ComponentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new component
+      tags:
+      - components
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing component
+      parameters:
+      - description: Component Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ComponentUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing component
+      tags:
+      - components
+  /components/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific component by its ID
+      parameters:
+      - description: Component ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ComponentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a component by ID
+      tags:
+      - components
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -17,6 +17,9 @@ import (
 // @description JWT Auth Server
 // @host localhost:8080
 // @BasePath /
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 func main() {
 	viper.SetConfigFile("internal/configs/config.yaml")
