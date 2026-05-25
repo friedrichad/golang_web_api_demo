@@ -7,12 +7,112 @@ definitions:
       message:
         type: string
     type: object
+  model.ApprovalAudit:
+    properties:
+      audit_id:
+        type: integer
+      note:
+        type: string
+      status_int:
+        type: integer
+    required:
+    - audit_id
+    - status_int
+    type: object
+  model.ApprovalRequest:
+    properties:
+      approver_id:
+        type: integer
+      reason:
+        type: string
+      request_id:
+        type: integer
+      status_int:
+        type: integer
+    type: object
+  model.BinCreate:
+    properties:
+      location_in_warehouse:
+        type: string
+      warehouse_id:
+        type: integer
+    required:
+    - location_in_warehouse
+    - warehouse_id
+    type: object
+  model.BinResponse:
+    properties:
+      bin_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      location_in_warehouse:
+        type: string
+      status_int:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+    type: object
+  model.BinUpdate:
+    properties:
+      bin_id:
+        type: integer
+      location_in_warehouse:
+        type: string
+      status_int:
+        type: integer
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+    required:
+    - bin_id
+    type: object
+  model.ComponentCategoryCreate:
+    properties:
+      category_name:
+        type: string
+    required:
+    - category_name
+    type: object
   model.ComponentCategoryDTO:
     properties:
       category_id:
         type: integer
       category_name:
         type: string
+    type: object
+  model.ComponentCategoryResponse:
+    properties:
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  model.ComponentCategoryUpdate:
+    properties:
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      updated_by:
+        type: integer
+    required:
+    - category_id
     type: object
   model.ComponentCreate:
     properties:
@@ -81,6 +181,403 @@ definitions:
     required:
     - component_id
     type: object
+  model.ConfirmAudit:
+    properties:
+      audit_id:
+        type: integer
+      status_int:
+        type: integer
+    required:
+    - audit_id
+    - status_int
+    type: object
+  model.ConfirmRequest:
+    properties:
+      request_id:
+        type: integer
+      status_int:
+        type: integer
+    type: object
+  model.CustomerCreate:
+    properties:
+      address:
+        type: string
+      customer_name:
+        type: string
+      email:
+        type: string
+      phone:
+        type: string
+    required:
+    - customer_name
+    - phone
+    type: object
+  model.CustomerResponse:
+    properties:
+      address:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      customer_id:
+        type: integer
+      customer_name:
+        type: string
+      email:
+        type: string
+      phone:
+        type: string
+      status_int:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  model.CustomerUpdate:
+    properties:
+      address:
+        type: string
+      customer_id:
+        type: integer
+      customer_name:
+        type: string
+      email:
+        type: string
+      phone:
+        type: string
+      status_int:
+        type: integer
+      updated_by:
+        type: integer
+    required:
+    - customer_id
+    type: object
+  model.InventoryAdjustmentCreate:
+    properties:
+      audit_id:
+        type: integer
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/model.InventoryAdjustmentDetailCreate'
+        type: array
+      note:
+        type: string
+    required:
+    - audit_id
+    type: object
+  model.InventoryAdjustmentDetailCreate:
+    properties:
+      adjustment_id:
+        type: integer
+      adjustment_quantity:
+        type: number
+      bin_id:
+        type: integer
+      component_id:
+        type: integer
+      quantity_after:
+        type: number
+      quantity_before:
+        type: number
+      warehouse_id:
+        type: integer
+    required:
+    - adjustment_id
+    - adjustment_quantity
+    - bin_id
+    - component_id
+    - quantity_after
+    - quantity_before
+    - warehouse_id
+    type: object
+  model.InventoryAdjustmentDetailResponse:
+    properties:
+      adjustment_detail_id:
+        type: integer
+      adjustment_id:
+        type: integer
+      adjustment_quantity:
+        type: number
+      bin_id:
+        type: integer
+      component_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      quantity_after:
+        type: number
+      quantity_before:
+        type: number
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+    type: object
+  model.InventoryAdjustmentDetailUpdate:
+    properties:
+      adjustment_detail_id:
+        type: integer
+      adjustment_id:
+        type: integer
+      adjustment_quantity:
+        type: number
+      bin_id:
+        type: integer
+      component_id:
+        type: integer
+      quantity_after:
+        type: number
+      quantity_before:
+        type: number
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+    required:
+    - adjustment_detail_id
+    type: object
+  model.InventoryAdjustmentResponse:
+    properties:
+      adjustment_id:
+        type: integer
+      approved_id:
+        type: integer
+      audit_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/model.InventoryAdjustmentDetailResponse'
+        type: array
+      note:
+        type: string
+      status_int:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  model.InventoryAdjustmentUpdate:
+    properties:
+      adjustment_id:
+        type: integer
+      approved_id:
+        type: integer
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/model.InventoryAdjustmentDetailUpdate'
+        type: array
+      note:
+        type: string
+      status_int:
+        type: integer
+      updated_by:
+        type: integer
+    required:
+    - adjustment_id
+    type: object
+  model.InventoryAuditCreate:
+    properties:
+      audit_detail:
+        items:
+          $ref: '#/definitions/model.InventoryAuditDetailCreate'
+        type: array
+      note:
+        type: string
+      warehouse_id:
+        type: integer
+    required:
+    - warehouse_id
+    type: object
+  model.InventoryAuditDetailCreate:
+    properties:
+      actual_quantity:
+        type: number
+      audit_id:
+        type: integer
+      bin_id:
+        type: integer
+      component_id:
+        type: integer
+      system_quantity:
+        type: number
+    required:
+    - actual_quantity
+    - audit_id
+    - bin_id
+    - component_id
+    - system_quantity
+    type: object
+  model.InventoryAuditDetailResponse:
+    properties:
+      actual_quantity:
+        type: number
+      audit_detail_id:
+        type: integer
+      audit_id:
+        type: integer
+      bin_id:
+        type: integer
+      component_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      difference_quantity:
+        type: number
+      note:
+        type: string
+      system_quantity:
+        type: number
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  model.InventoryAuditDetailUpdate:
+    properties:
+      actual_quantity:
+        type: number
+      audit_detail_id:
+        type: integer
+      audit_id:
+        type: integer
+      bin_id:
+        type: integer
+      component_id:
+        type: integer
+      system_quantity:
+        type: number
+      updated_by:
+        type: integer
+    required:
+    - actual_quantity
+    - audit_detail_id
+    - system_quantity
+    type: object
+  model.InventoryAuditResponse:
+    properties:
+      audit_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      note:
+        type: string
+      status_int:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+    type: object
+  model.InventoryAuditUpdate:
+    properties:
+      audit_id:
+        type: integer
+      note:
+        type: string
+      status_int:
+        type: integer
+      updated_by:
+        type: integer
+    required:
+    - audit_id
+    type: object
+  model.InventoryLedgerResponse:
+    properties:
+      bin_id:
+        type: integer
+      component_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      ledger_id:
+        type: integer
+      note:
+        type: string
+      quantity_after:
+        type: number
+      quantity_change:
+        type: number
+      reference_type:
+        type: integer
+      reference_type_id:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+    type: object
+  model.PositionCreate:
+    properties:
+      description:
+        type: string
+      position_level:
+        type: integer
+      position_name:
+        type: string
+    required:
+    - position_name
+    type: object
+  model.PositionResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      position_id:
+        type: integer
+      position_level:
+        type: integer
+      position_name:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  model.PositionUpdate:
+    properties:
+      description:
+        type: string
+      position_id:
+        type: integer
+      position_level:
+        type: integer
+      position_name:
+        type: string
+    required:
+    - position_id
+    type: object
   model.RegisterRequest:
     properties:
       display_name:
@@ -103,6 +600,223 @@ definitions:
     - email
     - password
     - username
+    type: object
+  model.RequestCreate:
+    properties:
+      description:
+        type: string
+      expired_date:
+        type: string
+      note:
+        type: string
+      partner_id:
+        type: integer
+      request_type:
+        type: integer
+      warehouse_id:
+        type: integer
+    required:
+    - request_type
+    type: object
+  model.RequestDetailCreate:
+    properties:
+      bin_from_id:
+        type: integer
+      bin_to_id:
+        type: integer
+      component_id:
+        type: integer
+      quantity:
+        type: integer
+      request_id:
+        type: integer
+      unit_price:
+        type: number
+    required:
+    - component_id
+    - quantity
+    - request_id
+    - unit_price
+    type: object
+  model.RequestDetailResponse:
+    properties:
+      bin_from_id:
+        type: integer
+      bin_to_id:
+        type: integer
+      component_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      quantity:
+        type: integer
+      request_detail_id:
+        type: integer
+      request_id:
+        type: integer
+      unit_price:
+        type: number
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  model.RequestDetailUpdate:
+    properties:
+      bin_from_id:
+        type: integer
+      bin_to_id:
+        type: integer
+      component_id:
+        type: integer
+      quantity:
+        type: integer
+      request_detail_id:
+        type: integer
+      request_id:
+        type: integer
+      unit_price:
+        type: number
+      updated_by:
+        type: integer
+    required:
+    - request_detail_id
+    type: object
+  model.RequestPermissionCreate:
+    properties:
+      menu_permission:
+        type: integer
+      reason:
+        type: string
+      request_id:
+        type: integer
+    type: object
+  model.RequestPermissionResponse:
+    properties:
+      created_at:
+        type: string
+      menu_permission:
+        type: integer
+      reason:
+        type: string
+      request_id:
+        type: integer
+      request_permission_id:
+        type: integer
+    type: object
+  model.RequestPermissionUpdate:
+    properties:
+      menu_permission:
+        type: integer
+      reason:
+        type: string
+      request_id:
+        type: integer
+      request_permission_id:
+        type: integer
+    required:
+    - menu_permission
+    - request_id
+    - request_permission_id
+    type: object
+  model.RequestResponse:
+    properties:
+      approver_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      expired_date:
+        type: string
+      note:
+        type: string
+      partner_id:
+        type: integer
+      performed_by_id:
+        type: integer
+      reason:
+        type: string
+      request_id:
+        type: integer
+      request_type:
+        type: integer
+      status_int:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+    type: object
+  model.RequestUpdate:
+    properties:
+      approver_id:
+        type: integer
+      description:
+        type: string
+      note:
+        type: string
+      partner_id:
+        type: integer
+      performed_by_id:
+        type: integer
+      request_id:
+        type: integer
+      request_type:
+        type: integer
+      status_int:
+        type: integer
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+    required:
+    - request_id
+    type: object
+  model.RoleCreate:
+    properties:
+      description:
+        type: string
+      role_name:
+        type: string
+    required:
+    - role_name
+    type: object
+  model.RoleResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      role_id:
+        type: integer
+      role_name:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  model.RoleUpdate:
+    properties:
+      description:
+        type: string
+      role_id:
+        type: integer
+      role_name:
+        type: string
+      updated_by:
+        type: integer
+    required:
+    - role_id
     type: object
   model.TokenResponse:
     properties:
@@ -135,6 +849,50 @@ definitions:
       user_name:
         type: string
     type: object
+  model.UploadBase64Request:
+    properties:
+      data:
+        type: string
+      file_name:
+        type: string
+    required:
+    - data
+    - file_name
+    type: object
+  model.UploadResponse:
+    properties:
+      file_name:
+        type: string
+      file_url:
+        type: string
+      size:
+        type: integer
+    type: object
+  model.UserCreate:
+    properties:
+      display_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      role_ids:
+        items:
+          type: integer
+        type: array
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - display_name
+    - email
+    - password
+    - username
+    type: object
   model.UserResponse:
     properties:
       created_at:
@@ -164,6 +922,89 @@ definitions:
       username:
         type: string
     type: object
+  model.UserUpdate:
+    properties:
+      display_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      email:
+        type: string
+      new_password:
+        minLength: 6
+        type: string
+      old_password:
+        type: string
+      position_id:
+        type: integer
+      position_level:
+        type: integer
+      position_name:
+        type: string
+      status_int:
+        type: integer
+      updated_by:
+        type: integer
+      user_id:
+        type: integer
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - user_id
+    type: object
+  model.WarehouseCreate:
+    properties:
+      description:
+        type: string
+      image_url:
+        type: string
+      physical_location:
+        type: string
+      warehouse_name:
+        type: string
+    required:
+    - warehouse_name
+    type: object
+  model.WarehouseResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      image_url:
+        type: string
+      physical_location:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+      warehouse_name:
+        type: string
+    type: object
+  model.WarehouseUpdate:
+    properties:
+      description:
+        type: string
+      image_url:
+        type: string
+      physical_location:
+        type: string
+      updated_by:
+        type: integer
+      warehouse_id:
+        type: integer
+      warehouse_name:
+        type: string
+    required:
+    - warehouse_id
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -171,6 +1012,477 @@ info:
   title: Auth Server API
   version: "1.0"
 paths:
+  /adjustments:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple inventory adjustments by their IDs
+      parameters:
+      - description: Array of Adjustment IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete inventory adjustments
+      tags:
+      - adjustments
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all inventory adjustments with optional filtering
+        and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.InventoryAdjustmentResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all inventory adjustments
+      tags:
+      - adjustments
+    post:
+      consumes:
+      - application/json
+      description: Add a new inventory adjustment to the system
+      parameters:
+      - description: Adjustment Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.InventoryAdjustmentCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.InventoryAdjustmentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new inventory adjustment
+      tags:
+      - adjustments
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing inventory adjustment
+      parameters:
+      - description: Adjustment Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.InventoryAdjustmentUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing inventory adjustment
+      tags:
+      - adjustments
+  /adjustments/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific inventory adjustment by its ID
+      parameters:
+      - description: Adjustment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.InventoryAdjustmentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get an adjustment by ID
+      tags:
+      - adjustments
+  /adjustments/approval:
+    post:
+      consumes:
+      - application/json
+      description: Approve a specific inventory adjustment
+      parameters:
+      - description: Approval Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.InventoryAdjustmentUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Approve an inventory adjustment
+      tags:
+      - adjustments
+  /audit-details:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple inventory audit details by their IDs
+      parameters:
+      - description: Array of Audit Detail IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete audit details
+      tags:
+      - audit-details
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all inventory audit details with optional filtering
+        and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.InventoryAuditDetailResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all audit details
+      tags:
+      - audit-details
+    post:
+      consumes:
+      - application/json
+      description: Add a new inventory audit detail to an audit
+      parameters:
+      - description: Audit Detail Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.InventoryAuditDetailCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new audit detail
+      tags:
+      - audit-details
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing inventory audit detail
+      parameters:
+      - description: Audit Detail Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.InventoryAuditDetailUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing audit detail
+      tags:
+      - audit-details
+  /audits:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all inventory audits with optional filtering and
+        pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.InventoryAuditResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all inventory audits
+      tags:
+      - audits
+    post:
+      consumes:
+      - application/json
+      description: Add a new inventory audit to the system
+      parameters:
+      - description: Audit Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.InventoryAuditCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.InventoryAuditResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new inventory audit
+      tags:
+      - audits
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing inventory audit
+      parameters:
+      - description: Audit Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.InventoryAuditUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing inventory audit
+      tags:
+      - audits
+  /audits/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific inventory audit by its ID
+      parameters:
+      - description: Audit ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.InventoryAuditResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get an audit by ID
+      tags:
+      - audits
+  /audits/approval:
+    post:
+      consumes:
+      - application/json
+      description: Approve a specific inventory audit
+      parameters:
+      - description: Approval Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ApprovalAudit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Approve an inventory audit
+      tags:
+      - audits
+  /audits/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Confirm a specific inventory audit
+      parameters:
+      - description: Confirmation Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ConfirmAudit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Confirm an inventory audit
+      tags:
+      - audits
   /auth/login:
     post:
       consumes:
@@ -239,6 +1551,299 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /bins:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple bins by their IDs
+      parameters:
+      - description: Array of Bin IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete bins
+      tags:
+      - bins
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all bins with optional filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.BinResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all bins
+      tags:
+      - bins
+    post:
+      consumes:
+      - application/json
+      description: Add a new bin to the system
+      parameters:
+      - description: Bin Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.BinCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BinResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new bin
+      tags:
+      - bins
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing bin
+      parameters:
+      - description: Bin Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.BinUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing bin
+      tags:
+      - bins
+  /bins/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific bin by its ID
+      parameters:
+      - description: Bin ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BinResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a bin by ID
+      tags:
+      - bins
+  /categories:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple component categories by their IDs
+      parameters:
+      - description: Array of Category IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete component categories
+      tags:
+      - categories
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all component categories with optional filtering
+        and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ComponentCategoryResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all component categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Add a new component category to the system
+      parameters:
+      - description: Category Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ComponentCategoryCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ComponentCategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new component category
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing component category
+      parameters:
+      - description: Category Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ComponentCategoryUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing component category
+      tags:
+      - categories
+  /categories/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific component category by its ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ComponentCategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a category by ID
+      tags:
+      - categories
   /components:
     delete:
       consumes:
@@ -389,6 +1994,1443 @@ paths:
       summary: Get a component by ID
       tags:
       - components
+  /customers:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple customers by their IDs
+      parameters:
+      - description: Array of Customer IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete customers
+      tags:
+      - customers
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all customers with optional filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CustomerResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all customers
+      tags:
+      - customers
+    post:
+      consumes:
+      - application/json
+      description: Add a new customer to the system
+      parameters:
+      - description: Customer Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CustomerCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.CustomerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new customer
+      tags:
+      - customers
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing customer
+      parameters:
+      - description: Customer Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CustomerUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing customer
+      tags:
+      - customers
+  /customers/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific customer by their ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.CustomerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a customer by ID
+      tags:
+      - customers
+  /ledgers:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all inventory ledgers with optional filtering and
+        pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.InventoryLedgerResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all inventory ledgers
+      tags:
+      - ledgers
+  /ledgers/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific inventory ledger by its ID
+      parameters:
+      - description: Ledger ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.InventoryLedgerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a ledger by ID
+      tags:
+      - ledgers
+  /ledgers/export:
+    get:
+      consumes:
+      - application/json
+      description: Export all inventory ledgers to an Excel file
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel file
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Export inventory ledgers to Excel
+      tags:
+      - ledgers
+  /positions:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple positions by their IDs
+      parameters:
+      - description: Array of Position IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete positions
+      tags:
+      - positions
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all positions with optional filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PositionResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all positions
+      tags:
+      - positions
+    post:
+      consumes:
+      - application/json
+      description: Add a new position to the system
+      parameters:
+      - description: Position Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.PositionCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PositionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new position
+      tags:
+      - positions
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing position
+      parameters:
+      - description: Position Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.PositionUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing position
+      tags:
+      - positions
+  /positions/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific position by its ID
+      parameters:
+      - description: Position ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PositionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a position by ID
+      tags:
+      - positions
+  /request-details:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple request details by their IDs
+      parameters:
+      - description: Array of Request Detail IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete request details
+      tags:
+      - request-details
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all request details with optional filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.RequestDetailResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all request details
+      tags:
+      - request-details
+    post:
+      consumes:
+      - application/json
+      description: Add a new request detail to a request
+      parameters:
+      - description: Request Detail Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RequestDetailCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RequestDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new request detail
+      tags:
+      - request-details
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing request detail
+      parameters:
+      - description: Request Detail Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RequestDetailUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing request detail
+      tags:
+      - request-details
+  /request-details/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific request detail by its ID
+      parameters:
+      - description: Request Detail ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RequestDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a request detail by ID
+      tags:
+      - request-details
+  /request-permissions:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple request permissions by their IDs
+      parameters:
+      - description: Array of Permission IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete request permissions
+      tags:
+      - request-permissions
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all request permissions with optional filtering and
+        pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.RequestPermissionResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all request permissions
+      tags:
+      - request-permissions
+    post:
+      consumes:
+      - application/json
+      description: Add a new request permission to the system
+      parameters:
+      - description: Permission Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RequestPermissionCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new request permission
+      tags:
+      - request-permissions
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing request permission
+      parameters:
+      - description: Permission Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RequestPermissionUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing request permission
+      tags:
+      - request-permissions
+  /request-permissions/approval:
+    post:
+      consumes:
+      - application/json
+      description: Approve a specific request permission
+      parameters:
+      - description: Approval Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RequestPermissionUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Approve a request permission
+      tags:
+      - request-permissions
+  /requests:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple requests by their IDs
+      parameters:
+      - description: Array of Request IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete requests
+      tags:
+      - requests
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all requests with optional filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.RequestResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all requests
+      tags:
+      - requests
+    post:
+      consumes:
+      - application/json
+      description: Add a new request to the system
+      parameters:
+      - description: Request Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RequestCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RequestResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new request
+      tags:
+      - requests
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing request
+      parameters:
+      - description: Request Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RequestUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing request
+      tags:
+      - requests
+  /requests/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific request by its ID
+      parameters:
+      - description: Request ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RequestResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a request by ID
+      tags:
+      - requests
+  /requests/approval:
+    post:
+      consumes:
+      - application/json
+      description: Approve a specific request
+      parameters:
+      - description: Approval Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ApprovalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Approve a request
+      tags:
+      - requests
+  /requests/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Confirm a specific request
+      parameters:
+      - description: Confirmation Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Confirm a request
+      tags:
+      - requests
+  /roles:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple roles by their IDs
+      parameters:
+      - description: Array of Role IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete roles
+      tags:
+      - roles
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all roles with optional filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.RoleResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all roles
+      tags:
+      - roles
+    post:
+      consumes:
+      - application/json
+      description: Add a new role to the system
+      parameters:
+      - description: Role Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RoleCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RoleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new role
+      tags:
+      - roles
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing role
+      parameters:
+      - description: Role Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RoleUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing role
+      tags:
+      - roles
+  /roles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific role by its ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RoleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a role by ID
+      tags:
+      - roles
+  /uploads/base64:
+    post:
+      consumes:
+      - application/json
+      description: Upload a file encoded in Base64 format
+      parameters:
+      - description: Base64 file data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UploadBase64Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload file as Base64
+      tags:
+      - uploads
+  /uploads/multipart:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a single file as multipart form data
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload file as multipart form data
+      tags:
+      - uploads
+  /uploads/multiple:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload multiple files at once
+      parameters:
+      - description: Files to upload
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.UploadResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload multiple files
+      tags:
+      - uploads
+  /users:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple users by their UUIDs
+      parameters:
+      - description: Array of User UUIDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete users
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all users with optional filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.UserResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Add a new user to the system
+      parameters:
+      - description: User Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing user
+      parameters:
+      - description: User Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing user
+      tags:
+      - users
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific user by their UUID
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a user by ID
+      tags:
+      - users
+  /users/{id}/authorities:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all authorities assigned to a specific user
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get user authorities
+      tags:
+      - users
+  /warehouses:
+    delete:
+      consumes:
+      - application/json
+      description: Delete one or multiple warehouses by their IDs
+      parameters:
+      - description: Array of Warehouse IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete warehouses
+      tags:
+      - warehouses
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all warehouses with optional filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.WarehouseResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all warehouses
+      tags:
+      - warehouses
+    post:
+      consumes:
+      - application/json
+      description: Add a new warehouse to the system
+      parameters:
+      - description: Warehouse Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.WarehouseCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.WarehouseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new warehouse
+      tags:
+      - warehouses
+    put:
+      consumes:
+      - application/json
+      description: Modify details of an existing warehouse
+      parameters:
+      - description: Warehouse Update Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.WarehouseUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing warehouse
+      tags:
+      - warehouses
+  /warehouses/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific warehouse by its ID
+      parameters:
+      - description: Warehouse ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.WarehouseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a warehouse by ID
+      tags:
+      - warehouses
 securityDefinitions:
   ApiKeyAuth:
     in: header
