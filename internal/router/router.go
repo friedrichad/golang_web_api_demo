@@ -9,12 +9,20 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/friedrichad/golang_web_api_demo/docs"
+	"github.com/friedrichad/golang_web_api_demo/internal/rabbitmq"
 )
 
-func InitRouter() *gin.Engine {
+func InitRouter(rmq *rabbitmq.RabbitMQ,) *gin.Engine {
 	router := gin.Default()
 	router.Static("/uploads", "./internal/upload")
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.Use(
+		middleware.SystemLogMiddleware(rmq),
+	)
+	router.Static(
+		"/uploads",
+		"./internal/upload",
+	)
 	configCors(router)
 	initAuthRouter(router)
 	initUserRouter(router)
@@ -34,6 +42,7 @@ func InitRouter() *gin.Engine {
 	initComponentCategoryRouter(router)
 	initUploadRouter(router)
 	initNonAuthRouter(router)
+
 	return router
 }
 func initNonAuthRouter(router *gin.Engine) {
