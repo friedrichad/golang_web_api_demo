@@ -6,11 +6,18 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"github.com/friedrichad/golang_web_api_demo/internal/rabbitmq"
 )
 
-func InitRouter() *gin.Engine {
+func InitRouter(rmq *rabbitmq.RabbitMQ,) *gin.Engine {
 	router := gin.Default()
-	router.Static("/uploads", "./internal/upload")
+	router.Use(
+		middleware.SystemLogMiddleware(rmq),
+	)
+	router.Static(
+		"/uploads",
+		"./internal/upload",
+	)
 	configCors(router)
 	initAuthRouter(router)
 	initUserRouter(router)
@@ -30,6 +37,7 @@ func InitRouter() *gin.Engine {
 	initComponentCategoryRouter(router)
 	initUploadRouter(router)
 	initNonAuthRouter(router)
+
 	return router
 }
 func initNonAuthRouter(router *gin.Engine) {
