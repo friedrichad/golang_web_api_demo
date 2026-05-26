@@ -1,0 +1,15 @@
+package repository
+
+import (
+	"github.com/friedrichad/golang_web_api_demo/backend/model"
+)
+
+type ISystemLog interface {
+	IBaseRepository[model.SystemLog, int]
+	GetByRequestId(requestId string) (*model.Request, error)
+	GetAuthorities(requestId int) ([]string, error)
+	GetAllByCondition(query model.Request) ([]model.Request, int, error)
+	Delete(ids []int) error
+	Save(request *model.Request) error
+	Update(request *model.Request) error
+}

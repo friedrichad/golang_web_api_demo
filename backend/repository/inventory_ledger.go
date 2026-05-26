@@ -1,0 +1,70 @@
+package repository
+
+import (
+	"github.com/friedrichad/golang_web_api_demo/backend/configs/db"
+	"github.com/friedrichad/golang_web_api_demo/backend/model"
+	"gorm.io/gorm"
+)
+
+type IInventoryLedger interface {
+	IBaseRepository[model.InventoryLedger, int]
+	GetByLedgerId(ledgerId int) (*model.InventoryLedger, error)
+	GetAllByCondition(query model.InventoryLedgerFilter) ([]model.InventoryLedger, int, error)
+	Delete(ids []int) error
+	Save(request *model.InventoryLedger) error
+	Update(request *model.InventoryLedger) error
+}
+
+type InventoryLedgerRepository struct {
+	BaseRepository[model.InventoryLedger, int]
+	DB *gorm.DB
+}
+
+var inventoryLedgerRepository IInventoryLedger
+
+func NewInventoryLedgerRepository() IInventoryLedger {
+	if inventoryLedgerRepository == nil {
+		inventoryLedgerRepository = &InventoryLedgerRepository{DB: db.Instance}
+		inventoryLedgerRepository.SetInstance(db.Instance)
+	}
+	return inventoryLedgerRepository
+}
+
+func (r *InventoryLedgerRepository) GetByLedgerId(ledgerId int) (*model.InventoryLedger, error) {
+	var inventoryLedger *model.InventoryLedger
+	err := r.DB.Where("ledger_id = ?", ledgerId).First(&inventoryLedger).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return inventoryLedger, err
+}
+
+func (r *InventoryLedgerRepository) GetAllByCondition(query model.InventoryLedgerFilter) ([]model.InventoryLedger, int, error) {
+	return r.GetPage("Select il.* from inventory_ledger as il "+
+		" where (? is Null or il.ledger_id = ?)"+
+		" and (? is null or il.component_id = ?) "+
+		" and (? is null or il.warehouse_id = ?) "+
+		" and (? is null or il.bin_id = ?) "+
+		" and (? is null or il.reference_type_id = ?) "+
+		" and (? is null or il.created_at >= ?) "+
+		" and (? is null or il.created_at < ?) ", query.Page, query.Size, query.LedgerID, query.LedgerID, query.ComponentID, query.ComponentID, query.WarehouseID, query.WarehouseID, query.BinID, query.BinID, query.ReferenceTypeID, query.ReferenceTypeID, query.GetDateFrom(), query.GetDateFrom(), query.GetDateTo(), query.GetDateTo())
+}
+
+func (r *InventoryLedgerRepository) Delete(ids []int) error {
+	return r.DB.Exec("delete from inventory_ledger where ledger_id in ?", ids).Error
+}
+
+func (r *InventoryLedgerRepository) Save(request *model.InventoryLedger) error {
+	return r.BaseRepository.Create(request)
+}
+
+func (r *InventoryLedgerRepository) Update(request *model.InventoryLedger) error {
+	return r.BaseRepository.Update(request)
+}
+
+func (r *InventoryLedgerRepository) WithTx(tx *gorm.DB) *InventoryLedgerRepository {
+	return &InventoryLedgerRepository{
+		BaseRepository: BaseRepository[model.InventoryLedger, int]{Instance: tx},
+		DB:             tx,
+	}
+}
