@@ -6,7 +6,7 @@ database:
 
 security:
   cors:
-    - http://localhost:8080
+    - http://localhost:5173
 
 oauth:
   access-token-expired: 3600
