@@ -14,6 +14,7 @@ type IRequestDetailRepository interface {
 	Save(request *model.RequestDetail) error
 	Update(request *model.RequestDetail) error
 	GetByRequestDetailId(requestDetailId int) (*model.RequestDetail, error)
+	CreateBatch(requestDetails []*model.RequestDetail, batchSize int) error
 }
 type RequestDetailRepository struct {
 	BaseRepository[model.RequestDetail, int]
@@ -67,4 +68,7 @@ func (r *RequestDetailRepository) GetByRequestDetailId(requestDetailId int) (*mo
 		return nil, nil
 	}
 	return requestDetail, err
+}
+func (r *RequestDetailRepository) CreateBatch(requestDetails []*model.RequestDetail, batchSize int) error {
+	return r.BaseRepository.CreateBatch(requestDetails, batchSize)
 }

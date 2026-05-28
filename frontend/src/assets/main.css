@@ -1,10 +1,57 @@
 @import './base.css';
 
+/* Responsive font scaling - 1920px as standard */
+html {
+  font-size: 16px;
+  width: 100%;
+}
+
+body {
+  width: 100%;
+  margin: 0;
+  padding: 10px;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 1920px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 1440px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 1024px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+}
+
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
   font-weight: normal;
+  box-sizing: border-box;
 }
 
 a,
@@ -23,13 +70,16 @@ a,
 
 @media (min-width: 1024px) {
   body {
-    display: flex;
-    place-items: center;
+    width: 100%;
   }
 
   #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    max-width: 1920px;
+    margin: 0 auto;
   }
 }

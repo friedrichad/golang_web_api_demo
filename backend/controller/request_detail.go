@@ -34,7 +34,7 @@ func (c *RequestDetailController) GetRequestDetailById() gin.HandlerFunc {
 }
 
 func (c *RequestDetailController) CreateRequestDetail() gin.HandlerFunc {
-	return c.ResponsePointer(c.requestService.CreateRequestDetail)
+	return c.ResponseSuccessOnly(c.requestService.CreateRequestDetail)
 }
 
 func (c *RequestDetailController) UpdateRequestDetail() gin.HandlerFunc {

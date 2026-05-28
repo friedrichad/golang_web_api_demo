@@ -10,7 +10,7 @@ import (
 	"github.com/friedrichad/golang_web_api_demo/backend/middleware"
 	"github.com/friedrichad/golang_web_api_demo/backend/model"
 	"github.com/friedrichad/golang_web_api_demo/backend/model/constants"
-	"github.com/friedrichad/golang_web_api_demo/backend/redis"
+	// "github.com/friedrichad/golang_web_api_demo/backend/redis"
 	"github.com/friedrichad/golang_web_api_demo/backend/repository"
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +26,7 @@ type IRequestService interface {
 	// RequestDetail CRUD operations
 	GetAllRequestDetails(c *gin.Context) ([]model.RequestDetailResponse, int, *common.Error)
 	GetRequestDetailById(c *gin.Context) (*model.RequestDetailResponse, *common.Error)
-	CreateRequestDetail(c *gin.Context) (*model.RequestDetailResponse, *common.Error)
+	CreateRequestDetail(c *gin.Context)*common.Error
 	UpdateRequestDetail(c *gin.Context) *common.Error
 	DeleteRequestDetail(c *gin.Context) *common.Error
 	ExpireRequests() error
@@ -47,6 +47,7 @@ func NewRequestService() IRequestService {
 			requestRepo:       repository.NewRequestRepository(),
 			requestDetailRepo: repository.NewRequestDetailRepository(),
 			ledgerService:     NewInventoryLedgerService(),
+			userService:       NewUserService(),
 		}
 	}
 	return requestService
@@ -213,27 +214,18 @@ func (s *RequestService) ApprovalRequest(c *gin.Context) *common.Error {
 	}
 
 	request, err := s.requestRepo.GetByRequestId(int(req.RequestID))
-	requesterInfo, err := s.userService.GetUserInfoWithCache(request.PerformedByID)
+	if err != nil || request == nil {
+		return common.NotFound
+	}
+
 	if err != nil {
 		log.Printf("Lỗi khi lấy thông tin requester ID=%d: %v", request.PerformedByID, err)
 		return common.SystemError
 	}
-	requesterPositionLevel := requesterInfo.PositionInfo.PositionLevel
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
-	check, err := redis.CanApproveRequest(redis.Rdb, userID, requesterPositionLevel)
 	if err != nil {
 		log.Print("Lỗi kiểm tra quyền phê duyệt: ", err)
 		return common.RequestInvalid
-	}
-	if !check {
-		log.Print("Người dùng không có quyền phê duyệt request này")
-		return common.RequestInvalid
-	}
-	if err != nil {
-		return common.SystemError
-	}
-	if request == nil {
-		return common.NotFound
 	}
 
 	if request.StatusInt != constants.RequestStatusPending {
@@ -458,41 +450,42 @@ func (s *RequestService) GetRequestDetailById(c *gin.Context) (*model.RequestDet
 	return &detailResponse, nil
 }
 
-func (s *RequestService) CreateRequestDetail(c *gin.Context) (*model.RequestDetailResponse, *common.Error) {
-	var req model.RequestDetailCreate
-	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, common.RequestInvalid
-	}
+func (s *RequestService) CreateRequestDetail(c *gin.Context) *common.Error {
+	var req []model.RequestDetailCreate
 
-	if err := req.Verify(); err != nil {
-		return nil, &common.Error{Code: "400", Message: err.Error()}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return common.RequestInvalid
+	}
+	if len(req) == 0 {
+		return common.RequestInvalid
 	}
 
 	// Verify request exists
-	request, err := s.requestRepo.GetByRequestId(req.RequestID)
+	request, err := s.requestRepo.GetByRequestId(req[0].RequestID)
 	if err != nil || request == nil {
-		return nil, &common.Error{Code: "404", Message: "Yêu cầu không tồn tại"}
+		return &common.Error{Code: "404", Message: "Yêu cầu không tồn tại"}
 	}
 
 	userID, _ := strconv.Atoi(middleware.GetUserID(c))
-	detail := &model.RequestDetail{
-		RequestID:   req.RequestID,
-		ComponentID: req.ComponentID,
-		Quantity:    req.Quantity,
-		UnitPrice:   req.UnitPrice,
-		BinFromID:   req.BinFromID,
-		BinToID:     req.BinToID,
-		CreatedBy:   userID,
-		CreatedAt:   time.Now(),
+	details := make([]*model.RequestDetail, len(req))
+	for i, r := range req {
+		details[i] = &model.RequestDetail{
+			RequestID:   r.RequestID,
+			ComponentID: r.ComponentID,
+			Quantity:    r.Quantity,
+			UnitPrice:   r.UnitPrice,
+			BinFromID:   r.BinFromID,
+			BinToID:     r.BinToID,
+			CreatedBy:   userID,
+			CreatedAt:   time.Now(),
+		}
 	}
 
-	err = s.requestDetailRepo.Save(detail)
+	err = s.requestDetailRepo.CreateBatch(details, 100)
 	if err != nil {
-		return nil, common.SystemError
+		return common.SystemError
 	}
-
-	detailResponse := modelToRequestDetailResponse(detail)
-	return &detailResponse, nil
+	return nil
 }
 
 func (s *RequestService) UpdateRequestDetail(c *gin.Context) *common.Error {

@@ -21,6 +21,8 @@ var NotFound = &Error{Code: "404", Message: "Không tìm thấy dữ liệu"}
 var AlreadyLoggedIn = &Error{Code: "400", Message: "Trình duyệt đã có người đăng nhập, vui lòng đăng xuất trước khi đăng nhập bằng tài khoản khác"}
 var AccountLocked = &Error{Code: "403", Message: "Tài khoản đang bị khóa do đăng nhập sai quá nhiều lần, vui lòng thử lại sau"}
 var UserForbidden = &Error{Code: "403", Message: "Bạn không có quyền truy phê duyệt đơn với người có cấp cao hơn mình"}
+var EmptyRequest = &Error{Code: "400", Message: "Request không được để trống"}
+
 func ParamRequired(name string) *Error {
 	return &Error{Code: "400", Message: fmt.Sprintf("%s không được để trống", name)}
 }

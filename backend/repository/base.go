@@ -48,7 +48,7 @@ func (r *BaseRepository[E, T]) Update(e *E) error {
 }
 
 func (r *BaseRepository[E, T]) GetPage(sql string, page int, size int, values ...interface{}) ([]E, int, error) {
-	if page <= 0{
+	if page <= 0 {
 		page = 0
 	}
 	if size == 0 {
@@ -79,9 +79,59 @@ func (r *BaseRepository[E, T]) Exists(query string, values ...interface{}) (bool
 	var exists bool
 
 	err := r.Instance.Raw(
-		"SELECT EXISTS(" + query + ")",
+		"SELECT EXISTS("+query+")",
 		values...,
 	).Scan(&exists).Error
 
 	return exists, err
+}
+
+func (r *BaseRepository[E, T]) CreateBatch(list []*E, batchSize int) error {
+	if len(list) == 0 {
+		return nil
+	}
+	if batchSize <= 0 {
+		batchSize = 100
+	}
+	return r.Instance.Transaction(func(tx *gorm.DB) error {
+		for i := 0; i < len(list); i += batchSize {
+			end := i + batchSize
+			if end > len(list) {
+				end = len(list)
+			}
+			chunk := list[i:end]
+			if err := tx.Create(&chunk).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (r *BaseRepository[E, T]) UpdateBatch(list []*E, batchSize int) error {
+	if len(list) == 0 {
+		return nil
+	}
+
+	if batchSize <= 0 {
+		batchSize = 500
+	}
+
+	return r.Instance.Transaction(func(tx *gorm.DB) error {
+		for i := 0; i < len(list); i += batchSize {
+			end := i + batchSize
+			if end > len(list) {
+				end = len(list)
+			}
+
+			chunk := list[i:end]
+
+			for _, item := range chunk {
+				if err := tx.Save(&item).Error; err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
 }

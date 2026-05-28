@@ -49,10 +49,11 @@ func initNonAuthRouter(router *gin.Engine) {
 }
 func configCors(router *gin.Engine) {
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:  viper.GetStringSlice("security.cors"),
-		AllowMethods:  []string{"*"},
-		AllowHeaders:  []string{"*"},
-		ExposeHeaders: []string{"*"},
+		AllowOrigins:     viper.GetStringSlice("security.cors"),
+		AllowMethods:     []string{"*"},
+		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{"*"},
+		AllowCredentials: true,
 	}))
 }
 
