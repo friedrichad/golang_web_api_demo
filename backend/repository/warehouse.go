@@ -16,6 +16,8 @@ type IWarehouseRepository interface {
 	CreateWarehouseTx(warehouse *model.Warehouse) (*model.Warehouse, error)
 	UpdateWarehouseTx(warehouse *model.Warehouse) error
 	DeleteWarehouseTx(ids []int) error
+	CreateBatch(warehouses []*model.Warehouse, batchSize int) error
+	UpdateBatch(warehouses []*model.Warehouse, batchSize int) error
 }
 
 type WarehouseRepository struct {
@@ -148,4 +150,12 @@ func (w *WarehouseRepository) DeleteWarehouseTx(ids []int) error {
 	}
 
 	return nil
+}
+
+func (w *WarehouseRepository) CreateBatch(warehouses []*model.Warehouse, batchSize int) error {
+	return w.BaseRepository.CreateBatch(warehouses, batchSize)
+}
+
+func (w *WarehouseRepository) UpdateBatch(warehouses []*model.Warehouse, batchSize int) error {
+	return w.BaseRepository.UpdateBatch(warehouses, batchSize)
 }

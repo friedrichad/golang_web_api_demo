@@ -16,6 +16,8 @@ type ICustomer interface {
 	CreateCustomerTx(request *model.Customer) (*model.Customer, error)
 	UpdateCustomerTx(request *model.Customer) error
 	DeleteCustomerTx(ids []int) error
+	CreateBatch(customers []*model.Customer, batchSize int) error
+	UpdateBatch(customers []*model.Customer, batchSize int) error
 }
 type CustomerRepository struct {
 	BaseRepository[model.Customer, int]
@@ -142,4 +144,12 @@ func (r *CustomerRepository) DeleteCustomerTx(ids []int) error {
 	}
 
 	return nil
+}
+
+func (r *CustomerRepository) CreateBatch(customers []*model.Customer, batchSize int) error {
+	return r.BaseRepository.CreateBatch(customers, batchSize)
+}
+
+func (r *CustomerRepository) UpdateBatch(customers []*model.Customer, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(customers, batchSize)
 }

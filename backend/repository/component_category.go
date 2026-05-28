@@ -16,6 +16,8 @@ type IComponentCategoryRepository interface {
 	CreateComponentCategoryTx(category *model.ComponentCategory) (*model.ComponentCategory, error)
 	UpdateComponentCategoryTx(category *model.ComponentCategory) error
 	DeleteComponentCategoryTx(ids []int) error
+	CreateBatch(categories []*model.ComponentCategory, batchSize int) error
+	UpdateBatch(categories []*model.ComponentCategory, batchSize int) error
 }
 
 type ComponentCategoryRepository struct {
@@ -144,4 +146,12 @@ func (r *ComponentCategoryRepository) DeleteComponentCategoryTx(ids []int) error
 	}
 
 	return nil
+}
+
+func (r *ComponentCategoryRepository) CreateBatch(categories []*model.ComponentCategory, batchSize int) error {
+	return r.BaseRepository.CreateBatch(categories, batchSize)
+}
+
+func (r *ComponentCategoryRepository) UpdateBatch(categories []*model.ComponentCategory, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(categories, batchSize)
 }

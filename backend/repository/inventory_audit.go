@@ -17,6 +17,8 @@ type IInventoryAudit interface {
 	CreateInventoryAuditDetailsTx(details []model.InventoryAuditDetail) error
 	UpdateInventoryAuditTx(audit *model.InventoryAudit) error
 	DeleteInventoryAuditTx(ids []int) error
+	CreateBatch(audits []*model.InventoryAudit, batchSize int) error
+	UpdateBatch(audits []*model.InventoryAudit, batchSize int) error
 }
 
 type InventoryAuditRepository struct {
@@ -186,4 +188,12 @@ func (r *InventoryAuditRepository) DeleteInventoryAuditTx(ids []int) error {
 	}
 
 	return nil
+}
+
+func (r *InventoryAuditRepository) CreateBatch(audits []*model.InventoryAudit, batchSize int) error {
+	return r.BaseRepository.CreateBatch(audits, batchSize)
+}
+
+func (r *InventoryAuditRepository) UpdateBatch(audits []*model.InventoryAudit, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(audits, batchSize)
 }

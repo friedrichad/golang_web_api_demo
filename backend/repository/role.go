@@ -15,6 +15,8 @@ type IRoleRepository interface {
 	GetRoleById(roleId int) (*model.Role, error)
 	Save(role *model.Role) error
 	Update(role *model.Role) error
+	CreateBatch(roles []*model.Role, batchSize int) error
+	UpdateBatch(roles []*model.Role, batchSize int) error
 
 	// role_menu
 	GetRoleMenus(roleId int) ([]model.RoleMenu, error)
@@ -276,4 +278,12 @@ func (r *RoleRepository) AssignRoleMenusTx(roleId int, menus []model.RoleMenu) e
 	}
 
 	return nil
+}
+
+func (r *RoleRepository) CreateBatch(roles []*model.Role, batchSize int) error {
+	return r.BaseRepository.CreateBatch(roles, batchSize)
+}
+
+func (r *RoleRepository) UpdateBatch(roles []*model.Role, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(roles, batchSize)
 }

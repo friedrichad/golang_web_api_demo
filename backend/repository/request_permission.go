@@ -14,6 +14,8 @@ type IRequestPermissionRepository interface {
 	Delete(ids []int) error
 	Save(requestPermission *model.RequestPermission) error
 	Update(requestPermission *model.RequestPermission) error
+	CreateBatch(requestPermissions []*model.RequestPermission, batchSize int) error
+	UpdateBatch(requestPermissions []*model.RequestPermission, batchSize int) error
 }
 
 type RequestPermissionRepository struct {
@@ -66,6 +68,10 @@ func (r *RequestPermissionRepository) Save(requestPermission *model.RequestPermi
 func (r *RequestPermissionRepository) Update(requestPermission *model.RequestPermission) error {
 	return r.BaseRepository.Update(requestPermission)
 }
-func (r *RequestPermissionRepository)CreateBatch(requestPermissions []*model.RequestPermission, batchSize int) error {
+func (r *RequestPermissionRepository) CreateBatch(requestPermissions []*model.RequestPermission, batchSize int) error {
 	return r.BaseRepository.CreateBatch(requestPermissions, batchSize)
+}
+
+func (r *RequestPermissionRepository) UpdateBatch(requestPermissions []*model.RequestPermission, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(requestPermissions, batchSize)
 }

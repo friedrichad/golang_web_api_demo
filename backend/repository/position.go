@@ -15,6 +15,8 @@ type IPositionRepository interface {
 	GetPositionById(positionId int) (*model.Position, error)
 	Save(position *model.Position) error
 	Update(position *model.Position) error
+	CreateBatch(positions []*model.Position, batchSize int) error
+	UpdateBatch(positions []*model.Position, batchSize int) error
 }
 
 type PositionRepository struct {
@@ -87,6 +89,14 @@ func (r *PositionRepository) Save(position *model.Position) error {
 
 func (r *PositionRepository) Update(position *model.Position) error {
 	return r.BaseRepository.Update(position)
+}
+
+func (r *PositionRepository) CreateBatch(positions []*model.Position, batchSize int) error {
+	return r.BaseRepository.CreateBatch(positions, batchSize)
+}
+
+func (r *PositionRepository) UpdateBatch(positions []*model.Position, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(positions, batchSize)
 }
 
 func (r *PositionRepository) WithTx(tx *gorm.DB) *PositionRepository {

@@ -18,6 +18,8 @@ type IRequestRepository interface {
 	Update(request *model.Request) error
 	CanApprove(approverId int, requesterId int) (bool, error)
 	GetExpiredPendingRequests() ([]model.Request, error)
+	CreateBatch(requests []*model.Request, batchSize int) error
+	UpdateBatch(requests []*model.Request, batchSize int) error
 }
 
 type RequestRepository struct {
@@ -89,4 +91,12 @@ func (r *RequestRepository) GetExpiredPendingRequests() ([]model.Request, error)
 	var requests []model.Request
 	err := r.DB.Where("status_int = ? AND expired_date < ?", constants.RequestStatusPending, time.Now()).Find(&requests).Error
 	return requests, err
+}
+
+func (r *RequestRepository) CreateBatch(requests []*model.Request, batchSize int) error {
+	return r.BaseRepository.CreateBatch(requests, batchSize)
+}
+
+func (r *RequestRepository) UpdateBatch(requests []*model.Request, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(requests, batchSize)
 }

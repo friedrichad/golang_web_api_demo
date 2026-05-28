@@ -13,6 +13,8 @@ type IMenuPermissionRepository interface {
 	AddMenuPermission(menuPermission *model.MenuPermission) error
 	UpdateMenuPermission(menuPermission *model.MenuPermission) error
 	DeleteMenuPermissions(menuPermissionId int) error
+	CreateBatch(permissions []*model.MenuPermission, batchSize int) error
+	UpdateBatch(permissions []*model.MenuPermission, batchSize int) error
 }
 
 type MenuPermissionRepository struct {
@@ -80,4 +82,12 @@ func (m *MenuPermissionRepository) GetAllMenuPermissionsByRestricted(isRestricte
 		isRestricted, isRestricted,
 	).Scan(&scopes).Error
 	return scopes, err
+}
+
+func (m *MenuPermissionRepository) CreateBatch(permissions []*model.MenuPermission, batchSize int) error {
+	return m.BaseRepository.CreateBatch(permissions, batchSize)
+}
+
+func (m *MenuPermissionRepository) UpdateBatch(permissions []*model.MenuPermission, batchSize int) error {
+	return m.BaseRepository.UpdateBatch(permissions, batchSize)
 }

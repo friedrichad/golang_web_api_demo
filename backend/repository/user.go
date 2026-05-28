@@ -20,6 +20,8 @@ type IUserRepository interface {
 	Update(user *model.User) error
 	AddUserRole(userId int, roleId int) error
 	GetUserPermissionScopes(userId int) ([]shared.UserPermissionScope, error)
+	CreateBatch(users []*model.User, batchSize int) error
+	UpdateBatch(users []*model.User, batchSize int) error
 }
 
 type UserRepository struct {
@@ -149,4 +151,12 @@ func (u *UserRepository) GetUserPermissionScopes(userId int) ([]shared.UserPermi
     `, userId).Scan(&result).Error
 
 	return result, err
+}
+
+func (u *UserRepository) CreateBatch(users []*model.User, batchSize int) error {
+	return u.BaseRepository.CreateBatch(users, batchSize)
+}
+
+func (u *UserRepository) UpdateBatch(users []*model.User, batchSize int) error {
+	return u.BaseRepository.UpdateBatch(users, batchSize)
 }

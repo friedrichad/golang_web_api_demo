@@ -14,6 +14,8 @@ type IInventoryAdjustmentDetail interface {
 	Delete(ids []int) error
 	Save(request *model.InventoryAdjustmentDetail) error
 	Update(request *model.InventoryAdjustmentDetail) error
+	CreateBatch(details []*model.InventoryAdjustmentDetail, batchSize int) error
+	UpdateBatch(details []*model.InventoryAdjustmentDetail, batchSize int) error
 }
 type InventoryAdjustmentDetailRepository struct {
 	BaseRepository[model.InventoryAdjustmentDetail, int]
@@ -65,6 +67,14 @@ func (r *InventoryAdjustmentDetailRepository) Save(request *model.InventoryAdjus
 
 func (r *InventoryAdjustmentDetailRepository) Update(request *model.InventoryAdjustmentDetail) error {
 	return r.BaseRepository.Update(request)
+}
+
+func (r *InventoryAdjustmentDetailRepository) CreateBatch(details []*model.InventoryAdjustmentDetail, batchSize int) error {
+	return r.BaseRepository.CreateBatch(details, batchSize)
+}
+
+func (r *InventoryAdjustmentDetailRepository) UpdateBatch(details []*model.InventoryAdjustmentDetail, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(details, batchSize)
 }
 
 func (r *InventoryAdjustmentDetailRepository) WithTx(tx *gorm.DB) *InventoryAdjustmentDetailRepository {

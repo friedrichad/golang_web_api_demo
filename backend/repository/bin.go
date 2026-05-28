@@ -17,6 +17,8 @@ type IBinRepository interface {
 	CreateBinTx(bin *model.Bin) (*model.Bin, error)
 	UpdateBinTx(bin *model.Bin) error
 	DeleteBinTx(ids []int) error
+	CreateBatch(bins []*model.Bin, batchSize int) error
+	UpdateBatch(bins []*model.Bin, batchSize int) error
 }
 
 type BinRepository struct {
@@ -45,6 +47,14 @@ func (b *BinRepository) GetAllByCondition(query model.BinFilter) ([]model.Bin, i
 func (b *BinRepository) Delete(ids []int) error {
 	return b.DB.Exec("delete from bin where bin_id in ?", ids).Error
 }
+func (b *BinRepository) CreateBatch(bins []*model.Bin, batchSize int) error {
+	return b.BaseRepository.CreateBatch(bins, batchSize)
+}
+
+func (b *BinRepository) UpdateBatch(bins []*model.Bin, batchSize int) error {
+	return b.BaseRepository.UpdateBatch(bins, batchSize)
+}
+
 func (b *BinRepository) GetById(id int) (*model.Bin, error) {
 	var bin *model.Bin
 	err := b.DB.Where("bin_id = ?", id).First(&bin).Error

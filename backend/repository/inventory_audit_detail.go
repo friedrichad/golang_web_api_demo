@@ -14,6 +14,8 @@ type IInventoryAuditDetail interface {
 	Delete(ids []int) error
 	Save(request *model.InventoryAuditDetail) error
 	Update(request *model.InventoryAuditDetail) error
+	CreateBatch(details []*model.InventoryAuditDetail, batchSize int) error
+	UpdateBatch(details []*model.InventoryAuditDetail, batchSize int) error
 }
 
 type InventoryAuditDetailRepository struct {
@@ -59,6 +61,14 @@ func (r *InventoryAuditDetailRepository) Save(request *model.InventoryAuditDetai
 }
 func (r *InventoryAuditDetailRepository) Update(request *model.InventoryAuditDetail) error {
 	return r.BaseRepository.Update(request)
+}
+
+func (r *InventoryAuditDetailRepository) CreateBatch(details []*model.InventoryAuditDetail, batchSize int) error {
+	return r.BaseRepository.CreateBatch(details, batchSize)
+}
+
+func (r *InventoryAuditDetailRepository) UpdateBatch(details []*model.InventoryAuditDetail, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(details, batchSize)
 }
 
 func (r *InventoryAuditDetailRepository) WithTx(tx *gorm.DB) *InventoryAuditDetailRepository {

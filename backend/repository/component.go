@@ -18,6 +18,8 @@ type IComponentRepository interface {
 	DeleteComponentTx(ids []int) error
 	GetComponentCategories(componentId int) []model.ComponentCategoryDTO
 	GetAllComponentCategories(componentIds []int) map[int][]model.ComponentCategoryDTO
+	CreateBatch(components []*model.Component, batchSize int) error
+	UpdateBatch(components []*model.Component, batchSize int) error
 }
 
 type ComponentRepository struct {
@@ -221,4 +223,12 @@ func (c *ComponentRepository) GetAllComponentCategories(componentIds []int) map[
 	}
 
 	return categoriesMap
+}
+
+func (c *ComponentRepository) CreateBatch(components []*model.Component, batchSize int) error {
+	return c.BaseRepository.CreateBatch(components, batchSize)
+}
+
+func (c *ComponentRepository) UpdateBatch(components []*model.Component, batchSize int) error {
+	return c.BaseRepository.UpdateBatch(components, batchSize)
 }

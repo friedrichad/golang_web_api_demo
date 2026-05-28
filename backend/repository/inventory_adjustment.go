@@ -17,6 +17,8 @@ type IInventoryAdjustment interface {
 	CreateInventoryAdjustmentTx(adjustment *model.InventoryAdjustment, details []model.InventoryAdjustmentDetail) (*model.InventoryAdjustment, error)
 	UpdateInventoryAdjustmentTx(adjustment *model.InventoryAdjustment) error
 	DeleteInventoryAdjustmentTx(ids []int) error
+	CreateBatch(adjustments []*model.InventoryAdjustment, batchSize int) error
+	UpdateBatch(adjustments []*model.InventoryAdjustment, batchSize int) error
 }
 
 type InventoryAdjustmentRepository struct {
@@ -164,4 +166,12 @@ func (r *InventoryAdjustmentRepository) DeleteInventoryAdjustmentTx(ids []int) e
 	}
 
 	return nil
+}
+
+func (r *InventoryAdjustmentRepository) CreateBatch(adjustments []*model.InventoryAdjustment, batchSize int) error {
+	return r.BaseRepository.CreateBatch(adjustments, batchSize)
+}
+
+func (r *InventoryAdjustmentRepository) UpdateBatch(adjustments []*model.InventoryAdjustment, batchSize int) error {
+	return r.BaseRepository.UpdateBatch(adjustments, batchSize)
 }
