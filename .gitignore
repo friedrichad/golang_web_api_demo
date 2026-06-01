@@ -1,6 +1,7 @@
 # Ignore config files
 .env
 configs/config.json
+configs/config.yaml
 
 
 # dependencies
