@@ -92,7 +92,7 @@ func (u *UserRepository) GetById(id int) (*model.User, error) {
 	err := u.DB.
 		Joins("LEFT JOIN position p ON p.position_id = user.position_id").
 		Where("user.user_id = ?", id).
-		Select("user.*, p.position_name, p.position_level, position_id").
+		Select("user.*, p.position_name, p.position_level").
 		First(&user).Error
 
 	if err == gorm.ErrRecordNotFound {

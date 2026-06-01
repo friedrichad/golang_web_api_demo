@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/friedrichad/golang_web_api_demo/backend/model/constants"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+// Publish message to UserExchange (for user events like user.created)
 func (r *RabbitMQ) Publish(
 	routingKey string,
 	data interface{},
@@ -22,7 +22,7 @@ func (r *RabbitMQ) Publish(
 	return r.Channel.PublishWithContext(
 		context.Background(),
 
-		constants.InventoryExchange,
+		UserExchange,
 
 		routingKey,
 

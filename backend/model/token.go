@@ -15,6 +15,8 @@ type TokenInfo struct {
 
 type TokenResponse struct {
 	TokenInfo
+	Required2FA bool   `json:"required_2fa"`
+	UserId      int    `json:"user_id"`
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	RefreshExp  int64  `json:"refresh_exp"`
@@ -36,4 +38,17 @@ type RegisterRequest struct {
 	Email       string `json:"email" binding:"required,email"`
 	DisplayName string `json:"display_name" binding:"required,min=1,max=100"`
 	PositionID  int    `json:"position_id"`
+}
+
+type TwoFASetupResponse struct {
+	Secret string `json:"secret"`
+	QrUrl  string `json:"qr_url"`
+}
+
+type TwoFAVerifyRequest struct {
+	Code string `json:"code" binding:"required"`
+}
+
+type TwoFAVerifyResponse struct {
+	Message string `json:"message"`
 }

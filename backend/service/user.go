@@ -243,8 +243,6 @@ func (s *UserService) GetUserInfoWithCache(userId int) (*shared.UserInfo, error)
 		UserName: user.Username,
 		PositionInfo: shared.PositionInfo{
 			PositionId:    user.PositionID,
-			PositionLevel: user.PositionLevel,
-			PositionName:  user.PositionName,
 		},
 		IsOP: user.IsOp,
 	}

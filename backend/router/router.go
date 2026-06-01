@@ -36,6 +36,7 @@ func InitRouter(rmq *rabbitmq.RabbitMQ) *gin.Engine {
 	initInventoryLedgerRouter(router)
 	initComponentCategoryRouter(router)
 	initUploadRouter(router)
+	initTwoFARouter(router)
 	initNonAuthRouter(router)
 
 	return router
@@ -275,4 +276,30 @@ func initUploadRouter(router *gin.Engine) {
 		uploadGroup.POST("/multipart", middleware.Authorizator("upload:create"), uploadController.UploadMultipart())
 		uploadGroup.POST("/multiple", middleware.Authorizator("upload:create"), uploadController.UploadMultiple())
 	}
+}
+
+func initTwoFARouter(router *gin.Engine) {
+
+	twoFAController := controller.NewTwoFAController()
+
+	setupGroup := router.Group("/auth/2fa")
+	setupGroup.Use(middleware.BearerAuthenticator())
+	{
+		setupGroup.POST(
+			"/generate",
+			middleware.Authorizator("2fa:generate"),
+			twoFAController.Generate2FA(),
+		)
+
+		setupGroup.POST(
+			"/verify-setup",
+			middleware.Authorizator("2fa:verify"),
+			twoFAController.VerifySetup2FA(),
+		)
+	}
+
+	router.POST(
+		"/auth/verify-2fa",
+		twoFAController.Verify2FA(),
+	)
 }

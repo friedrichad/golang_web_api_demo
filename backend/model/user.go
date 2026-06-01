@@ -19,14 +19,14 @@ type User struct {
 	PasswordHash string    `gorm:"column:password_hash" json:"password_hash"`
 	StatusInt    int       `gorm:"column:status_int" json:"status_int"`
 	IsOp         int       `gorm:"column:is_op" json:"is_op"`
+	TwoFaEnabled bool      `gorm:"column:two_fa_enabled" json:"two_fa_enabled"`
+	TwoFaSecret  string    `gorm:"column:two_fa_secret" json:"two_fa_secret"`
 	CreatedBy    int       `gorm:"column:created_by" json:"created_by"`
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedBy    int       `gorm:"column:updated_by" json:"updated_by"`
 	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
 	DepartmentID int       `gorm:"column:department_id" json:"department_id"`
 	PositionID   int       `gorm:"column:position_id" json:"position_id"`
-	PositionName string    `gorm:"column:position_name" json:"position_name"`
-	PositionLevel int       `gorm:"column:position_level" json:"position_level"`
 }
 
 // TableName User's table name
@@ -73,6 +73,7 @@ type UserUpdate struct {
 	Username      string `json:"username" binding:"min=3,max=50"`
 	DisplayName   string `json:"display_name" binding:"min=1,max=100"`
 	Email         string `json:"email" binding:"email"`
+	TwoFaEnabled  bool   `json:"two_fa_enabled"`
 	OldPassword   string `json:"old_password"`
 	NewPassword   string `json:"new_password" binding:"min=6"`
 	StatusInt     int    `json:"status_int"`

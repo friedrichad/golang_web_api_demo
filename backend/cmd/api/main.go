@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/friedrichad/golang_web_api_demo/backend/configs/db"
+	"github.com/friedrichad/golang_web_api_demo/backend/configs/mail"
 	"github.com/friedrichad/golang_web_api_demo/backend/cron"
 	"github.com/friedrichad/golang_web_api_demo/backend/rabbitmq"
 	"github.com/friedrichad/golang_web_api_demo/backend/redis"
@@ -47,7 +48,9 @@ func main() {
 	db.InitMysql()
 	log.SetOutput(os.Stdout)
 	redis.InitRedis()
+	mail.InitMailConfig()
 	var rmq *rabbitmq.RabbitMQ
+
 	rmqInstance, err := rabbitmq.NewRabbitMQ()
 	if err != nil {
 		log.Println(
@@ -55,12 +58,30 @@ func main() {
 			err,
 		)
 	} else {
+
 		rmq = rmqInstance
+
+		err = rmq.DeclareExchange()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = rmq.DeclareQueues()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = rmq.BindQueues()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	requestService := service.NewRequestService()
 	systemLogService := service.NewSystemLogService()
 	if rmq != nil {
 		go rmq.ConsumeSystemLogs(systemLogService)
+		mailService := service.NewMailService()
+		go rmq.ConsumeMail(mailService)
 	}
 	requestCron := cron.NewRequestCron(
 		requestService,

@@ -8,11 +8,14 @@ import (
 	"time"
 
 	"github.com/friedrichad/golang_web_api_demo/backend/common"
+	"github.com/friedrichad/golang_web_api_demo/backend/middleware"
 	"github.com/friedrichad/golang_web_api_demo/backend/model"
+	"github.com/friedrichad/golang_web_api_demo/backend/rabbitmq"
 	"github.com/friedrichad/golang_web_api_demo/backend/redis"
 	"github.com/friedrichad/golang_web_api_demo/backend/repository"
 	"github.com/friedrichad/golang_web_api_demo/backend/shared"
 	"github.com/friedrichad/golang_web_api_demo/backend/utils"
+	"github.com/pquerna/otp/totp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -24,9 +27,13 @@ type IAuthService interface {
 	Authentication(c *gin.Context) (*model.TokenResponse, *common.Error)
 	Register(c *gin.Context) (*model.UserResponse, *common.Error)
 	Logout(c *gin.Context) *common.Error
+	Setup2FA(c *gin.Context) (*model.TwoFASetupResponse, *common.Error)
+	VerifySetup2FA(c *gin.Context) (*model.TwoFAVerifyResponse, *common.Error)
+	Verify2FA(c *gin.Context) (*model.TokenResponse, *common.Error)
 }
 
 type AuthService struct {
+	rabbitMQ            *rabbitmq.RabbitMQ
 	repository          repository.IUserRepository
 	accessTokenExpired  int
 	refreshTokenExpired int
@@ -37,21 +44,69 @@ type AuthService struct {
 }
 
 func NewAuthService() IAuthService {
+	rmq, err := rabbitmq.NewRabbitMQ()
+	if err != nil {
+		log.Println(
+			"RabbitMQ unavailable:",
+			err,
+		)
+	}
 	return &AuthService{
+		rabbitMQ:            rmq,
 		repository:          repository.NewUserRepository(),
 		accessTokenExpired:  viper.GetInt("oauth.access-token-expired"),
 		refreshTokenExpired: viper.GetInt("oauth.refresh-token-expired"),
 		clientId:            viper.GetString("oauth.client-id"),
 		basicAuth:           base64.StdEncoding.EncodeToString([]byte(viper.GetString("oauth.client-id") + ":" + viper.GetString("oauth.client-secret"))),
-		jwtSecret:           viper.GetString("oauth.jwt-secret"),
-		clientTypeNoExp:     viper.GetStringSlice("oauth.client_type_no_expire"),
+
+		jwtSecret: viper.GetString(
+			"oauth.jwt-secret",
+		),
+
+		clientTypeNoExp: viper.GetStringSlice(
+			"oauth.client_type_no_expire",
+		),
 	}
 }
 
-func (a AuthService) Authentication(c *gin.Context) (*model.TokenResponse, *common.Error) {
+func (a *AuthService) Authentication(c *gin.Context) (*model.TokenResponse, *common.Error) {
 	grantType := c.Request.FormValue("grant_type")
 	if grantType == "password" {
-		return createNewToken(c, a)
+		user, err := a.ValidateUser(c)
+		if err != nil {
+			return nil, err
+		}
+		if user.TwoFaEnabled {
+			// Return user info without access token when 2FA is required
+			response := &model.TokenResponse{
+				Required2FA: true,
+				UserId:      user.UserID,
+			}
+			response.Id = strconv.FormatInt(int64(user.UserID), 10)
+			response.Username = user.Username
+			response.Active = true
+
+			// Fetch Position
+			positionRepo := repository.NewPositionRepository()
+			position, err := positionRepo.GetPositionById(user.PositionID)
+			if err == nil && position != nil {
+				response.PositionName = position.PositionName
+				response.Level = position.PositionLevel
+			} else {
+				response.PositionName = ""
+				response.Level = 999
+			}
+
+			authorities, err := a.repository.GetAuthorities(user.UserID)
+			if err != nil && err.Error() != "record not found" {
+				return nil, common.SystemError
+			}
+			response.Authorities = authorities
+
+			return response, nil
+		}
+
+		return createNewToken(user, a, c)
 	}
 	if grantType == "refresh_token" {
 		return refreshToken(c, a)
@@ -59,29 +114,29 @@ func (a AuthService) Authentication(c *gin.Context) (*model.TokenResponse, *comm
 	return nil, &common.Error{Code: "400", Message: "Grant type không hỗ trợ"}
 }
 
-func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.Error) {
-	sessionId := utils.GetOrCreateSessionID(c, time.Until(time.Unix(getExpiredTime(a.accessTokenExpired), 0)))
-	if existedUserId, err := utils.BrowserHasSession(sessionId); err == nil && existedUserId != "" {
-		log.Printf("Trình duyệt đã có session_id %s với user_id %s", sessionId, existedUserId)
-		return nil, common.AlreadyLoggedIn
-	}
+func (a *AuthService) ValidateUser(c *gin.Context) (*model.User, *common.Error) {
 	username := c.Request.FormValue("username")
 	password := c.Request.FormValue("password")
+
 	if len(password) == 0 {
 		return nil, common.AuthenticationFail
 	}
+
 	user, err := a.repository.GetByUsername(username)
 	if err != nil {
 		log.Printf("Error when get user by username: %s", err.Error())
 		return nil, common.AuthenticationFail
 	}
+
 	if user == nil {
 		return nil, common.AuthenticationFail
 	}
+
 	if IsLockedAccount(user.UserID, 5) {
 		log.Printf("Tài khoản user_id %d đang bị khóa do đăng nhập sai quá nhiều lần", user.UserID)
 		return nil, common.AccountLocked
 	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		locked, count := LockAccount(user.UserID, 5)
@@ -91,6 +146,17 @@ func createNewToken(c *gin.Context, a AuthService) (*model.TokenResponse, *commo
 		}
 		return nil, common.AuthenticationFail
 	}
+
+	return user, nil
+}
+
+func createNewToken(user *model.User, a *AuthService, c *gin.Context) (*model.TokenResponse, *common.Error) {
+	sessionId := utils.GetOrCreateSessionID(c, time.Until(time.Unix(getExpiredTime(a.accessTokenExpired), 0)))
+	if existedUserId, err := utils.BrowserHasSession(sessionId); err == nil && existedUserId != "" {
+		log.Printf("Trình duyệt đã có session_id %s với user_id %s", sessionId, existedUserId)
+		return nil, common.AlreadyLoggedIn
+	}
+
 	response := &model.TokenResponse{
 		AccessToken: "",
 		TokenType:   "bearer",
@@ -169,7 +235,7 @@ func createJwtToken(jwtSecret string, token model.TokenResponse) (string, error)
 	return accessToken, nil
 }
 
-func refreshToken(c *gin.Context, a AuthService) (*model.TokenResponse, *common.Error) {
+func refreshToken(c *gin.Context, a *AuthService) (*model.TokenResponse, *common.Error) {
 	sessionID, err := c.Cookie("session_id")
 	if err != nil || sessionID == "" {
 		return nil, common.TokenInvalid
@@ -243,7 +309,7 @@ func extractClaims(tokenStr string, hmacSecret []byte) (*model.Claims, bool) {
 	return claims, true
 }
 
-func (a AuthService) Register(c *gin.Context) (*model.UserResponse, *common.Error) {
+func (a *AuthService) Register(c *gin.Context) (*model.UserResponse, *common.Error) {
 	var req model.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return nil, common.RequestInvalid
@@ -276,11 +342,28 @@ func (a AuthService) Register(c *gin.Context) (*model.UserResponse, *common.Erro
 		return nil, common.SystemError
 	}
 
+	if a.rabbitMQ != nil {
+
+		err := a.rabbitMQ.Publish(
+			"user.created",
+			map[string]interface{}{
+				"user_id": user.UserID,
+				"email":   user.Email,
+			},
+		)
+
+		if err != nil {
+			log.Println(
+				"Publish user.created failed:",
+				err,
+			)
+		}
+	}
 	userResponse := modelToUserResponse(user)
 	return &userResponse, nil
 }
 
-func (a AuthService) Logout(c *gin.Context) *common.Error {
+func (a *AuthService) Logout(c *gin.Context) *common.Error {
 	token := c.GetHeader("Authorization")
 	if token == "" {
 		return common.TokenInvalid
@@ -346,4 +429,106 @@ func IsLockedAccount(userID int, attempt int) bool {
 		return true
 	}
 	return false
+}
+
+func (a *AuthService) Setup2FA(c *gin.Context) (*model.TwoFASetupResponse, *common.Error) {
+
+	userId, err := strconv.Atoi(middleware.GetUserID(c))
+	if err != nil {
+		log.Printf("Invalid user id: %s", err.Error())
+		return nil, common.RequestInvalid
+	}
+
+	user, err := a.repository.GetById(userId)
+	if err != nil {
+		log.Printf("Error when get user by id: %s", err.Error())
+		return nil, common.NotFound
+	}
+	key, err := Generate2FA(user.Email)
+	if err != nil {
+		log.Printf("Error when generate 2FA key: %s", err.Error())
+		return nil, common.SystemError
+	}
+	user.TwoFaSecret = key.Secret()
+	err = a.repository.Update(user)
+	if err != nil {
+		log.Printf("Error when update user with 2Fa secret: %s", err.Error())
+		return nil, common.SystemError
+	}
+	return &model.TwoFASetupResponse{
+		Secret: key.Secret(),
+		QrUrl:  key.URL(),
+	}, nil
+}
+
+func (a *AuthService) VerifySetup2FA(c *gin.Context) (*model.TwoFAVerifyResponse, *common.Error) {
+
+	userId, err := strconv.Atoi(middleware.GetUserID(c))
+	if err != nil {
+		return nil, common.NotFound
+	}
+
+	user, err := a.repository.GetById(userId)
+	if err != nil {
+		return nil, common.NotFound
+	}
+
+	var body model.TwoFAVerifyRequest
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	valid := totp.Validate(body.Code, user.TwoFaSecret)
+
+	if !valid {
+		return nil, &common.Error{
+			Code:    "400",
+			Message: "Invalid 2FA code",
+		}
+	}
+
+	user.TwoFaEnabled = true
+
+	err = a.repository.Update(user)
+	if err != nil {
+		return nil, common.SystemError
+	}
+
+	return &model.TwoFAVerifyResponse{
+		Message: "2FA enabled",
+	}, nil
+}
+
+func (a *AuthService) Verify2FA(c *gin.Context) (*model.TokenResponse, *common.Error) {
+
+	var body struct {
+		UserId int    `json:"user_id"`
+		Code   string `json:"code"`
+	}
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		return nil, common.RequestInvalid
+	}
+
+	user, err := a.repository.GetById(body.UserId)
+	if err != nil {
+		return nil, common.NotFound
+	}
+	if !user.TwoFaEnabled {
+		return nil, &common.Error{
+			Code:    "400",
+			Message: "2FA chưa được bật",
+		}
+	}
+
+	valid := totp.Validate(body.Code, user.TwoFaSecret)
+
+	if !valid {
+		return nil, &common.Error{
+			Code:    "401",
+			Message: "Mã xác thực không đúng",
+		}
+	}
+	return createNewToken(user, a, c)
 }

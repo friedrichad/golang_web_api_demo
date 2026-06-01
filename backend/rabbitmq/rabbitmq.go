@@ -34,7 +34,7 @@ func NewRabbitMQ() (*RabbitMQ, error) {
 	}
 
 	err = channel.ExchangeDeclare(
-		constants.InventoryExchange,
+		constants.SystemLogExchange,
 
 		"topic",
 
@@ -70,7 +70,7 @@ func NewRabbitMQ() (*RabbitMQ, error) {
 
 		constants.SystemLogRoutingKey,
 
-		constants.InventoryExchange,
+		constants.SystemLogExchange,
 
 		false,
 		nil,

@@ -2,7 +2,7 @@ package constants
 
 // RabbitMQ Exchanges
 const (
-	InventoryExchange = "inventory_exchange"
+	SystemLogExchange = "system_log_exchange"
 )
 
 // RabbitMQ Queues
