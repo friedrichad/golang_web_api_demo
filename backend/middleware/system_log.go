@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/friedrichad/golang_web_api_demo/backend/model"
-	"github.com/friedrichad/golang_web_api_demo/backend/model/constants"
 	"github.com/friedrichad/golang_web_api_demo/backend/rabbitmq"
 	"github.com/gin-gonic/gin"
 )
@@ -73,10 +72,7 @@ func SystemLogMiddleware(rmq *rabbitmq.RabbitMQ) gin.HandlerFunc {
 		}
 
 		if rmq != nil {
-			go rmq.Publish(
-				constants.SystemLogRoutingKey,
-				logData,
-			)
+			go rmq.PublishSystemLog(logData)
 		}
 	}
 }

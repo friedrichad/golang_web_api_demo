@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"time"
 )
 
 func InitRouter(rmq *rabbitmq.RabbitMQ) *gin.Engine {
@@ -259,6 +260,7 @@ func initComponentCategoryRouter(router *gin.Engine) {
 func initAuthRouter(router *gin.Engine) {
 	authController := controller.NewAuthController()
 	authGroup := router.Group("/auth")
+	authGroup.Use(middleware.RateLimit("auth", 5, 15*time.Minute))
 	{
 		authGroup.POST("/refresh", authController.GetToken())
 		authGroup.POST("/login", authController.GetToken())

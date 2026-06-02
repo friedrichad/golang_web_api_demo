@@ -35,3 +35,25 @@ func (r *RabbitMQ) Publish(
 		},
 	)
 }
+
+// PublishSystemLog publishes system log messages to SystemLogExchange
+func (r *RabbitMQ) PublishSystemLog(
+	data interface{},
+) error {
+	body, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return r.Channel.PublishWithContext(
+		context.Background(),
+		SystemLogExchange,
+		"system.log",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        body,
+		},
+	)
+}

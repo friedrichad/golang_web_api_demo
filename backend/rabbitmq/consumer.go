@@ -14,10 +14,10 @@ type ISystemLogService interface {
 
 func (r *RabbitMQ) ConsumeSystemLogs(svc ISystemLogService) error {
 	msgs, err := r.Channel.Consume(
-		r.SystemLogQueue.Name,
+		SystemLogQueue,
 
 		"",
-		false, // ❗ autoAck = false
+		false,
 		false,
 		false,
 		false,
@@ -102,7 +102,6 @@ func (r *RabbitMQ) ConsumeMail(mailService IMailService) error {
 				event.Email,
 			)
 
-			// 👉 GỌI MAIL SERVICE Ở ĐÂY
 			err = mailService.SendWelcomeEmail(
 				event.UserID,
 				event.Email,
