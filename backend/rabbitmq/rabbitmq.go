@@ -3,8 +3,8 @@ package rabbitmq
 import (
 	"log"
 
-	"github.com/spf13/viper"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/spf13/viper"
 )
 
 type RabbitMQ struct {

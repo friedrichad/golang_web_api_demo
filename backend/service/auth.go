@@ -179,21 +179,25 @@ func createNewToken(user *model.User, a *AuthService, c *gin.Context) (*model.To
 	response.RefreshExp = getExpiredTime(a.refreshTokenExpired)
 	authorities, err := a.repository.GetAuthorities(user.UserID)
 	if err != nil && err.Error() != "record not found" {
+		log.Printf("GetAuthorities Error: %v", err)
 		return nil, common.SystemError
 	}
 	response.Authorities = authorities
 	accessToken, err := createJwtToken(a.jwtSecret, *response)
 	if err != nil {
+		log.Printf("createJwtToken Error: %v", err)
 		return nil, common.SystemError
 	}
 	response.AccessToken = accessToken
 	ttl := time.Until(time.Unix(response.Exp, 0))
 	err = utils.SaveBrowserSession(sessionId, response.Id, ttl)
 	if err != nil {
+		log.Printf("SaveBrowserSession Error: %v", err)
 		return nil, common.SystemError
 	}
 	err = redis.Save(redis.Rdb, "auth:token:"+response.Id, response.AccessToken, ttl)
 	if err != nil {
+		log.Printf("redis.Save token Error: %v", err)
 		return nil, common.SystemError
 	}
 	userInfo := shared.UserInfo{

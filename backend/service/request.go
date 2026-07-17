@@ -26,7 +26,7 @@ type IRequestService interface {
 	// RequestDetail CRUD operations
 	GetAllRequestDetails(c *gin.Context) ([]model.RequestDetailResponse, int, *common.Error)
 	GetRequestDetailById(c *gin.Context) (*model.RequestDetailResponse, *common.Error)
-	CreateRequestDetail(c *gin.Context)*common.Error
+	CreateRequestDetail(c *gin.Context) *common.Error
 	UpdateRequestDetail(c *gin.Context) *common.Error
 	DeleteRequestDetail(c *gin.Context) *common.Error
 	ExpireRequests() error

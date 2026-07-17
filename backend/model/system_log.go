@@ -12,14 +12,14 @@ const TableNameSystemLog = "system_log"
 
 // SystemLog mapped from table <system_log>
 type SystemLog struct {
-	LogID      int       `gorm:"column:log_id;primaryKey;autoIncrement:true" json:"log_id"`
-	UserID     int       `gorm:"column:user_id" json:"user_id"`
-	HTTPMethod string    `gorm:"column:http_method" json:"http_method"`
-	Route      string    `gorm:"column:route" json:"route"`
-	StatusInt  int       `gorm:"column:status_int" json:"status_int"`
-	IPAddress  string    `gorm:"column:ip_address" json:"ip_address"`
-	ExecutedAt time.Time `gorm:"column:executed_at" json:"executed_at"`
-	ResponseBody string `gorm:"column:response_body" json:"response_body"`
+	LogID        int       `gorm:"column:log_id;primaryKey;autoIncrement:true" json:"log_id"`
+	UserID       int       `gorm:"column:user_id" json:"user_id"`
+	HTTPMethod   string    `gorm:"column:http_method" json:"http_method"`
+	Route        string    `gorm:"column:route" json:"route"`
+	StatusInt    int       `gorm:"column:status_int" json:"status_int"`
+	IPAddress    string    `gorm:"column:ip_address" json:"ip_address"`
+	ExecutedAt   time.Time `gorm:"column:executed_at" json:"executed_at"`
+	ResponseBody string    `gorm:"column:response_body" json:"response_body"`
 }
 
 // TableName SystemLog's table name
@@ -28,23 +28,22 @@ func (*SystemLog) TableName() string {
 }
 
 type SystemLogDTO struct {
-	LogID      int       `json:"log_id"`
-	UserID     int       `json:"user_id"`
-	HTTPMethod string    `json:"http_method"`
-	Route      string    `json:"route"`
-	StatusInt  int       `json:"status_int"`
-	IPAddress  string    `json:"ip_address"`
-	ExecutedAt time.Time `json:"executed_at"`
-	ResponseBody string `json:"response_body"`
+	LogID        int       `json:"log_id"`
+	UserID       int       `json:"user_id"`
+	HTTPMethod   string    `json:"http_method"`
+	Route        string    `json:"route"`
+	StatusInt    int       `json:"status_int"`
+	IPAddress    string    `json:"ip_address"`
+	ExecutedAt   time.Time `json:"executed_at"`
+	ResponseBody string    `json:"response_body"`
 }
 
-
 type SystemLogMessage struct {
-	UserID int `json:"user_id"`
-	HTTPMethod string `json:"http_method"`
-	Route string `json:"route"`
-	StatusInt int `json:"status_int"`
-	IPAddress string `json:"ip_address"`
-	DurationMs int64 `json:"duration_ms"`
+	UserID       int    `json:"user_id"`
+	HTTPMethod   string `json:"http_method"`
+	Route        string `json:"route"`
+	StatusInt    int    `json:"status_int"`
+	IPAddress    string `json:"ip_address"`
+	DurationMs   int64  `json:"duration_ms"`
 	ResponseBody string `json:"response_body"`
 }

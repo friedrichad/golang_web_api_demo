@@ -2,11 +2,11 @@ package middleware
 
 import (
 	"context"
-	"time"
 	"net/http"
+	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/friedrichad/golang_web_api_demo/backend/redis"
+	"github.com/gin-gonic/gin"
 )
 
 func RateLimit(prefix string, limit int64, window time.Duration) gin.HandlerFunc {
@@ -14,7 +14,7 @@ func RateLimit(prefix string, limit int64, window time.Duration) gin.HandlerFunc
 		ip := c.ClientIP()
 		key := prefix + ":" + ip
 		count, err := redis.Rdb.Incr(context.Background(), key).Result()
-		if err !=nil{
+		if err != nil {
 			c.Next()
 			return
 		}
@@ -22,11 +22,11 @@ func RateLimit(prefix string, limit int64, window time.Duration) gin.HandlerFunc
 			redis.Rdb.Expire(context.Background(), key, window)
 		}
 		if count > limit {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests,gin.H{
-					"code":    429,
-					"message": "Too many requests",
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"code":    429,
+				"message": "Too many requests",
 			},
-		)
+			)
 			return
 		}
 		c.Next()

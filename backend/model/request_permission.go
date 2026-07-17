@@ -12,14 +12,14 @@ const TableNameRequestPermission = "request_permission"
 
 // RequestPermission mapped from table <request_permission>
 type RequestPermission struct {
-	RequestPermissionID int     `gorm:"column:request_permission_id;primaryKey;autoIncrement:true" json:"request_permission_id"`
-	RequestID           int     `gorm:"column:request_id;not null" json:"request_id"`
-	MenuPermissionID    int     `gorm:"column:menu_permission_id" json:"menu_permission_id"`
+	RequestPermissionID int       `gorm:"column:request_permission_id;primaryKey;autoIncrement:true" json:"request_permission_id"`
+	RequestID           int       `gorm:"column:request_id;not null" json:"request_id"`
+	MenuPermissionID    int       `gorm:"column:menu_permission_id" json:"menu_permission_id"`
 	Reason              string    `gorm:"column:reason" json:"reason"`
 	CreatedAt           time.Time `gorm:"column:created_at" json:"created_at"`
-	CreatedBy           int     `gorm:"column:created_by" json:"created_by"`
+	CreatedBy           int       `gorm:"column:created_by" json:"created_by"`
 	UpdatedAt           time.Time `gorm:"column:updated_at" json:"updated_at"`
-	UpdatedBy           int     `gorm:"column:updated_by" json:"updated_by"`
+	UpdatedBy           int       `gorm:"column:updated_by" json:"updated_by"`
 }
 
 // TableName RequestPermission's table name
@@ -36,9 +36,9 @@ type RequestPermissionFilter struct {
 }
 
 type RequestPermissionCreate struct {
-	RequestID    int    `json:"request_id", binding:"required"`
-	MenuPermission int    `json:"menu_permission", binding:"required"`
-	Reason       string `json:"reason", binding:"required"`
+	RequestID      int    `json:"request_id" binding:"required"`
+	MenuPermission int    `json:"menu_permission" binding:"required"`
+	Reason         string `json:"reason" binding:"required"`
 }
 
 type RequestPermissionUpdate struct {

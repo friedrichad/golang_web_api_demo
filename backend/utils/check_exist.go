@@ -6,7 +6,7 @@ func Exists(db *gorm.DB, query string, args ...interface{}) (bool, error) {
 	var exists bool
 
 	err := db.Raw(
-		"SELECT EXISTS(" + query + ")",
+		"SELECT EXISTS("+query+")",
 		args...,
 	).Scan(&exists).Error
 
